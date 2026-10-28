@@ -11,9 +11,13 @@
 - Scaffold Python instalable con comandos `xma --help` y `xma version`.
 - Pruebas unitarias, Ruff, mypy, pre-commit y workflow de CI.
 - Prompts gobernados de ejecución Codex y auditoría dot para B02.
+- Entidades y validadores de dominio para perfiles, publicaciones, medios, ejecuciones, trabajos y
+  artefactos.
+- Contratos tipados de catálogo, unidad de trabajo y reloj.
+- Catálogo SQLite v1 con migración monotónica, integridad referencial, transacciones e idempotencia.
+- Matriz documentada y probada de transiciones de trabajos de descarga.
 
 ### Known Limitations
 
-- No existe implementación ejecutable.
-- No se ha creado ni validado un repositorio remoto.
-- La arquitectura está en diseño y el producto no está certificado.
+- B02 no incluye discovery, acceso a X ni descarga de medios.
+- La arquitectura sigue en validación incremental y el producto no está certificado.
