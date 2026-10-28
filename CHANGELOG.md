@@ -17,6 +17,15 @@
 - Catálogo SQLite v1 con migración monotónica, integridad referencial, transacciones e idempotencia.
 - Matriz documentada y probada de transiciones de trabajos de descarga.
 
+### Fixed
+
+- Validación de rutas de artefacto para rechazar el directorio actual `.`.
+- Actualizaciones controladas del progreso y cierre de `DiscoveryRun`, preservando identidad,
+  conteos monotónicos e inmutabilidad terminal.
+- Cierre de la conexión SQLite cuando falla la entrada a una unidad de trabajo.
+- Validación completa de la identidad compuesta de activos en `DownloadJob`.
+- Timestamp UTC real y testeable para la aplicación de migraciones.
+
 ### Known Limitations
 
 - B02 no incluye discovery, acceso a X ni descarga de medios.

@@ -17,7 +17,15 @@
 
 Todos los timestamps se serializan como ISO 8601 UTC con seis dígitos de microsegundos y sufijo
 `Z`. Las conexiones activan `PRAGMA foreign_keys = ON`. La tabla `schema_version` registra las
-migraciones aplicadas, que se ejecutan de forma monotónica y transaccional.
+migraciones aplicadas con su instante UTC real, que se ejecutan de forma monotónica y
+transaccional. El reloj de migración puede inyectarse en pruebas.
+
+## Ciclo de `DiscoveryRun`
+
+La identidad de una ejecución está formada por `run_id`, `strategy` y `started_at`, que no cambian
+después de insertarse. Mientras el estado sea `RUNNING`, el catálogo permite actualizar cursor y
+conteos, siempre sin disminuirlos, o cerrar la ejecución como `COMPLETED` o `FAILED` con
+`finished_at`. Un estado terminal es inmutable; reinsertarlo sin cambios es idempotente.
 
 ## Matriz de estados de `DownloadJob`
 
@@ -40,5 +48,6 @@ incrementa `attempts`; cualquier transición fuera de esta matriz produce
 
 Reinsertar una entidad idéntica no modifica filas. Los perfiles permiten actualizar handle,
 nombre y timestamps sin cambiar `profile_id`; los trabajos permiten cambios de estado sin cambiar
-su activo, ejecución o fecha de creación. Una reutilización incompatible de identidad produce
+su activo, ejecución o fecha de creación. Las identidades de activo se validan en su forma canónica
+`<post_id>:<media_index>`. Una reutilización incompatible de identidad produce
 `IdentityConflictError` y la unidad de trabajo revierte la transacción.
