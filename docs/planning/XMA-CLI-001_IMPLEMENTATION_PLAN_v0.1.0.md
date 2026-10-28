@@ -56,16 +56,16 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso autorizado
 
-AUD-0004 v0.1.1 cierra DOC-01 como `VALIDATED_WITH_OBSERVATIONS`. La regla permanece: la prueba
-usa `--limit 2` como máximo operativo y Q3-Público solo pasa con exactamente dos activos públicos
-de video distintos y catalogados; cero o uno no pasan.
+ADR-0003 autoriza una ejecución de PRM-0009 para extender B03 con autenticación explícita mediante
+una sesión local de Firefox. Los identificadores concretos se suministran solo en el entorno local
+y no se publican. Codex se ejecuta primero; DOT-PRM-0011 solo después de HND-0003 v0.2.0 y CI.
 
-No existe una ejecución activa para Codex o dot. Q3-Técnico conserva
-`VALIDATED_WITH_OBSERVATIONS`; Q3-Público y la transición general B03 conservan `BLOCKED`.
+El modo anónimo continúa por defecto. La app puede solicitar a `gallery-dl` lectura directa del
+perfil local, pero no almacenar, exportar, imprimir ni versionar cookies o credenciales. CI sigue
+offline.
 
-El siguiente movimiento requiere una decisión humana nueva y versionada sobre cómo intentar o
-resolver la aceptación pública. Hasta entonces continúan prohibidos smoke, merge, B04, cookies,
-autenticación, otro extractor, descargas, tags, releases y certificación.
+Q3-Público y B03 permanecen `BLOCKED` hasta catalogar exactamente dos activos públicos distintos
+con `--limit 2` y obtener auditoría favorable. Cero o uno no pasan. Siguen prohibidos merge, B04,
+descargas, otros extractores, API X, tags, releases y certificación.
 
-El rework B02 permanece separado y no integrado. Los recordatorios corporativos ajenos no cambian
-este plan ni autorizan fases posteriores.
+El rework B02 permanece separado y no integrado.
