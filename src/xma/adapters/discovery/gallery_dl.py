@@ -3,7 +3,7 @@
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from decimal import ROUND_HALF_EVEN, Decimal, DecimalException
+from decimal import Decimal, DecimalException
 from math import isfinite
 from typing import Any, cast
 
@@ -264,16 +264,21 @@ def _duration_ms(value: object) -> int | None:
     if isinstance(value, bool) or not isinstance(value, (str, int, float)):
         raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
     try:
-        seconds = Decimal.from_float(value) if isinstance(value, float) else Decimal(value)
-        if not seconds.is_finite() or seconds < 0:
+        if isinstance(value, str):
+            semantic_value = Decimal(value)
+            if not semantic_value.is_finite() or semantic_value < 0:
+                raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+        elif isinstance(value, float) and (not isfinite(value) or value < 0):
             raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+
+        seconds = float(value)
         milliseconds = seconds * 1000
-        if not milliseconds.is_finite():
+        if not isfinite(seconds) or not isfinite(milliseconds):
             raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
-        result = int(milliseconds.to_integral_value(rounding=ROUND_HALF_EVEN))
+        result = round(milliseconds)
     except (DecimalException, TypeError, ValueError, OverflowError) as error:
         raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR) from error
-    if result > _SQLITE_INTEGER_MAX:
+    if result < 0 or result > _SQLITE_INTEGER_MAX:
         raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
     return result
 

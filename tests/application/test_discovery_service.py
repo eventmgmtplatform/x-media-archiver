@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from xma.adapters.catalog.sqlite import SQLiteUnitOfWork
+from xma.adapters.discovery.gallery_dl import GalleryDlDiscoveryProvider, GalleryDlExtraction
 from xma.application.discovery import DiscoveryService
 from xma.domain.discovery import (
     DiscoveredAsset,
@@ -169,3 +170,37 @@ def test_rotated_variants_do_not_conflict_or_persist_secrets(tmp_path: Path) -> 
     with sqlite3.connect(database) as connection:
         assert connection.execute("SELECT count(*) FROM media_assets").fetchone()[0] == 1
     assert b"secret" not in database.read_bytes()
+
+
+@pytest.mark.parametrize(
+    ("duration", "expected_ms"),
+    [(0.0005, 0), (0.0025, 2), ("0.0005", 0), ("0.0025", 2)],
+    ids=["float-half-ms", "float-two-and-half-ms", "string-half-ms", "string-two-and-half-ms"],
+)
+def test_sync_persists_baseline_compatible_duration_rounding(
+    tmp_path: Path, duration: object, expected_ms: int
+) -> None:
+    record = {
+        "type": "video",
+        "tweet_id": 9001,
+        "author": {"id": 123},
+        "num": 1,
+        "width": 1280,
+        "height": 720,
+        "duration": duration,
+        "date": "2026-10-28T12:00:00Z",
+        "_source_url": "https://media.invalid/offline-fixture",
+    }
+    extraction = GalleryDlExtraction(
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        (record,),
+    )
+    provider = GalleryDlDiscoveryProvider(lambda url, limit: extraction, lambda: NOW)
+    database = tmp_path / "catalog.sqlite3"
+
+    DiscoveryService(provider, lambda: SQLiteUnitOfWork(database)).sync("Reuters", 1)
+
+    with SQLiteUnitOfWork(database) as unit:
+        asset = unit.catalog.get_media_asset("9001:0")
+        assert asset is not None
+        assert asset.duration_ms == expected_ms

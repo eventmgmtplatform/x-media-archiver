@@ -291,11 +291,27 @@ def test_mapper_rejects_every_semantically_negative_duration(invalid: object) ->
     [
         (0, 0),
         (0.0001, 0),
-        (0.0006, 1),
+        (0.0005, 0),
+        (0.0015, 2),
+        (0.0025, 2),
+        (0.0045, 4),
+        ("0.0005", 0),
+        ("0.0025", 2),
         ("1e-400", 0),
         ("12.5", 12500),
     ],
-    ids=["zero", "positive-under-half-ms", "positive-over-half-ms", "positive-extreme", "existing"],
+    ids=[
+        "zero",
+        "positive-under-half-ms",
+        "float-half-ms",
+        "float-one-and-half-ms",
+        "float-two-and-half-ms",
+        "float-four-and-half-ms",
+        "string-half-ms",
+        "string-two-and-half-ms",
+        "positive-extreme",
+        "existing",
+    ],
 )
 def test_mapper_preserves_nonnegative_duration_rounding(duration: object, expected_ms: int) -> None:
     data = extraction()
