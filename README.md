@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03-REWORK-004 — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03-REWORK-005 — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -143,3 +143,12 @@ restaura la secuencia histórica `float(value)`, multiplicación por 1000 y `rou
 validación semántica. Los cinco negativos siguen rechazándose antes del redondeo y los límites
 SQLite y el mensaje sanitizado permanecen intactos. Esto corrige la afirmación incompatible de
 HND v0.1.3 sobre compatibilidad positiva; no reescribe ese documento histórico ni repite el smoke.
+
+### Rework B03-REWORK-005
+
+AUD-0003 v0.1.4 detectó que `Decimal(value)` introducía un límite de exponente ausente en la
+baseline: cadenas finitas no negativas que `float()` convierte a cero podían rechazarse. PRM-0008
+reemplaza esa validación por inspección léxica del signo y significando, sin evaluar el exponente.
+Así se aceptan exponentes extremos positivos y ceros con signo, mientras todo signo negativo con
+significando no cero se rechaza antes de perderse como `-0.0`. La conversión histórica, los límites
+SQLite y el mensaje sanitizado permanecen intactos; el smoke público no se repitió.

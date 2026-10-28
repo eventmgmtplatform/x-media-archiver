@@ -12,6 +12,7 @@
 | 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.1 y PRM-0005 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-002 autorizado |
 | 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.2 y PRM-0006 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-003 autorizado |
 | 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.3 y PRM-0007 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-004 autorizado una vez |
+| 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.4 y PRM-0008 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-005 autorizado una vez |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -23,6 +24,7 @@
 | GOV-RWK-0004 | B03 | AUD-0003 v0.1.1 detectó `OverflowError` no normalizado ante metadatos numéricos no finitos. | `WAITING_VALIDATION` tras B03-REWORK-002. | PRM-0005 ejecutado una vez; DOT-PRM-0005 debe auditar el HEAD final. |
 | GOV-RWK-0005 | B03 | AUD-0003 v0.1.2 demostró que duraciones negativas submilisegundo podían redondearse y persistirse como cero. | `WAITING_VALIDATION` tras B03-REWORK-003. | PRM-0006 ejecutado una vez; DOT-PRM-0006 debe auditar el nuevo HEAD. |
 | GOV-RWK-0006 | B03 | AUD-0003 v0.1.3 detectó que `Decimal.from_float()` alteró los empates positivos históricos. | `WAITING_VALIDATION` tras B03-REWORK-004. | Leonel autorizó una ejecución de PRM-0007; DOT-PRM-0007 debe auditar el HEAD final. |
+| GOV-RWK-0007 | B03 | AUD-0003 v0.1.4 detectó que `Decimal(value)` rechazaba exponentes extremos aceptados por la baseline. | `WAITING_VALIDATION` tras B03-REWORK-005. | Leonel autorizó una ejecución de PRM-0008; DOT-PRM-0008 debe auditar el HEAD final. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

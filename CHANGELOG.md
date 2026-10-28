@@ -34,6 +34,8 @@
   subnormal, y conserva el redondeo histórico de cero y duraciones positivas submilisegundo.
 - B03-REWORK-004 restaura exactamente el redondeo positivo histórico después de validar el signo,
   sin retirar las regresiones de duraciones negativas ni alterar los límites SQLite.
+- B03-REWORK-005 elimina el límite decimal de exponente mediante validación léxica del significando,
+  preservando cadenas compatibles con `float()` y el rechazo de negativos que subdesbordan.
 
 ### Known Limitations
 
