@@ -3,6 +3,7 @@
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from math import isfinite
 from typing import Any, cast
 
 import gallery_dl  # type: ignore[import-untyped]
@@ -26,6 +27,8 @@ from xma.domain.errors import (
 )
 
 _VIDEO_TYPES = {"video", "animated_gif"}
+_SQLITE_INTEGER_MAX = 2**63 - 1
+_NUMERIC_CONTRACT_ERROR = "gallery-dl numeric metadata violates the B03 contract"
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,7 +164,7 @@ def map_gallery_dl_extraction(
             author_id = str(_required(author, "id"))
             if author_id != profile.profile_id:
                 raise DiscoveryContractError("gallery-dl returned media from another author")
-            index = int(_required(record, "num")) - 1
+            index = _source_index(_required(record, "num"))
             key = (post_id, index)
             if key in seen_assets:
                 continue
@@ -194,7 +197,7 @@ def map_gallery_dl_extraction(
         )
     except DiscoveryContractError:
         raise
-    except (KeyError, TypeError, ValueError) as error:
+    except (KeyError, TypeError, ValueError, OverflowError) as error:
         raise DiscoveryContractError(
             "gallery-dl output does not satisfy the B03 contract"
         ) from error
@@ -227,20 +230,49 @@ def _mapping(value: object, field: str) -> Mapping[str, Any]:
     return cast(Mapping[str, Any], value)
 
 
+def _bounded_integer(value: object, *, minimum: int, maximum: int) -> int:
+    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+        raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+    try:
+        if isinstance(value, float):
+            if not isfinite(value) or not value.is_integer():
+                raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+            result = int(value)
+        else:
+            result = int(value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR) from error
+    if result < minimum or result > maximum:
+        raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+    return result
+
+
+def _source_index(value: object) -> int:
+    return _bounded_integer(value, minimum=1, maximum=_SQLITE_INTEGER_MAX + 1) - 1
+
+
 def _optional_int(value: object) -> int | None:
     if value is None:
         return None
-    if isinstance(value, bool) or not isinstance(value, (str, int, float)):
-        raise DiscoveryContractError("gallery-dl dimension must be numeric")
-    return int(value)
+    return _bounded_integer(value, minimum=0, maximum=_SQLITE_INTEGER_MAX)
 
 
 def _duration_ms(value: object) -> int | None:
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, (str, int, float)):
-        raise DiscoveryContractError("gallery-dl duration must be numeric")
-    return round(float(value) * 1000)
+        raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+    try:
+        seconds = float(value)
+        milliseconds = seconds * 1000
+        if not isfinite(seconds) or not isfinite(milliseconds):
+            raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+        result = round(milliseconds)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR) from error
+    if result < 0 or result > _SQLITE_INTEGER_MAX:
+        raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
+    return result
 
 
 def _datetime(value: object) -> datetime:

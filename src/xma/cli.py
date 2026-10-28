@@ -110,11 +110,9 @@ def sync_profile(
     database = repository / "catalog.sqlite3"
     service = DiscoveryService(
         _provider_factory(),
-        None if dry_run else lambda: SQLiteUnitOfWork(database),
+        None if dry_run else lambda: _catalog_unit(database),
     )
     try:
-        if not dry_run:
-            repository.mkdir(parents=True, exist_ok=True)
         result = service.sync(target, limit, dry_run=dry_run)
     except (InvalidIdentityError, DiscoveryError) as error:
         _exit_for_discovery_error(error)
@@ -124,6 +122,11 @@ def sync_profile(
         )
         raise typer.Exit(EXIT_CATALOG_FAILED) from error
     _render_sync(result, json_output, database)
+
+
+def _catalog_unit(database: Path) -> SQLiteUnitOfWork:
+    database.parent.mkdir(parents=True, exist_ok=True)
+    return SQLiteUnitOfWork(database)
 
 
 def _exit_for_discovery_error(error: Exception) -> NoReturn:

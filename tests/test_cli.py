@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 import xma.cli as cli
 from xma import __version__
+from xma.adapters.discovery.gallery_dl import GalleryDlDiscoveryProvider, GalleryDlExtraction
 from xma.cli import app
 from xma.domain.discovery import (
     DiscoveredAsset,
@@ -216,3 +217,43 @@ def test_external_error_exit_codes(
     result = runner.invoke(app, ["inspect", "Reuters"])
     assert result.exit_code == code
     assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize("command", ["inspect", "sync"])
+def test_cli_sanitizes_real_mapper_numeric_contract_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, command: str
+) -> None:
+    marker = "SYNTHETIC-SIGNED-URL-SECRET"
+    record = {
+        "type": "video",
+        "tweet_id": 9001,
+        "author": {"id": 123},
+        "num": 1,
+        "width": json.loads("1e400"),
+        "height": 720,
+        "duration": 1,
+        "date": "2026-10-28T12:00:00Z",
+        f"_{marker}": marker,
+        "_source_url": f"https://media.invalid/video?signature={marker}",
+    }
+    extraction = GalleryDlExtraction(
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        (record,),
+    )
+    monkeypatch.setattr(
+        cli,
+        "_provider_factory",
+        lambda: GalleryDlDiscoveryProvider(lambda url, limit: extraction, lambda: NOW),
+    )
+    repository = tmp_path / "must-not-exist"
+    arguments = [command, "Reuters", "--limit", "1"]
+    if command == "sync":
+        arguments.extend(["--repository", str(repository)])
+
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code == cli.EXIT_PROVIDER_FAILED
+    assert "gallery-dl numeric metadata violates the B03 contract" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert marker not in result.stdout + result.stderr
+    assert not repository.exists()

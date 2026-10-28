@@ -25,6 +25,8 @@ from xma.domain.errors import (
 
 NOW = datetime(2026, 10, 28, 12, tzinfo=UTC)
 FIXTURE = Path(__file__).parents[1] / "fixtures/gallery_dl/twitter_videos.json"
+SENSITIVE_MARKER = "SYNTHETIC-SIGNED-URL-SECRET"
+NUMERIC_ERROR = "gallery-dl numeric metadata violates the B03 contract"
 
 
 def extraction() -> GalleryDlExtraction:
@@ -203,7 +205,7 @@ def test_mapper_rejects_unsupported_media_and_nonnumeric_fields() -> None:
         )
 
     bad_width = dict(data.media_records[0], width={"bad": True})
-    with pytest.raises(DiscoveryContractError, match="dimension"):
+    with pytest.raises(DiscoveryContractError, match=NUMERIC_ERROR):
         map_gallery_dl_extraction(
             GalleryDlExtraction(data.profile_record, (bad_width,)),
             normalize_discovery_target("Reuters"),
@@ -211,6 +213,81 @@ def test_mapper_rejects_unsupported_media_and_nonnumeric_fields() -> None:
             NOW,
             "gallery-dl:test",
         )
+
+
+@pytest.mark.parametrize("field", ["num", "width", "height", "duration"])
+@pytest.mark.parametrize(
+    "invalid",
+    [float("nan"), float("inf"), float("-inf"), True, False, json.loads("1e400")],
+    ids=["nan", "positive-infinity", "negative-infinity", "true", "false", "json-1e400"],
+)
+def test_mapper_rejects_invalid_numeric_metadata(field: str, invalid: object) -> None:
+    data = extraction()
+    record = dict(data.media_records[0], **{field: invalid})
+    record["_source_url"] = f"https://media.invalid/video?signature={SENSITIVE_MARKER}"
+
+    with pytest.raises(DiscoveryContractError) as captured:
+        map_gallery_dl_extraction(
+            GalleryDlExtraction(data.profile_record, (record,)),
+            normalize_discovery_target("Reuters"),
+            1,
+            NOW,
+            "gallery-dl:test",
+        )
+
+    assert str(captured.value) == NUMERIC_ERROR
+    assert SENSITIVE_MARKER not in str(captured.value)
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid"),
+    [
+        ("num", 0),
+        ("num", -1),
+        ("num", 1.5),
+        ("num", 2**63 + 1),
+        ("width", -1),
+        ("height", 2**63),
+        ("duration", -0.001),
+        ("duration", 1e308),
+    ],
+)
+def test_mapper_rejects_out_of_range_or_fractional_metadata(field: str, invalid: object) -> None:
+    data = extraction()
+    record = dict(data.media_records[0], **{field: invalid})
+    with pytest.raises(DiscoveryContractError, match=NUMERIC_ERROR):
+        map_gallery_dl_extraction(
+            GalleryDlExtraction(data.profile_record, (record,)),
+            normalize_discovery_target("Reuters"),
+            1,
+            NOW,
+            "gallery-dl:test",
+        )
+
+
+def test_mapper_preserves_finite_numeric_values() -> None:
+    data = extraction()
+    record = dict(
+        data.media_records[0],
+        num="1",
+        width=1920.0,
+        height="1080",
+        duration="12.5",
+    )
+    batch = map_gallery_dl_extraction(
+        GalleryDlExtraction(data.profile_record, (record,)),
+        normalize_discovery_target("Reuters"),
+        1,
+        NOW,
+        "gallery-dl:test",
+    )
+    asset = batch.posts[0].assets[0]
+    assert (asset.media_index, asset.width, asset.height, asset.duration_ms) == (
+        0,
+        1920,
+        1080,
+        12500,
+    )
 
 
 @pytest.mark.parametrize(
