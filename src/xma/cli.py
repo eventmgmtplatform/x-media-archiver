@@ -12,7 +12,7 @@ from rich.table import Table
 
 from xma import __version__
 from xma.adapters.catalog.sqlite import SQLiteUnitOfWork
-from xma.adapters.discovery import GalleryDlDiscoveryProvider
+from xma.adapters.discovery import BrowserAuthentication, GalleryDlDiscoveryProvider
 from xma.application.discovery import DiscoveryService, SyncResult
 from xma.domain.discovery import DiscoveryBatch
 from xma.domain.errors import (
@@ -37,6 +37,11 @@ app = typer.Typer(
 console = Console()
 error_console = Console(stderr=True)
 _provider_factory: Callable[[], DiscoveryProvider] = GalleryDlDiscoveryProvider
+
+
+def _authenticated_provider_factory(authentication: BrowserAuthentication) -> DiscoveryProvider:
+    return GalleryDlDiscoveryProvider(authentication=authentication)
+
 
 EXIT_INVALID_INPUT = 2
 EXIT_RESTRICTED = 3
@@ -77,10 +82,19 @@ def inspect_profile(
         bool,
         typer.Option("--json", help="Emit stable JSON without signed media URLs."),
     ] = False,
+    auth_browser: Annotated[
+        str | None,
+        typer.Option("--auth-browser", help="Local browser session source (Firefox only)."),
+    ] = None,
+    auth_profile: Annotated[
+        str | None,
+        typer.Option("--auth-profile", help="Local Firefox profile name."),
+    ] = None,
 ) -> None:
     """Inspect public video metadata without writing a catalog or media."""
     try:
-        batch = DiscoveryService(_provider_factory()).inspect(target, limit)
+        provider = _discovery_provider(auth_browser, auth_profile)
+        batch = DiscoveryService(provider).inspect(target, limit)
     except (InvalidIdentityError, DiscoveryError) as error:
         _exit_for_discovery_error(error)
     _render_batch(batch, json_output)
@@ -105,14 +119,23 @@ def sync_profile(
         bool,
         typer.Option("--json", help="Emit stable JSON without signed media URLs."),
     ] = False,
+    auth_browser: Annotated[
+        str | None,
+        typer.Option("--auth-browser", help="Local browser session source (Firefox only)."),
+    ] = None,
+    auth_profile: Annotated[
+        str | None,
+        typer.Option("--auth-profile", help="Local Firefox profile name."),
+    ] = None,
 ) -> None:
     """Synchronize public video metadata into the local SQLite catalog."""
     database = repository / "catalog.sqlite3"
-    service = DiscoveryService(
-        _provider_factory(),
-        None if dry_run else lambda: _catalog_unit(database),
-    )
     try:
+        provider = _discovery_provider(auth_browser, auth_profile)
+        service = DiscoveryService(
+            provider,
+            None if dry_run else lambda: _catalog_unit(database),
+        )
         result = service.sync(target, limit, dry_run=dry_run)
     except (InvalidIdentityError, DiscoveryError) as error:
         _exit_for_discovery_error(error)
@@ -122,6 +145,18 @@ def sync_profile(
         )
         raise typer.Exit(EXIT_CATALOG_FAILED) from error
     _render_sync(result, json_output, database)
+
+
+def _discovery_provider(browser: str | None, profile: str | None) -> DiscoveryProvider:
+    if browser is None and profile is None:
+        return _provider_factory()
+    if browser is None or profile is None:
+        raise InvalidIdentityError("browser authentication requires both options")
+    try:
+        authentication = BrowserAuthentication(browser, profile)
+    except ValueError as error:
+        raise InvalidIdentityError("browser authentication configuration is invalid") from error
+    return _authenticated_provider_factory(authentication)
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:

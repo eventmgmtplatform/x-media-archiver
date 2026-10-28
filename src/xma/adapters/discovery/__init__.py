@@ -1,5 +1,5 @@
 """Public discovery adapter exports."""
 
-from xma.adapters.discovery.gallery_dl import GalleryDlDiscoveryProvider
+from xma.adapters.discovery.gallery_dl import BrowserAuthentication, GalleryDlDiscoveryProvider
 
-__all__ = ["GalleryDlDiscoveryProvider"]
+__all__ = ["BrowserAuthentication", "GalleryDlDiscoveryProvider"]

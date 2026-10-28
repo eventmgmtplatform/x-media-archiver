@@ -30,6 +30,27 @@ from xma.domain.errors import (
 _VIDEO_TYPES = {"video", "animated_gif"}
 _SQLITE_INTEGER_MAX = 2**63 - 1
 _NUMERIC_CONTRACT_ERROR = "gallery-dl numeric metadata violates the B03 contract"
+_AUTH_CONFIGURATION_ERROR = "browser authentication configuration is invalid"
+
+
+@dataclass(frozen=True, slots=True)
+class BrowserAuthentication:
+    """Local browser-session selector; cookie values never cross this boundary."""
+
+    browser: str
+    profile: str
+
+    def __post_init__(self) -> None:
+        if self.browser.casefold() != "firefox":
+            raise ValueError(_AUTH_CONFIGURATION_ERROR)
+        if (
+            not self.profile
+            or "/" in self.profile
+            or "\\" in self.profile
+            or any(character.isspace() for character in self.profile)
+        ):
+            raise ValueError(_AUTH_CONFIGURATION_ERROR)
+        object.__setattr__(self, "browser", "firefox")
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,13 +86,24 @@ class _LimitedDataJob(job.DataJob):  # type: ignore[misc]
             raise exception.StopExtraction
 
 
-def _run_gallery_dl(url: str, limit: int) -> GalleryDlExtraction:
+def _run_gallery_dl(
+    url: str,
+    limit: int,
+    authentication: BrowserAuthentication | None = None,
+) -> GalleryDlExtraction:
     """Run gallery-dl as a library without loading user config or credentials."""
     config.clear()
-    config.set(("extractor",), "cookies", None)
+    cookie_source = (
+        None
+        if authentication is None
+        else [authentication.browser, authentication.profile, None, None, None]
+    )
+    config.set(("extractor",), "cookies", cookie_source)
+    config.set(("extractor",), "cookies-update", False)
     config.set(("extractor",), "username", "")
     config.set(("extractor",), "password", "")
-    config.set(("extractor", "twitter"), "cookies", None)
+    config.set(("extractor", "twitter"), "cookies", cookie_source)
+    config.set(("extractor", "twitter"), "cookies-update", False)
     config.set(("extractor", "twitter"), "username", "")
     config.set(("extractor", "twitter"), "password", "")
     config.set(("extractor", "twitter"), "include", ["timeline"])
@@ -124,8 +156,9 @@ class GalleryDlDiscoveryProvider:
         self,
         runner: GalleryDlRunner | None = None,
         clock: Callable[[], datetime] | None = None,
+        authentication: BrowserAuthentication | None = None,
     ) -> None:
-        self._runner = runner or _run_gallery_dl
+        self._runner = runner or (lambda url, limit: _run_gallery_dl(url, limit, authentication))
         self._clock = clock or (lambda: datetime.now(UTC))
 
     def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:

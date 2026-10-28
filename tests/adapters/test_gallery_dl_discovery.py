@@ -7,6 +7,7 @@ import pytest
 from gallery_dl import config, exception  # type: ignore[import-untyped]
 
 from xma.adapters.discovery.gallery_dl import (
+    BrowserAuthentication,
     GalleryDlDiscoveryProvider,
     GalleryDlExtraction,
     _classified_error,
@@ -163,6 +164,46 @@ def test_live_runner_boundary_has_no_download_and_classifies_failures(
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", FailedJob)
     with pytest.raises(DiscoveryRateLimitError):
         _run_gallery_dl("https://x.com/Reuters", 1)
+
+
+def test_live_runner_configures_firefox_session_without_export(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    data = extraction()
+
+    class SuccessfulJob:
+        exception: BaseException | None = None
+        profile_record = data.profile_record
+        media_records = list(data.media_records[:1])
+
+        def __init__(self, url: str, limit: int) -> None:
+            pass
+
+        def run(self) -> None:
+            return None
+
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", SuccessfulJob)
+    authentication = BrowserAuthentication("firefox", "synthetic-profile")
+
+    _run_gallery_dl("https://x.com/Reuters", 1, authentication)
+
+    expected = ["firefox", "synthetic-profile", None, None, None]
+    assert config.get(("extractor", "twitter"), "cookies") == expected
+    assert config.get(("extractor", "twitter"), "cookies-update") is False
+    assert config.get(("cache",), "file") == ":memory:"
+    assert config.get(("extractor",), "download") is False
+    assert config.get(("downloader",), "enabled") is False
+
+
+@pytest.mark.parametrize(
+    ("browser", "profile"),
+    [("chromium", "profile"), ("firefox", ""), ("firefox", "../profile")],
+)
+def test_browser_authentication_rejects_unsupported_or_path_values(
+    browser: str, profile: str
+) -> None:
+    with pytest.raises(ValueError, match="browser authentication configuration is invalid"):
+        BrowserAuthentication(browser, profile)
 
 
 def test_live_runner_rejects_missing_profile_and_constructor_error(

@@ -10,7 +10,11 @@ from typer.testing import CliRunner
 
 import xma.cli as cli
 from xma import __version__
-from xma.adapters.discovery.gallery_dl import GalleryDlDiscoveryProvider, GalleryDlExtraction
+from xma.adapters.discovery.gallery_dl import (
+    BrowserAuthentication,
+    GalleryDlDiscoveryProvider,
+    GalleryDlExtraction,
+)
 from xma.cli import app
 from xma.domain.discovery import (
     DiscoveredAsset,
@@ -124,6 +128,73 @@ def test_sync_writes_catalog_and_dry_run_does_not(
     assert dry.exit_code == 0
     assert "Dry run" in dry.stdout
     assert not dry_repository.exists()
+
+
+@pytest.mark.parametrize("command", ["inspect", "sync-dry-run", "sync"])
+def test_authenticated_cli_propagates_selector_without_exposing_it(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, command: str
+) -> None:
+    marker = "SYNTHETIC-LOCAL-PROFILE"
+    captured: list[tuple[str, str]] = []
+
+    def authenticated_factory(authentication: BrowserAuthentication) -> FakeProvider:
+        captured.append((authentication.browser, authentication.profile))
+        return FakeProvider()
+
+    monkeypatch.setattr(cli, "_authenticated_provider_factory", authenticated_factory)
+    repository = tmp_path / "repository"
+    arguments = ["inspect", "Reuters", "--limit", "1"]
+    if command.startswith("sync"):
+        arguments = [
+            "sync",
+            "Reuters",
+            "--limit",
+            "1",
+            "--repository",
+            str(repository),
+        ]
+        if command == "sync-dry-run":
+            arguments.append("--dry-run")
+    arguments.extend(["--auth-browser", "firefox", "--auth-profile", marker])
+
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code == 0
+    assert captured == [("firefox", marker)]
+    assert marker not in result.stdout + result.stderr
+    if command == "sync":
+        database = repository / "catalog.sqlite3"
+        assert database.is_file()
+        assert marker.encode() not in database.read_bytes()
+    else:
+        assert not repository.exists()
+
+
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["--auth-browser", "firefox"],
+        ["--auth-profile", "SYNTHETIC-LOCAL-PROFILE"],
+        ["--auth-browser", "chromium", "--auth-profile", "SYNTHETIC-LOCAL-PROFILE"],
+        ["--auth-browser", "firefox", "--auth-profile", "../SYNTHETIC-LOCAL-PROFILE"],
+    ],
+)
+@pytest.mark.parametrize("command", ["inspect", "sync"])
+def test_cli_rejects_invalid_browser_authentication_without_disclosure(
+    tmp_path: Path, command: str, options: list[str]
+) -> None:
+    repository = tmp_path / "must-not-exist"
+    arguments = [command, "Reuters"]
+    if command == "sync":
+        arguments.extend(["--repository", str(repository)])
+    arguments.extend(options)
+
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code == cli.EXIT_INVALID_INPUT
+    assert "Traceback" not in result.stderr
+    assert "SYNTHETIC-LOCAL-PROFILE" not in result.stdout + result.stderr
+    assert not repository.exists()
 
 
 def test_cli_exit_codes_for_invalid_and_restricted_input(monkeypatch: pytest.MonkeyPatch) -> None:
