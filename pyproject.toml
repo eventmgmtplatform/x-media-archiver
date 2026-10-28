@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "x-media-archiver"
+version = "0.1.0.dev0"
+description = "Local-first CLI for cataloging and archiving public X media"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "rich>=13.9,<15",
+  "typer>=0.15,<1",
+]
+
+[project.scripts]
+xma = "xma.cli:app"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.15,<2",
+  "pre-commit>=4.1,<5",
+  "pytest>=8.3,<10",
+  "pytest-cov>=6,<8",
+  "ruff>=0.9,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xma"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers --cov=xma --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "T20"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src", "tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["xma"]
+omit = ["src/xma/__main__.py"]
