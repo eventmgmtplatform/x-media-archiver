@@ -1,0 +1,29 @@
+name: Engineering activity
+description: Track one approved Engineering OS activity
+title: "[XMA] "
+labels: [enhancement]
+body:
+  - type: input
+    id: block
+    attributes:
+      label: Block and requirement IDs
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and rollback
+    validations:
+      required: true

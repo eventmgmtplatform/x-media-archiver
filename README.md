@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `NOT STARTED`
+- Implementación: `B01 FOUNDATION IN PROGRESS`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -33,3 +33,18 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 `Leonel autoriza → ChatGPT diseña y gobierna → Codex ejecuta → Codex entrega handoff Markdown → ChatGPT valida → Leonel autoriza la transición`.
 
 Codex no encadena fases ni publica releases sin un gate explícito.
+
+## Desarrollo local
+
+```bash
+uv sync --all-groups
+uv run xma --help
+uv run xma version
+uv run ruff format --check .
+uv run ruff check .
+uv run mypy
+uv run pytest
+uv build
+```
+
+Los comandos de discovery y descarga se incorporarán en bloques posteriores; no forman parte de B01.
