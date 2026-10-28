@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B01 FOUNDATION IN PROGRESS`
+- Implementación: `B02 DOMAIN, CONTRACTS AND CATALOG — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -27,6 +27,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - [Plan de actividades](docs/planning/XMA-CLI-001_IMPLEMENTATION_PLAN_v0.1.0.md)
 - [Gobierno Git y releases](docs/governance/XMA-CLI-001_GIT_RELEASE_GOVERNANCE_v0.1.0.md)
 - [Prompt inicial de Codex](docs/prompts/XMA-CLI-001_PRM-0001_FOUNDATION-BOOTSTRAP_v0.1.0.md)
+- [Catálogo SQLite v1](docs/architecture/XMA-CLI-001_CATALOG-SCHEMA_v0.1.0.md)
 
 ## Principio de operación
 
@@ -47,4 +48,11 @@ uv run pytest
 uv build
 ```
 
-Los comandos de discovery y descarga se incorporarán en bloques posteriores; no forman parte de B01.
+### Núcleo B02
+
+`xma.domain` contiene entidades inmutables, validadores, estados y puertos sin dependencias de
+CLI o persistencia. `xma.adapters.catalog` implementa el catálogo SQLite mediante una migración
+monotónica, claves foráneas activas y límites transaccionales explícitos.
+
+Los comandos de discovery y descarga se incorporarán en bloques posteriores; no forman parte de
+B02.
