@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 DISCOVERY — BLOCKED`
+- Implementación: `B02 VALIDATED / B03 DISCOVERY — REWORK REQUIRED`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -90,5 +90,5 @@ La salida JSON omite las URLs de variantes multimedia. `inspect` no abre el cat�
 | `5` | contrato o proveedor fallido |
 
 En octubre de 2026, la prueba controlada de Reuters, AP y BBCWorld recibió `AuthRequired` de X.
-El gate B03 permanece bloqueado: no se agregan cookies ni autenticación sin un prompt y una
-autorización humana específicos.
+El smoke público B03 permanece bloqueado por `AuthRequired`. AUD-0003 exige además el rework
+interno R-01 a R-07 antes de reclasificar el gate; no se agregan cookies ni autenticación.
