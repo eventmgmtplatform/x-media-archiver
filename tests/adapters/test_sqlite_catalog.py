@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -39,10 +40,28 @@ def put_all(catalog: object) -> None:
 def test_migration_from_empty_database_is_idempotent() -> None:
     connection = sqlite3.connect(":memory:", isolation_level=None)
     connection.execute("PRAGMA foreign_keys = ON")
+    before = datetime.now(UTC)
     assert migrate(connection) == LATEST_SCHEMA_VERSION
+    after = datetime.now(UTC)
     assert migrate(connection) == LATEST_SCHEMA_VERSION
     assert connection.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (1,)
+    applied_at = datetime.fromisoformat(
+        connection.execute("SELECT applied_at FROM schema_version")
+        .fetchone()[0]
+        .replace("Z", "+00:00")
+    )
+    assert before <= applied_at <= after
     assert connection.execute("PRAGMA foreign_keys").fetchone() == (1,)
+    connection.close()
+
+
+def test_migration_records_injected_real_utc_application_time() -> None:
+    connection = sqlite3.connect(":memory:", isolation_level=None)
+    applied_at = datetime(2026, 10, 28, 8, 45, 12, 123456, tzinfo=UTC)
+    assert migrate(connection, now=lambda: applied_at) == LATEST_SCHEMA_VERSION
+    assert connection.execute("SELECT applied_at FROM schema_version").fetchone() == (
+        "2026-10-28T08:45:12.123456Z",
+    )
     connection.close()
 
 
@@ -90,6 +109,50 @@ def test_profile_handle_update_preserves_stable_identity(tmp_path: Path) -> None
         assert unit.catalog.get_profile("123") == changed
 
 
+def test_discovery_run_allows_controlled_progress_and_completion(tmp_path: Path) -> None:
+    database = tmp_path / "catalog.sqlite3"
+    running = DiscoveryRun("run-1", "fixtures", NOW, RunStatus.RUNNING)
+    progress = DiscoveryRun("run-1", "fixtures", NOW, RunStatus.RUNNING, None, "next", 2, 1)
+    completed = DiscoveryRun(
+        "run-1", "fixtures", NOW, RunStatus.COMPLETED, NOW + timedelta(seconds=3), None, 3, 1
+    )
+    with SQLiteUnitOfWork(database) as unit:
+        unit.catalog.put_discovery_run(running)
+        unit.catalog.put_discovery_run(progress)
+        assert unit.catalog.get_discovery_run("run-1") == progress
+        unit.catalog.put_discovery_run(completed)
+        unit.catalog.put_discovery_run(completed)
+        assert unit.catalog.get_discovery_run("run-1") == completed
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [
+        DiscoveryRun("run-1", "other", NOW, RunStatus.RUNNING),
+        DiscoveryRun("run-1", "fixtures", NOW + timedelta(seconds=1), RunStatus.RUNNING),
+        DiscoveryRun("run-1", "fixtures", NOW, RunStatus.RUNNING, None, None, 0, 1),
+        DiscoveryRun("run-1", "fixtures", NOW, RunStatus.COMPLETED, None, None, 1, 0),
+    ],
+)
+def test_discovery_run_rejects_invalid_update(tmp_path: Path, replacement: DiscoveryRun) -> None:
+    database = tmp_path / "catalog.sqlite3"
+    running = DiscoveryRun("run-1", "fixtures", NOW, RunStatus.RUNNING, None, None, 1, 1)
+    with SQLiteUnitOfWork(database) as unit:
+        unit.catalog.put_discovery_run(running)
+        with pytest.raises(IdentityConflictError, match="discovery_runs"):
+            unit.catalog.put_discovery_run(replacement)
+
+
+def test_discovery_run_terminal_state_is_immutable(tmp_path: Path) -> None:
+    database = tmp_path / "catalog.sqlite3"
+    completed = DiscoveryRun("run-1", "fixtures", NOW, RunStatus.COMPLETED, NOW, None, 1, 0)
+    changed = DiscoveryRun("run-1", "fixtures", NOW, RunStatus.FAILED, NOW, None, 1, 1)
+    with SQLiteUnitOfWork(database) as unit:
+        unit.catalog.put_discovery_run(completed)
+        with pytest.raises(IdentityConflictError, match="discovery_runs"):
+            unit.catalog.put_discovery_run(changed)
+
+
 def test_profile_rejects_identity_and_handle_conflicts(tmp_path: Path) -> None:
     database = tmp_path / "catalog.sqlite3"
     profile = aggregates()[0]
@@ -134,6 +197,32 @@ def test_exception_rolls_back_complete_unit_of_work(tmp_path: Path) -> None:
         raise RuntimeError("abort")
     with SQLiteUnitOfWork(database) as unit:
         assert unit.catalog.get_profile("123") is None
+
+
+def test_unit_of_work_closes_connection_when_enter_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class TrackingConnection(sqlite3.Connection):
+        closed = False
+
+        def close(self) -> None:
+            self.closed = True
+            super().close()
+
+    connection = sqlite3.connect(":memory:", isolation_level=None, factory=TrackingConnection)
+
+    def connect(*args: object, **kwargs: object) -> sqlite3.Connection:
+        return connection
+
+    def fail_migration(*args: object, **kwargs: object) -> Any:
+        raise RuntimeError("migration failed")
+
+    monkeypatch.setattr("xma.adapters.catalog.sqlite.sqlite3.connect", connect)
+    monkeypatch.setattr("xma.adapters.catalog.sqlite.migrate", fail_migration)
+
+    with pytest.raises(RuntimeError, match="migration failed"):
+        SQLiteUnitOfWork(":memory:").__enter__()
+    assert connection.closed is True
 
 
 def test_download_job_update_preserves_identity(tmp_path: Path) -> None:

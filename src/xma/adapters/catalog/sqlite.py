@@ -169,33 +169,53 @@ class SQLiteCatalog:
         )
 
     def put_discovery_run(self, run: DiscoveryRun) -> None:
-        self._put_immutable(
-            "discovery_runs",
-            "run_id",
-            run.run_id,
-            run,
-            (
-                "run_id",
-                "strategy",
-                "started_at",
-                "finished_at",
-                "cursor",
-                "discovered_count",
-                "error_count",
-                "status",
-            ),
-            (
-                run.run_id,
-                run.strategy,
-                _timestamp(run.started_at),
-                None if run.finished_at is None else _timestamp(run.finished_at),
-                run.cursor,
-                run.discovered_count,
-                run.error_count,
-                run.status.value,
-            ),
-            self.get_discovery_run,
-        )
+        existing = self.get_discovery_run(run.run_id)
+        if existing is None:
+            self._insert(
+                "discovery_runs",
+                (
+                    "run_id",
+                    "strategy",
+                    "started_at",
+                    "finished_at",
+                    "cursor",
+                    "discovered_count",
+                    "error_count",
+                    "status",
+                ),
+                (
+                    run.run_id,
+                    run.strategy,
+                    _timestamp(run.started_at),
+                    None if run.finished_at is None else _timestamp(run.finished_at),
+                    run.cursor,
+                    run.discovered_count,
+                    run.error_count,
+                    run.status.value,
+                ),
+            )
+        elif existing != run:
+            if (
+                existing.strategy != run.strategy
+                or existing.started_at != run.started_at
+                or existing.status is not RunStatus.RUNNING
+                or run.discovered_count < existing.discovered_count
+                or run.error_count < existing.error_count
+                or (run.status is not RunStatus.RUNNING and run.finished_at is None)
+            ):
+                raise IdentityConflictError("discovery_runs update conflicts with catalog")
+            self._connection.execute(
+                "UPDATE discovery_runs SET finished_at=?, cursor=?, discovered_count=?, "
+                "error_count=?, status=? WHERE run_id=?",
+                (
+                    None if run.finished_at is None else _timestamp(run.finished_at),
+                    run.cursor,
+                    run.discovered_count,
+                    run.error_count,
+                    run.status.value,
+                    run.run_id,
+                ),
+            )
 
     def get_discovery_run(self, run_id: str) -> DiscoveryRun | None:
         row = self._one("discovery_runs", "run_id", run_id)
@@ -369,9 +389,13 @@ class SQLiteUnitOfWork:
 
     def __enter__(self) -> Self:
         connection = sqlite3.connect(self._database, isolation_level=None)
-        connection.execute("PRAGMA foreign_keys = ON")
-        migrate(connection)
-        connection.execute("BEGIN")
+        try:
+            connection.execute("PRAGMA foreign_keys = ON")
+            migrate(connection)
+            connection.execute("BEGIN")
+        except BaseException:
+            connection.close()
+            raise
         self._connection = connection
         self.catalog = SQLiteCatalog(connection)
         return self

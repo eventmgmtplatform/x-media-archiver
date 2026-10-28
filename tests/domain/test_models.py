@@ -4,7 +4,7 @@ import pytest
 
 from xma.domain.enums import DownloadStatus, MediaType, PostType, RunStatus
 from xma.domain.errors import DomainError, InvalidIdentityError, InvalidTransitionError
-from xma.domain.identity import media_identity
+from xma.domain.identity import media_identity, parse_media_identity
 from xma.domain.models import (
     DOWNLOAD_TRANSITIONS,
     Artifact,
@@ -67,6 +67,16 @@ def test_media_identity_and_validation() -> None:
         MediaAsset("456", 0, MediaType.VIDEO, variants=("",))
 
 
+@pytest.mark.parametrize("asset_id", [":", "bad:0", "1:-1", "1:x", "1:00", "1:0:0"])
+def test_download_job_rejects_invalid_composite_asset_identity(asset_id: str) -> None:
+    with pytest.raises(InvalidIdentityError, match="asset_id"):
+        DownloadJob("job", asset_id, "run", DownloadStatus.QUEUED, 0, NOW, NOW)
+
+
+def test_parse_media_identity_returns_validated_components() -> None:
+    assert parse_media_identity("456:0") == ("456", 0)
+
+
 def test_discovery_run_validates_lifecycle_and_counts() -> None:
     run = DiscoveryRun("run-1", "fixtures", NOW, RunStatus.RUNNING)
     assert run.finished_at is None
@@ -89,13 +99,28 @@ def _job(status: DownloadStatus = DownloadStatus.DISCOVERED) -> DownloadJob:
     return DownloadJob("job-1", "456:0", "run-1", status, 0, NOW, NOW, *error)
 
 
-@pytest.mark.parametrize(
-    ("source", "targets"),
-    [(source, targets) for source, targets in DOWNLOAD_TRANSITIONS.items()],
-)
-def test_download_transition_matrix(
-    source: DownloadStatus, targets: frozenset[DownloadStatus]
-) -> None:
+EXPECTED_DOWNLOAD_TRANSITIONS = {
+    DownloadStatus.DISCOVERED: {
+        DownloadStatus.QUEUED,
+        DownloadStatus.SKIPPED_DUPLICATE,
+        DownloadStatus.RESTRICTED,
+    },
+    DownloadStatus.QUEUED: {DownloadStatus.DOWNLOADING, DownloadStatus.RESTRICTED},
+    DownloadStatus.DOWNLOADING: {
+        DownloadStatus.COMPLETED,
+        DownloadStatus.FAILED_RETRYABLE,
+        DownloadStatus.FAILED_FINAL,
+    },
+    DownloadStatus.FAILED_RETRYABLE: {DownloadStatus.QUEUED, DownloadStatus.FAILED_FINAL},
+    DownloadStatus.COMPLETED: set(),
+    DownloadStatus.FAILED_FINAL: set(),
+    DownloadStatus.SKIPPED_DUPLICATE: set(),
+    DownloadStatus.RESTRICTED: set(),
+}
+
+
+@pytest.mark.parametrize(("source", "targets"), EXPECTED_DOWNLOAD_TRANSITIONS.items())
+def test_download_transition_matrix(source: DownloadStatus, targets: set[DownloadStatus]) -> None:
     for target in DownloadStatus:
         if target in targets:
             error = (
@@ -109,6 +134,12 @@ def test_download_transition_matrix(
         else:
             with pytest.raises(InvalidTransitionError):
                 _job(source).transition(target, NOW + timedelta(seconds=1))
+
+
+def test_download_transition_policy_matches_independent_matrix() -> None:
+    assert {
+        source: frozenset(targets) for source, targets in EXPECTED_DOWNLOAD_TRANSITIONS.items()
+    } == DOWNLOAD_TRANSITIONS
 
 
 def test_download_job_rejects_invalid_errors_and_time() -> None:
@@ -129,7 +160,7 @@ def test_artifact_normalizes_hash_and_rejects_unsafe_paths() -> None:
         "artifact-1", "job-1", "profiles/a/media.mp4", "video/mp4", 12, "A" * 64, NOW
     )
     assert artifact.sha256 == "a" * 64
-    for path in ("/tmp/file", "../file", "safe/../file", "", "safe//file"):
+    for path in ("/tmp/file", "../file", "safe/../file", "", ".", "safe//file"):
         with pytest.raises(DomainError, match="relative POSIX"):
             Artifact("artifact-1", "job-1", path, "video/mp4", 12, "a" * 64, NOW)
     with pytest.raises(DomainError, match="64 hexadecimal"):
