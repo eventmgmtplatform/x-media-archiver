@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 DISCOVERY — START AUTHORIZED`
+- Implementación: `B02 VALIDATED / B03 DISCOVERY — BLOCKED`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP

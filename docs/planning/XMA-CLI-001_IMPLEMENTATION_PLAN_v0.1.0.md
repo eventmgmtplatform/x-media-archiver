@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 START AUTHORIZED
+**Estado:** ACTIVE / Q2 CLOSED / B03 BLOCKED
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -54,7 +54,8 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 7. Rollback o reversión definida.
 8. ChatGPT valida; Leonel autoriza transición.
 
-## Siguiente paso autorizado
+## Siguiente decisión requerida
 
-Ejecutar exclusivamente `XMA-CLI-001_PRM-0003_B03-DISCOVERY_v0.1.0.md` desde la baseline Q2.
-Su condición de parada es `HND-0003`, CI y PR draft; no descarga medios ni inicia B04.
+B03 se detuvo porque Reuters, AP y BBCWorld requieren autenticación para el discovery observado.
+Leonel debe decidir si mantiene el alcance anónimo, autoriza un bloque gobernado distinto o cierra
+el objetivo controlado. No se autorizan cookies, otro extractor ni el inicio de B04.
