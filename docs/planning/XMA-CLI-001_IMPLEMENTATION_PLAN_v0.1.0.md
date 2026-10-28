@@ -59,3 +59,8 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 Ejecutar exclusivamente `XMA-CLI-001-PRM-0004 v0.1.0` para cerrar R-01 a R-07 de AUD-0003. El
 smoke anónimo conserva el bloqueo `AuthRequired`; no se autorizan cookies, otro extractor ni B04.
 Codex debe terminar en handoff y CI; dot audita después con DOT-PRM-0004.
+
+B03-REWORK-001 aplica únicamente las correcciones autorizadas de AUD-0003. El rework B02
+permanece separado, no integrado. Q3 conserva `REWORK_REQUIRED` hasta auditoría del nuevo
+snapshot; el ejecutor entrega `WAITING_VALIDATION`, `BLOCKED` o `FAILED` con evidencia.
+Los recordatorios corporativos ajenos no cambian este plan ni autorizan B04.

@@ -1,6 +1,7 @@
 """Command-line entry point."""
 
 import json
+import sqlite3
 from collections.abc import Callable
 from pathlib import Path
 from typing import Annotated, NoReturn
@@ -15,9 +16,13 @@ from xma.adapters.discovery import GalleryDlDiscoveryProvider
 from xma.application.discovery import DiscoveryService, SyncResult
 from xma.domain.discovery import DiscoveryBatch
 from xma.domain.errors import (
+    CatalogError,
     DiscoveryError,
+    DiscoveryNotFoundError,
     DiscoveryRateLimitError,
     DiscoveryRestrictedError,
+    DiscoveryTransientError,
+    IdentityConflictError,
     InvalidIdentityError,
 )
 from xma.domain.ports import DiscoveryProvider
@@ -37,6 +42,9 @@ EXIT_INVALID_INPUT = 2
 EXIT_RESTRICTED = 3
 EXIT_RATE_LIMITED = 4
 EXIT_PROVIDER_FAILED = 5
+EXIT_CATALOG_FAILED = 6
+EXIT_NOT_FOUND = 7
+EXIT_TRANSIENT = 8
 
 
 @app.callback()
@@ -99,23 +107,32 @@ def sync_profile(
     ] = False,
 ) -> None:
     """Synchronize public video metadata into the local SQLite catalog."""
-    if not dry_run:
-        repository.mkdir(parents=True, exist_ok=True)
     database = repository / "catalog.sqlite3"
     service = DiscoveryService(
         _provider_factory(),
         None if dry_run else lambda: SQLiteUnitOfWork(database),
     )
     try:
+        if not dry_run:
+            repository.mkdir(parents=True, exist_ok=True)
         result = service.sync(target, limit, dry_run=dry_run)
     except (InvalidIdentityError, DiscoveryError) as error:
         _exit_for_discovery_error(error)
+    except (CatalogError, IdentityConflictError, sqlite3.Error, OSError) as error:
+        error_console.print(
+            "catalog failed: local persistence unavailable or conflicting", markup=False
+        )
+        raise typer.Exit(EXIT_CATALOG_FAILED) from error
     _render_sync(result, json_output, database)
 
 
 def _exit_for_discovery_error(error: Exception) -> NoReturn:
     if isinstance(error, InvalidIdentityError):
         code = EXIT_INVALID_INPUT
+    elif isinstance(error, DiscoveryNotFoundError):
+        code = EXIT_NOT_FOUND
+    elif isinstance(error, DiscoveryTransientError):
+        code = EXIT_TRANSIENT
     elif isinstance(error, DiscoveryRestrictedError):
         code = EXIT_RESTRICTED
     elif isinstance(error, DiscoveryRateLimitError):
@@ -129,7 +146,7 @@ def _exit_for_discovery_error(error: Exception) -> NoReturn:
 
 def _render_batch(batch: DiscoveryBatch, json_output: bool) -> None:
     if json_output:
-        console.print(json.dumps(batch.public_dict(), ensure_ascii=False, sort_keys=True))
+        typer.echo(json.dumps(batch.public_dict(), ensure_ascii=False, sort_keys=True))
         return
     table = Table(title=f"@{batch.profile.handle} public videos")
     table.add_column("Post")
@@ -152,7 +169,7 @@ def _render_batch(batch: DiscoveryBatch, json_output: bool) -> None:
 
 def _render_sync(result: SyncResult, json_output: bool, database: Path) -> None:
     if json_output:
-        console.print(json.dumps(result.public_dict(), ensure_ascii=False, sort_keys=True))
+        typer.echo(json.dumps(result.public_dict(), ensure_ascii=False, sort_keys=True))
         return
     _render_batch(result.batch, False)
     if result.dry_run:

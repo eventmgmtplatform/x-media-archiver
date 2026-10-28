@@ -35,3 +35,11 @@ class DiscoveryRateLimitError(DiscoveryError):
 
 class DiscoveryContractError(DiscoveryError):
     """Provider output no longer satisfies the expected contract."""
+
+
+class DiscoveryNotFoundError(DiscoveryError):
+    """The public profile does not exist."""
+
+
+class DiscoveryTransientError(DiscoveryError):
+    """A temporary provider or transport failure occurred."""

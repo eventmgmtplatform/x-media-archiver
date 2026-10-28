@@ -19,8 +19,10 @@ from xma.domain.enums import MediaType, PostType
 from xma.domain.errors import (
     DiscoveryContractError,
     DiscoveryError,
+    DiscoveryNotFoundError,
     DiscoveryRateLimitError,
     DiscoveryRestrictedError,
+    DiscoveryTransientError,
 )
 
 _VIDEO_TYPES = {"video", "animated_gif"}
@@ -104,7 +106,11 @@ def _classified_error(error: BaseException) -> DiscoveryError:
         return DiscoveryRateLimitError("gallery-dl was rate limited")
     if any(word in detail for word in ("cookie", "login", "auth", "protected", "locked")):
         return DiscoveryRestrictedError("profile is not available anonymously")
-    return DiscoveryError(f"gallery-dl discovery failed ({error.__class__.__name__})")
+    if any(word in detail for word in ("404", "notfound", "not found")):
+        return DiscoveryNotFoundError("public profile was not found")
+    if any(word in detail for word in ("timeout", "connection", "503", "502")):
+        return DiscoveryTransientError("temporary provider failure; retry later")
+    return DiscoveryContractError("gallery-dl could not satisfy the discovery contract")
 
 
 class GalleryDlDiscoveryProvider:

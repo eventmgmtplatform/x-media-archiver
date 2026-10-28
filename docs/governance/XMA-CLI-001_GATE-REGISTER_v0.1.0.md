@@ -16,7 +16,8 @@
 | ID | Bloque | Evento | Clasificación | Resolución |
 |---|---|---|---|---|
 | GOV-OBS-0001 | B02 | El monitor conservador marcó el merge de PR #2 como desviación porque su propio contrato prohibía mutaciones. | Alerta de alcance del monitor; no defecto de código. | Leonel había autorizado el cierre y después restableció que cada fase futura requiere prompt y gate. No se extiende autorización implícita a B03–B07. |
-| GOV-BLK-0002 | B03 | Reuters, AP y BBCWorld devolvieron `AuthRequired` en la prueba pública anónima. | Bloqueo externo; salida `3`, sin activos catalogados. | No introducir cookies, autenticación ni otro extractor. B04 no inicia. |\n| GOV-RWK-0003 | B03 | AUD-0003 identificó R-01 a R-07: evidencia, PR/gobierno, JSON, errores, idempotencia, límite y cursor. | `REWORK_REQUIRED`. | Leonel autorizó PRM-0004/DOT-PRM-0004; Codex debe detenerse tras handoff y CI. |
+| GOV-BLK-0002 | B03 | Reuters, AP y BBCWorld devolvieron `AuthRequired` en la prueba pública anónima. | Bloqueo externo; salida `3`, sin activos catalogados. | No introducir cookies, autenticación ni otro extractor. B04 no inicia. |
+| GOV-RWK-0003 | B03 | AUD-0003 identificó R-01 a R-07: evidencia, PR/gobierno, JSON, errores, idempotencia, límite y cursor. | `REWORK_REQUIRED`. | Leonel autorizó PRM-0004/DOT-PRM-0004; Codex debe detenerse tras handoff y CI. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin
@@ -26,3 +27,14 @@ importar cambios B02 indiscriminadamente.
 
 Ningún bloque posterior empieza por inferencia. Requiere prompt versionado, autorización humana,
 rama aislada, handoff, auditoría y decisión del gate. Un merge nunca autoriza el bloque siguiente.
+
+## Aislamiento de contexto — 2026-10-28
+
+El recordatorio corporativo Netcool mostrado junto a la auditoría XMA es contexto ajeno a este
+workstream. No modifica autorización, evidencia ni gates XMA. No se afirma resuelta ninguna
+credencial ni se incorpora contenido reservado personal o corporativo como evidencia del proyecto.
+El texto exacto de la reserva mencionada por Leonel no se recuperó; no se reconstruye por inferencia.
+
+Rework B02 verificado en `feature/xma-b02-contracts`, publicación `4b8bdab`, AUD-0002 v0.1.2
+(snapshot auditado `437dcf3`). No está integrado en main/B03; sigue pendiente de PR acotado y CI
+sobre su entrega. Se conserva el cierre histórico Q2 sin convertirlo en certificación del rework.

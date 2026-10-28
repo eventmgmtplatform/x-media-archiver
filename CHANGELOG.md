@@ -23,6 +23,12 @@
 - Casos de uso y comandos `inspect` y `sync`, con JSON seguro, dry-run y códigos de salida.
 - Fixtures offline, pruebas de mapeo y sincronización idempotente para B03.
 
+### Changed
+
+- B03 `REWORK_REQUIRED`: JSON crudo, errores normalizados y códigos 6–8, defensa de target/límite.
+- Persistencia B03 de variantes como `metadata-only`, con regresión de firmas rotadas.
+- Rework B02 separado, no integrado; aceptación pública y nueva auditoría B03 pendientes.
+
 ### Known Limitations
 
 - B02 no incluye discovery, acceso a X ni descarga de medios.

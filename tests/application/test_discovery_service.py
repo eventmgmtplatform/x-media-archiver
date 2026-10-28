@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -40,7 +41,7 @@ class FakeProvider:
 
     def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
         self.calls.append((target, limit))
-        return self.result
+        return replace(self.result, requested_limit=limit)
 
 
 def values(items: list[datetime]) -> Iterator[datetime]:
@@ -132,3 +133,39 @@ def test_sync_requires_unit_of_work_and_rolls_back_conflict(tmp_path: Path) -> N
         ).sync("Reuters", 1)
     with SQLiteUnitOfWork(database) as unit:
         assert unit.catalog.get_discovery_run("run-conflict") is None
+
+
+def test_application_rejects_inconsistent_provider_limit() -> None:
+    from xma.domain.errors import DiscoveryContractError
+
+    class InconsistentProvider(FakeProvider):
+        def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
+            return self.result
+
+    service = DiscoveryService(InconsistentProvider(batch()))
+    with pytest.raises(DiscoveryContractError):
+        service.inspect("Reuters", 1)
+    with pytest.raises(DiscoveryContractError):
+        service.inspect("Reuters", 0)
+    assert service.inspect("Reuters", 2).cursor is None
+
+
+def test_rotated_variants_do_not_conflict_or_persist_secrets(tmp_path: Path) -> None:
+    database = tmp_path / "catalog.sqlite3"
+    provider = FakeProvider(batch())
+    service = DiscoveryService(provider, lambda: SQLiteUnitOfWork(database))
+    for signature in ("first-secret", "rotated-secret"):
+        original = batch()
+        post = original.posts[0]
+        asset = replace(post.assets[0], variants=(f"https://video.test/a?sig={signature}",))
+        provider.result = replace(original, posts=(replace(post, assets=(asset,)),))
+        service.sync("Reuters", 2)
+    with SQLiteUnitOfWork(database) as unit:
+        persisted = unit.catalog.get_media_asset("9001:0")
+        assert persisted is not None
+        assert persisted.variants == ("metadata-only",)
+    import sqlite3
+
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("SELECT count(*) FROM media_assets").fetchone()[0] == 1
+    assert b"secret" not in database.read_bytes()

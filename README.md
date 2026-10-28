@@ -88,7 +88,31 @@ La salida JSON omite las URLs de variantes multimedia. `inspect` no abre el cat�
 | `3` | perfil no disponible en modo anónimo |
 | `4` | rate limit del proveedor |
 | `5` | contrato o proveedor fallido |
+| `6` | persistencia local no disponible o conflicto de catálogo |
+| `7` | perfil no encontrado |
+| `8` | fallo transitorio de transporte/proveedor |
 
 En octubre de 2026, la prueba controlada de Reuters, AP y BBCWorld recibió `AuthRequired` de X.
 El smoke público B03 permanece bloqueado por `AuthRequired`. AUD-0003 exige además el rework
 interno R-01 a R-07 antes de reclasificar el gate; no se agregan cookies ni autenticación.
+
+### Rework B03-REWORK-001
+
+B03 permanece `REWORK_REQUIRED` hasta nueva auditoría. El bloqueo externo histórico
+`AuthRequired` se evalúa por separado de las correcciones internas.
+
+JSON usa salida cruda UTF-8 determinista, sin Rich. `cursor=null` significa que no existe
+paginación implementada; no permite inferir completitud ni reanudación. La aplicación rechaza
+resultados cuyo target, límite declarado o conteo no coincida con la solicitud.
+
+La identidad del activo es `post_id:media_index`. En B03 las variantes son solo observaciones
+efímeras del proveedor: no se usan como identidad ni se imprimen. El catálogo nuevo guarda
+únicamente el marcador `metadata-only`; no conserva URLs, query strings, firmas ni rutas de
+variantes. Una futura descarga requerirá resolver nuevamente sus fuentes en otro gate. Esta
+política no migra catálogos previos; activos ya persistidos con variantes anteriores pueden
+seguir produciendo conflicto (salida 6). No borrar automáticamente catálogos del usuario.
+
+El rework B02 está separado en `feature/xma-b02-contracts`, auditoría v0.1.2 publicada en
+`4b8bdab`. No está integrado en main ni B03; la baseline sigue siendo `b2bdca7`. Sus mejoras
+de apertura excepcional, migración y contratos permanecen pendientes de integración gobernada.
+B03 captura errores esperables en su CLI; esto no equivale a integrar ni certificar el rework B02.

@@ -1,6 +1,7 @@
 """CLI foundation and B03 command tests."""
 
 import json
+import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -18,7 +19,15 @@ from xma.domain.discovery import (
     DiscoveryTarget,
 )
 from xma.domain.enums import MediaType, PostType
-from xma.domain.errors import DiscoveryRestrictedError
+from xma.domain.errors import (
+    CatalogError,
+    DiscoveryError,
+    DiscoveryNotFoundError,
+    DiscoveryRateLimitError,
+    DiscoveryRestrictedError,
+    DiscoveryTransientError,
+    IdentityConflictError,
+)
 
 runner = CliRunner()
 NOW = datetime(2026, 10, 28, 12, tzinfo=UTC)
@@ -133,3 +142,77 @@ def test_human_inspect_renders_observational_coverage(monkeypatch: pytest.Monkey
     assert result.exit_code == 0
     assert "Coverage is observational" in result.stdout
     assert "not complete" in result.stdout
+
+
+def test_json_preserves_markup_unicode_and_long_strings(monkeypatch: pytest.MonkeyPatch) -> None:
+    from dataclasses import replace
+
+    text = "[red]México[/red] " + "á" * 1000
+
+    class TextProvider(FakeProvider):
+        def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
+            batch = super().discover(target, limit)
+            return replace(batch, posts=(replace(batch.posts[0], text=text),))
+
+    monkeypatch.setattr(cli, "_provider_factory", TextProvider)
+    for command in (["inspect", "Reuters", "--json"], ["sync", "Reuters", "--dry-run", "--json"]):
+        result = runner.invoke(app, command)
+        assert result.exit_code == 0
+        assert json.loads(result.stdout)["posts"][0]["text"] == text
+        assert "México" in result.stdout
+
+
+def test_sync_normalizes_filesystem_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(cli, "_provider_factory", FakeProvider)
+    blocked = tmp_path / "file"
+    blocked.write_text("occupied")
+    result = runner.invoke(app, ["sync", "Reuters", "--repository", str(blocked)])
+    assert result.exit_code == cli.EXIT_CATALOG_FAILED
+    assert "catalog failed" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        IdentityConflictError("sensitive"),
+        sqlite3.OperationalError("sensitive"),
+        CatalogError("sensitive"),
+    ],
+)
+def test_sync_normalizes_catalog_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, error: Exception
+) -> None:
+    monkeypatch.setattr(cli, "_provider_factory", FakeProvider)
+
+    def fail(database: Path) -> None:
+        raise error
+
+    monkeypatch.setattr(cli, "SQLiteUnitOfWork", fail)
+    result = runner.invoke(app, ["sync", "Reuters", "--repository", str(tmp_path)])
+    assert result.exit_code == cli.EXIT_CATALOG_FAILED
+    assert "sensitive" not in result.stderr
+
+
+@pytest.mark.parametrize(
+    "error,code",
+    [
+        (DiscoveryNotFoundError("not found"), 7),
+        (DiscoveryTransientError("temporary failure"), 8),
+        (DiscoveryRateLimitError("rate limited"), 4),
+        (DiscoveryError("contract failed"), 5),
+    ],
+)
+def test_external_error_exit_codes(
+    monkeypatch: pytest.MonkeyPatch, error: Exception, code: int
+) -> None:
+    class FailedProvider:
+        def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
+            raise error
+
+    monkeypatch.setattr(cli, "_provider_factory", FailedProvider)
+    result = runner.invoke(app, ["inspect", "Reuters"])
+    assert result.exit_code == code
+    assert "Traceback" not in result.stderr

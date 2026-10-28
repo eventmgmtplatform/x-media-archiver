@@ -186,7 +186,7 @@ def test_live_runner_rejects_missing_profile_and_constructor_error(
             raise RuntimeError("network down")
 
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", BrokenJob)
-    with pytest.raises(DiscoveryError, match="RuntimeError"):
+    with pytest.raises(DiscoveryError, match="discovery contract"):
         _run_gallery_dl("https://x.com/Reuters", 1)
 
 
@@ -211,3 +211,21 @@ def test_mapper_rejects_unsupported_media_and_nonnumeric_fields() -> None:
             NOW,
             "gallery-dl:test",
         )
+
+
+@pytest.mark.parametrize(
+    "message,kind",
+    [
+        ("404 NotFound sensitive", "DiscoveryNotFoundError"),
+        ("connection timeout sensitive", "DiscoveryTransientError"),
+        ("429 sensitive", "DiscoveryRateLimitError"),
+        ("AuthRequired sensitive", "DiscoveryRestrictedError"),
+        ("unknown sensitive", "DiscoveryContractError"),
+    ],
+)
+def test_classification_does_not_expose_raw_response(message: str, kind: str) -> None:
+    from xma.adapters.discovery.gallery_dl import _classified_error
+
+    error = _classified_error(RuntimeError(message))
+    assert type(error).__name__ == kind
+    assert "sensitive" not in str(error)

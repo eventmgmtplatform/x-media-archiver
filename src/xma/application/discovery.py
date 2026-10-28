@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from xma.domain.discovery import DiscoveryBatch, normalize_discovery_target
 from xma.domain.enums import RunStatus
+from xma.domain.errors import DiscoveryContractError
 from xma.domain.models import DiscoveryRun, MediaAsset, Post, Profile
 from xma.domain.ports import DiscoveryProvider, UnitOfWork
 
@@ -40,7 +41,18 @@ class DiscoveryService:
 
     def inspect(self, target: str, limit: int) -> DiscoveryBatch:
         normalized = normalize_discovery_target(target)
-        return self._provider.discover(normalized, limit)
+        if not 1 <= limit <= 100:
+            raise DiscoveryContractError("limit must be between 1 and 100")
+        batch = self._provider.discover(normalized, limit)
+        if (
+            batch.target != normalized
+            or batch.requested_limit != limit
+            or batch.asset_count > limit
+        ):
+            raise DiscoveryContractError(
+                "provider result does not match the requested target/limit"
+            )
+        return batch
 
     def sync(self, target: str, limit: int, *, dry_run: bool = False) -> SyncResult:
         started_at = self._clock()
@@ -86,7 +98,7 @@ class DiscoveryService:
                             duration_ms=discovered_asset.duration_ms,
                             width=discovered_asset.width,
                             height=discovered_asset.height,
-                            variants=discovered_asset.variants,
+                            variants=("metadata-only",),
                         )
                     )
             catalog.put_discovery_run(
