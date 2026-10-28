@@ -57,5 +57,38 @@ uv build
 CLI o persistencia. `xma.adapters.catalog` implementa el catálogo SQLite mediante una migración
 monotónica, claves foráneas activas y límites transaccionales explícitos.
 
-Los comandos de discovery y descarga se incorporarán en bloques posteriores; no forman parte de
-B02.
+Los comandos de discovery no forman parte de B02 y se documentan abajo como B03. La descarga de
+medios permanece reservada para bloques posteriores.
+
+## Discovery B03
+
+B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.
+
+```bash
+# Inspección sin efectos laterales
+uv run xma inspect @Reuters --limit 2
+uv run xma inspect https://x.com/Reuters --limit 2 --json
+
+# Vista previa: no crea directorios ni SQLite
+uv run xma sync @Reuters --limit 2 --repository ./repository --dry-run
+
+# Catálogo local; solo se ejecuta si X permite discovery anónimo
+uv run xma sync @Reuters --limit 2 --repository ./repository
+```
+
+La salida JSON omite las URLs de variantes multimedia. `inspect` no abre el catálogo;
+`sync --dry-run` tampoco lo crea. El límite aceptado es de 1 a 100 activos de video.
+
+### Códigos de salida B03
+
+| Código | Significado |
+|---|---|
+| `0` | discovery completado |
+| `2` | target o argumento inválido |
+| `3` | perfil no disponible en modo anónimo |
+| `4` | rate limit del proveedor |
+| `5` | contrato o proveedor fallido |
+
+En octubre de 2026, la prueba controlada de Reuters, AP y BBCWorld recibió `AuthRequired` de X.
+El gate B03 permanece bloqueado: no se agregan cookies ni autenticación sin un prompt y una
+autorización humana específicos.

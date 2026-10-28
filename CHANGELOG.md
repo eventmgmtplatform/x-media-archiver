@@ -19,8 +19,12 @@
 - Auditoría y cierre humano Q2 en el commit `b2bdca7`.
 - Prompts gobernados de ejecución y auditoría para B03 discovery.
 - Registro versionado de gates, autorizaciones, alertas y rework.
+- Contrato de discovery independiente del proveedor y adaptador `gallery-dl` sin descarga.
+- Casos de uso y comandos `inspect` y `sync`, con JSON seguro, dry-run y códigos de salida.
+- Fixtures offline, pruebas de mapeo y sincronización idempotente para B03.
 
 ### Known Limitations
 
 - B02 no incluye discovery, acceso a X ni descarga de medios.
+- El smoke B03 anónimo está bloqueado por `AuthRequired` de X en Reuters, AP y BBCWorld.
 - La arquitectura sigue en validación incremental y el producto no está certificado.

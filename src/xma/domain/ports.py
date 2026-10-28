@@ -4,7 +4,12 @@ from datetime import datetime
 from types import TracebackType
 from typing import Protocol, Self
 
+from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget
 from xma.domain.models import Artifact, DiscoveryRun, DownloadJob, MediaAsset, Post, Profile
+
+
+class DiscoveryProvider(Protocol):
+    def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch: ...
 
 
 class CatalogRepository(Protocol):
@@ -23,7 +28,8 @@ class CatalogRepository(Protocol):
 
 
 class UnitOfWork(Protocol):
-    catalog: CatalogRepository
+    @property
+    def catalog(self) -> CatalogRepository: ...
 
     def __enter__(self) -> Self: ...
     def __exit__(
