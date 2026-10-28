@@ -30,6 +30,8 @@
 - Rework B02 separado, no integrado; aceptación pública y nueva auditoría B03 pendientes.
 - B03-REWORK-002 normaliza metadatos numéricos inválidos como error de contrato sanitizado y
   difiere la creación del catálogo hasta después de discovery.
+- B03-REWORK-003 rechaza duraciones negativas antes de redondear, incluidas cadenas con magnitud
+  subnormal, y conserva el redondeo histórico de cero y duraciones positivas submilisegundo.
 
 ### Known Limitations
 

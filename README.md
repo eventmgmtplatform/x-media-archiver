@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03-REWORK-002 — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03-REWORK-003 — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -123,3 +123,14 @@ PRM-0005 es el prompt vigente y AUD-0003 v0.1.1 es la auditoría que origina est
 frontera `gallery-dl` rechaza booleanos, valores no finitos y enteros fuera del rango SQLite antes
 de convertir `num`, dimensiones o duración. Estos casos producen salida 5 sanitizada y no crean
 catálogo. El bloqueo público `AuthRequired` permanece separado; el smoke no se repitió.
+
+### Rework B03-REWORK-003
+
+AUD-0003 v0.1.2 demostró que B03-REWORK-002 todavía aceptaba duraciones negativas menores a un
+milisegundo cuando el redondeo ocultaba su signo. PRM-0006 corrige esa frontera: valida la duración
+en segundos con representación decimal antes de multiplicar o redondear. Toda duración
+semánticamente negativa se rechaza con salida 5 sanitizada y sin crear catálogo.
+
+Cero y las duraciones positivas menores a medio milisegundo siguen siendo válidas y se redondean
+a cero milisegundos; las demás usan redondeo al entero par más cercano. Esto conserva la política
+histórica de conversión y no introduce un límite de producto. No se repitió el smoke público.

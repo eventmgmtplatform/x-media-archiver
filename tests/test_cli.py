@@ -219,9 +219,17 @@ def test_external_error_exit_codes(
     assert "Traceback" not in result.stderr
 
 
+@pytest.mark.parametrize(
+    "invalid_duration",
+    [-0.0001, -0.0005, -5e-324, "-0.0001", "-1e-400"],
+    ids=["tenth-ms", "half-ms", "negative-subnormal", "string-tenth-ms", "string-extreme"],
+)
 @pytest.mark.parametrize("command", ["inspect", "sync"])
 def test_cli_sanitizes_real_mapper_numeric_contract_failure(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, command: str
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    command: str,
+    invalid_duration: object,
 ) -> None:
     marker = "SYNTHETIC-SIGNED-URL-SECRET"
     record = {
@@ -229,9 +237,9 @@ def test_cli_sanitizes_real_mapper_numeric_contract_failure(
         "tweet_id": 9001,
         "author": {"id": 123},
         "num": 1,
-        "width": json.loads("1e400"),
+        "width": 1280,
         "height": 720,
-        "duration": 1,
+        "duration": invalid_duration,
         "date": "2026-10-28T12:00:00Z",
         f"_{marker}": marker,
         "_source_url": f"https://media.invalid/video?signature={marker}",

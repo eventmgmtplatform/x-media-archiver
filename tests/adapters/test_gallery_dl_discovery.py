@@ -265,6 +265,52 @@ def test_mapper_rejects_out_of_range_or_fractional_metadata(field: str, invalid:
         )
 
 
+@pytest.mark.parametrize(
+    "invalid",
+    [-0.0001, -0.0005, -5e-324, "-0.0001", "-1e-400"],
+    ids=["tenth-ms", "half-ms", "negative-subnormal", "string-tenth-ms", "string-extreme"],
+)
+def test_mapper_rejects_every_semantically_negative_duration(invalid: object) -> None:
+    data = extraction()
+    record = dict(data.media_records[0], duration=invalid)
+
+    with pytest.raises(DiscoveryContractError) as captured:
+        map_gallery_dl_extraction(
+            GalleryDlExtraction(data.profile_record, (record,)),
+            normalize_discovery_target("Reuters"),
+            1,
+            NOW,
+            "gallery-dl:test",
+        )
+
+    assert str(captured.value) == NUMERIC_ERROR
+
+
+@pytest.mark.parametrize(
+    ("duration", "expected_ms"),
+    [
+        (0, 0),
+        (0.0001, 0),
+        (0.0006, 1),
+        ("1e-400", 0),
+        ("12.5", 12500),
+    ],
+    ids=["zero", "positive-under-half-ms", "positive-over-half-ms", "positive-extreme", "existing"],
+)
+def test_mapper_preserves_nonnegative_duration_rounding(duration: object, expected_ms: int) -> None:
+    data = extraction()
+    record = dict(data.media_records[0], duration=duration)
+    batch = map_gallery_dl_extraction(
+        GalleryDlExtraction(data.profile_record, (record,)),
+        normalize_discovery_target("Reuters"),
+        1,
+        NOW,
+        "gallery-dl:test",
+    )
+
+    assert batch.posts[0].assets[0].duration_ms == expected_ms
+
+
 def test_mapper_preserves_finite_numeric_values() -> None:
     data = extraction()
     record = dict(

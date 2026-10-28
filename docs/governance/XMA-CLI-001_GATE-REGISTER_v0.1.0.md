@@ -10,6 +10,7 @@
 | 2026-10-28 | Q1 | PR #1, HND-0001, CI y merge `2acb88c` | Cerrado | Leonel |
 | 2026-10-28 | Q2 | PR #2, HND-0002, AUD-0002, CI #6 | `VALIDATED_WITH_OBSERVATIONS`; merge `b2bdca7` | Leonel |
 | 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.1 y PRM-0005 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-002 autorizado |
+| 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.2 y PRM-0006 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-003 autorizado |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -19,6 +20,7 @@
 | GOV-BLK-0002 | B03 | Reuters, AP y BBCWorld devolvieron `AuthRequired` en la prueba pública anónima. | Bloqueo externo; salida `3`, sin activos catalogados. | No introducir cookies, autenticación ni otro extractor. B04 no inicia. |
 | GOV-RWK-0003 | B03 | AUD-0003 identificó R-01 a R-07: evidencia, PR/gobierno, JSON, errores, idempotencia, límite y cursor. | `REWORK_REQUIRED`. | Leonel autorizó PRM-0004/DOT-PRM-0004; Codex debe detenerse tras handoff y CI. |
 | GOV-RWK-0004 | B03 | AUD-0003 v0.1.1 detectó `OverflowError` no normalizado ante metadatos numéricos no finitos. | `WAITING_VALIDATION` tras B03-REWORK-002. | PRM-0005 ejecutado una vez; DOT-PRM-0005 debe auditar el HEAD final. |
+| GOV-RWK-0005 | B03 | AUD-0003 v0.1.2 demostró que duraciones negativas submilisegundo podían redondearse y persistirse como cero. | `WAITING_VALIDATION` tras B03-REWORK-003. | PRM-0006 ejecutado una vez; DOT-PRM-0006 debe auditar el nuevo HEAD. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin
