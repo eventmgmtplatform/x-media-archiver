@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 DOMAIN, CONTRACTS AND CATALOG — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03 DISCOVERY — START AUTHORIZED`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -28,6 +28,9 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - [Gobierno Git y releases](docs/governance/XMA-CLI-001_GIT_RELEASE_GOVERNANCE_v0.1.0.md)
 - [Prompt inicial de Codex](docs/prompts/XMA-CLI-001_PRM-0001_FOUNDATION-BOOTSTRAP_v0.1.0.md)
 - [Catálogo SQLite v1](docs/architecture/XMA-CLI-001_CATALOG-SCHEMA_v0.1.0.md)
+- [Gate register](docs/governance/XMA-CLI-001_GATE-REGISTER_v0.1.0.md)
+- [Prompt B03 para Codex](docs/prompts/XMA-CLI-001_PRM-0003_B03-DISCOVERY_v0.1.0.md)
+- [Prompt B03 para dot](docs/prompts/XMA-CLI-001_DOT-PRM-0003_B03-GOVERNANCE-AUDIT_v0.1.0.md)
 
 ## Principio de operación
 

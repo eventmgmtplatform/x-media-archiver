@@ -16,6 +16,9 @@
 - Contratos tipados de catálogo, unidad de trabajo y reloj.
 - Catálogo SQLite v1 con migración monotónica, integridad referencial, transacciones e idempotencia.
 - Matriz documentada y probada de transiciones de trabajos de descarga.
+- Auditoría y cierre humano Q2 en el commit `b2bdca7`.
+- Prompts gobernados de ejecución y auditoría para B03 discovery.
+- Registro versionado de gates, autorizaciones, alertas y rework.
 
 ### Known Limitations
 

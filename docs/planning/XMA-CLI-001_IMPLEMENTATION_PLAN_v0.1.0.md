@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** DRAFT / PENDING SUPERVISOR APPROVAL  
+**Estado:** ACTIVE / Q2 CLOSED / B03 START AUTHORIZED
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -54,6 +54,7 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 7. Rollback o reversión definida.
 8. ChatGPT valida; Leonel autoriza transición.
 
-## Primer siguiente paso
+## Siguiente paso autorizado
 
-Ejecutar exclusivamente `XMA-CLI-001_PRM-0001_FOUNDATION-BOOTSTRAP_v0.1.0.md`. Su condición de parada es el handoff de B01; no implementa discovery ni descarga.
+Ejecutar exclusivamente `XMA-CLI-001_PRM-0003_B03-DISCOVERY_v0.1.0.md` desde la baseline Q2.
+Su condición de parada es `HND-0003`, CI y PR draft; no descarga medios ni inicia B04.
