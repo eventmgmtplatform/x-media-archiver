@@ -1,0 +1,16 @@
+# Changelog
+
+## [Unreleased]
+
+### Added
+
+- Baseline de arquitectura `XMA-CLI-001`.
+- ADR-0001 para CLI local y monolito modular hexagonal.
+- Plan incremental B00–B07 y gates Q0–Q6.
+- Gobierno inicial de Git, releases y prompt PRM-0001.
+
+### Known Limitations
+
+- No existe implementación ejecutable.
+- No se ha creado ni validado un repositorio remoto.
+- La arquitectura está en diseño y el producto no está certificado.
