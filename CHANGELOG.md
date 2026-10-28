@@ -28,6 +28,8 @@
 - B03 `REWORK_REQUIRED`: JSON crudo, errores normalizados y códigos 6–8, defensa de target/límite.
 - Persistencia B03 de variantes como `metadata-only`, con regresión de firmas rotadas.
 - Rework B02 separado, no integrado; aceptación pública y nueva auditoría B03 pendientes.
+- B03-REWORK-002 normaliza metadatos numéricos inválidos como error de contrato sanitizado y
+  difiere la creación del catálogo hasta después de discovery.
 
 ### Known Limitations
 

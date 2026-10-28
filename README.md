@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 DISCOVERY — REWORK REQUIRED`
+- Implementación: `B02 VALIDATED / B03-REWORK-002 — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -96,10 +96,10 @@ En octubre de 2026, la prueba controlada de Reuters, AP y BBCWorld recibió `Aut
 El smoke público B03 permanece bloqueado por `AuthRequired`. AUD-0003 exige además el rework
 interno R-01 a R-07 antes de reclasificar el gate; no se agregan cookies ni autenticación.
 
-### Rework B03-REWORK-001
+### Rework histórico B03-REWORK-001
 
-B03 permanece `REWORK_REQUIRED` hasta nueva auditoría. El bloqueo externo histórico
-`AuthRequired` se evalúa por separado de las correcciones internas.
+AUD-0003 v0.1.1 clasificó B03-REWORK-001 como `REWORK_REQUIRED`. El bloqueo externo histórico
+`AuthRequired` se evalúa por separado de las correcciones internas posteriores.
 
 JSON usa salida cruda UTF-8 determinista, sin Rich. `cursor=null` significa que no existe
 paginación implementada; no permite inferir completitud ni reanudación. La aplicación rechaza
@@ -116,3 +116,10 @@ El rework B02 está separado en `feature/xma-b02-contracts`, auditoría v0.1.2 p
 `4b8bdab`. No está integrado en main ni B03; la baseline sigue siendo `b2bdca7`. Sus mejoras
 de apertura excepcional, migración y contratos permanecen pendientes de integración gobernada.
 B03 captura errores esperables en su CLI; esto no equivale a integrar ni certificar el rework B02.
+
+### Rework B03-REWORK-002
+
+PRM-0005 es el prompt vigente y AUD-0003 v0.1.1 es la auditoría que origina este rework. La
+frontera `gallery-dl` rechaza booleanos, valores no finitos y enteros fuera del rango SQLite antes
+de convertir `num`, dimensiones o duración. Estos casos producen salida 5 sanitizada y no crean
+catálogo. El bloqueo público `AuthRequired` permanece separado; el smoke no se repitió.
