@@ -327,6 +327,42 @@ def test_mapper_preserves_nonnegative_duration_rounding(duration: object, expect
     assert batch.posts[0].assets[0].duration_ms == expected_ms
 
 
+@pytest.mark.parametrize(
+    ("duration", "expected_ms"),
+    [
+        ("1e-1999999999999999998", 0),
+        ("0e1000000000000000000", 0),
+        ("-1e-1999999999999999998", None),
+        ("-0e1000000000000000000", 0),
+    ],
+    ids=["positive-underflow", "positive-zero", "negative-underflow", "negative-zero"],
+)
+def test_mapper_preserves_extreme_exponent_compatibility(
+    duration: str, expected_ms: int | None
+) -> None:
+    data = extraction()
+    record = dict(data.media_records[0], duration=duration)
+    if expected_ms is None:
+        with pytest.raises(DiscoveryContractError, match=NUMERIC_ERROR):
+            map_gallery_dl_extraction(
+                GalleryDlExtraction(data.profile_record, (record,)),
+                normalize_discovery_target("Reuters"),
+                1,
+                NOW,
+                "gallery-dl:test",
+            )
+        return
+
+    batch = map_gallery_dl_extraction(
+        GalleryDlExtraction(data.profile_record, (record,)),
+        normalize_discovery_target("Reuters"),
+        1,
+        NOW,
+        "gallery-dl:test",
+    )
+    assert batch.posts[0].assets[0].duration_ms == expected_ms
+
+
 def test_mapper_preserves_finite_numeric_values() -> None:
     data = extraction()
     record = dict(

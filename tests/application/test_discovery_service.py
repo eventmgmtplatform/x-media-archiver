@@ -204,3 +204,35 @@ def test_sync_persists_baseline_compatible_duration_rounding(
         asset = unit.catalog.get_media_asset("9001:0")
         assert asset is not None
         assert asset.duration_ms == expected_ms
+
+
+@pytest.mark.parametrize(
+    "duration",
+    ["1e-1999999999999999998", "0e1000000000000000000", "-0e1000000000000000000"],
+    ids=["positive-underflow", "positive-zero", "negative-zero"],
+)
+def test_sync_persists_extreme_exponent_compatible_zero(tmp_path: Path, duration: str) -> None:
+    record = {
+        "type": "video",
+        "tweet_id": 9001,
+        "author": {"id": 123},
+        "num": 1,
+        "width": 1280,
+        "height": 720,
+        "duration": duration,
+        "date": "2026-10-28T12:00:00Z",
+        "_source_url": "https://media.invalid/offline-fixture",
+    }
+    extraction = GalleryDlExtraction(
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        (record,),
+    )
+    provider = GalleryDlDiscoveryProvider(lambda url, limit: extraction, lambda: NOW)
+    database = tmp_path / "catalog.sqlite3"
+
+    DiscoveryService(provider, lambda: SQLiteUnitOfWork(database)).sync("Reuters", 1)
+
+    with SQLiteUnitOfWork(database) as unit:
+        asset = unit.catalog.get_media_asset("9001:0")
+        assert asset is not None
+        assert asset.duration_ms == 0

@@ -221,8 +221,15 @@ def test_external_error_exit_codes(
 
 @pytest.mark.parametrize(
     "invalid_duration",
-    [-0.0001, -0.0005, -5e-324, "-0.0001", "-1e-400"],
-    ids=["tenth-ms", "half-ms", "negative-subnormal", "string-tenth-ms", "string-extreme"],
+    [-0.0001, -0.0005, -5e-324, "-0.0001", "-1e-400", "-1e-1999999999999999998"],
+    ids=[
+        "tenth-ms",
+        "half-ms",
+        "negative-subnormal",
+        "string-tenth-ms",
+        "string-extreme",
+        "string-extreme-exponent",
+    ],
 )
 @pytest.mark.parametrize("command", ["inspect", "sync"])
 def test_cli_sanitizes_real_mapper_numeric_contract_failure(
@@ -265,6 +272,51 @@ def test_cli_sanitizes_real_mapper_numeric_contract_failure(
     assert "Traceback" not in result.stderr
     assert marker not in result.stdout + result.stderr
     assert not repository.exists()
+
+
+@pytest.mark.parametrize(
+    "duration",
+    ["1e-1999999999999999998", "0e1000000000000000000", "-0e1000000000000000000"],
+    ids=["positive-underflow", "positive-zero", "negative-zero"],
+)
+@pytest.mark.parametrize("command", ["inspect", "sync"])
+def test_cli_accepts_extreme_exponent_compatible_zero(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, command: str, duration: str
+) -> None:
+    record = {
+        "type": "video",
+        "tweet_id": 9001,
+        "author": {"id": 123},
+        "num": 1,
+        "width": 1280,
+        "height": 720,
+        "duration": duration,
+        "date": "2026-10-28T12:00:00Z",
+        "_source_url": "https://media.invalid/offline-fixture",
+    }
+    extraction = GalleryDlExtraction(
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        (record,),
+    )
+    monkeypatch.setattr(
+        cli,
+        "_provider_factory",
+        lambda: GalleryDlDiscoveryProvider(lambda url, limit: extraction, lambda: NOW),
+    )
+    repository = tmp_path / "repository"
+    arguments = [command, "Reuters", "--limit", "1"]
+    if command == "sync":
+        arguments.extend(["--repository", str(repository)])
+
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code == 0
+    if command == "inspect":
+        assert not repository.exists()
+    else:
+        database = repository / "catalog.sqlite3"
+        with sqlite3.connect(database) as connection:
+            assert connection.execute("SELECT duration_ms FROM media_assets").fetchone() == (0,)
 
 
 @pytest.mark.parametrize("command", ["inspect", "sync"])

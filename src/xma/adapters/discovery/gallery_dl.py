@@ -3,9 +3,9 @@
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from decimal import Decimal, DecimalException
 from math import isfinite
 from typing import Any, cast
+from unicodedata import digit
 
 import gallery_dl  # type: ignore[import-untyped]
 from gallery_dl import config, exception, job
@@ -258,6 +258,18 @@ def _optional_int(value: object) -> int | None:
     return _bounded_integer(value, minimum=0, maximum=_SQLITE_INTEGER_MAX)
 
 
+def _has_negative_nonzero_significand(value: str) -> bool:
+    normalized = value.strip()
+    if not normalized.startswith("-"):
+        return False
+    significand = normalized[1:]
+    exponent_index = next(
+        (index for index, character in enumerate(significand) if character in "eE"),
+        len(significand),
+    )
+    return any(digit(character, 0) != 0 for character in significand[:exponent_index])
+
+
 def _duration_ms(value: object) -> int | None:
     if value is None:
         return None
@@ -265,8 +277,7 @@ def _duration_ms(value: object) -> int | None:
         raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
     try:
         if isinstance(value, str):
-            semantic_value = Decimal(value)
-            if not semantic_value.is_finite() or semantic_value < 0:
+            if _has_negative_nonzero_significand(value):
                 raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
         elif isinstance(value, float) and (not isfinite(value) or value < 0):
             raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
@@ -276,7 +287,7 @@ def _duration_ms(value: object) -> int | None:
         if not isfinite(seconds) or not isfinite(milliseconds):
             raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
         result = round(milliseconds)
-    except (DecimalException, TypeError, ValueError, OverflowError) as error:
+    except (TypeError, ValueError, OverflowError) as error:
         raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR) from error
     if result < 0 or result > _SQLITE_INTEGER_MAX:
         raise DiscoveryContractError(_NUMERIC_CONTRACT_ERROR)
