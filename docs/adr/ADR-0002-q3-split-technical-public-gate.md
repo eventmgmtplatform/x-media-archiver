@@ -10,7 +10,9 @@
 PRM-0003 exige dos clases de evidencia para cerrar B03:
 
 1. implementación, contratos, persistencia, CLI, pruebas offline y CI;
-2. una prueba pública anónima que catalogue hasta dos activos de video de Reuters, AP o BBCWorld.
+2. una prueba pública anónima ejecutada con `--limit 2` que catalogue exactamente dos activos
+   públicos de video distintos de Reuters, AP o BBCWorld. El valor 2 es simultáneamente el máximo
+   operativo y el mínimo de aceptación; cero o uno no satisfacen el gate.
 
 AUD-0003 v0.1.5 determinó `BLOCKED`: los reworks técnicos pasan, CI #26 está verde con 156
 pruebas y 95.18 % de cobertura, pero el smoke histórico terminó en `AuthRequired` para las tres
@@ -25,13 +27,18 @@ Q3 se separa en dos subgates acumulativos:
   alcance y CI. Queda `VALIDATED_WITH_OBSERVATIONS` sobre el snapshot auditado
   `beb2a7d9123b23f51f6f3a92571501cb25a025d6`, tree
   `f1b2207b0db65d92e7d7ba877a3444389b7b3010`, conforme a AUD-0003 v0.1.5.
-- **Q3-Público:** valida el comportamiento real anónimo y debe acreditar hasta dos activos de
-  video catalogados, sin medios descargados. Permanece `BLOCKED` por `AuthRequired`.
+- **Q3-Público:** valida el comportamiento real anónimo y debe acreditar exactamente dos activos
+  públicos de video distintos y catalogados, sin medios descargados. La prueba usa `--limit 2`
+  como máximo operativo; un conteo observado de cero o uno no pasa el gate. Permanece `BLOCKED`
+  por `AuthRequired`.
 
 Ambos subgates pertenecen a Q3. La validación técnica no sustituye la aceptación pública y no
 certifica el producto. Q3-Público es condición previa de cualquier transición a B04, salvo que una
 decisión humana posterior, explícita y versionada cambie el requisito o autorice una estrategia de
 acceso distinta.
+
+En términos de aceptación: `requested_limit = 2` y `observed_distinct_public_video_assets = 2`.
+No existe aceptación parcial para cero o un activo.
 
 ## Restricciones preservadas
 

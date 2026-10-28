@@ -24,7 +24,7 @@ Producir `xma` v0.1.0 capaz de inspeccionar un perfil público, catalogar videos
 | B00 | Baseline de diseño | arquitectura, ADR, plan, gobierno | Q0 aprobado |
 | B01 | Foundation | repositorio, `pyproject`, layout, CLI `--help`, lint/test/CI | Q1: build y tests PASS |
 | B02 | Contratos | entidades, schemas, puertos, migración SQLite inicial | Q2: contract tests PASS |
-| B03 | Discovery | adapter gallery-dl, inspect/sync, fixtures, cobertura | Q3-Técnico: implementación auditada; Q3-Público: perfil controlado con hasta dos activos catalogados antes de B04 |
+| B03 | Discovery | adapter gallery-dl, inspect/sync, fixtures, cobertura | Q3-Técnico: implementación auditada; Q3-Público: exactamente 2 activos públicos distintos catalogados con `--limit 2` antes de B04; 0 o 1 no pasan |
 | B04 | Download | yt-dlp, FFmpeg, staging, hash, sidecars | Q4: descarga reproducible PASS |
 | B05 | Operación CLI | selección, progreso, retry, status, export, doctor | Q5 funcional PASS |
 | B06 | Hardening | errores, seguridad, secret scan, rollback, docs | Q5 seguridad PASS |
@@ -56,18 +56,17 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso autorizado
 
-La única transición autorizada es documental: publicar AUD-0003 v0.1.5, ADR-0002, este plan,
-el Gate Register y DOT-PRM-0009 en estado inactivo. Q3-Técnico queda
-`VALIDATED_WITH_OBSERVATIONS` por decisión humana posterior a la auditoría; Q3-Público permanece
-`BLOCKED` porque la prueba anónima no acreditó dos activos catalogados.
+DOC-01 publica una precisión exclusivamente documental: Q3-Público requiere exactamente dos
+activos públicos de video distintos y catalogados; `--limit 2` es el máximo operativo de la
+prueba y no permite aceptar cero o uno.
 
-DOT-PRM-0009 puede ejecutarse únicamente con una autorización humana separada. No existe prompt
-de implementación para Codex: AUD-0003 v0.1.5 no identifica un defecto técnico recuperable.
+Leonel autorizó publicar y ejecutar una vez DOT-PRM-0010 para reauditar exclusivamente esta
+coherencia documental. No existe prompt de implementación para Codex y no se autoriza repetir el
+smoke.
 
-La división del gate no elimina ni difiere silenciosamente la aceptación pública. Mientras
-Q3-Público no pase, quedan prohibidos merge, B04, cookies, autenticación, otro extractor,
-descargas, tags, releases y cualquier afirmación de certificación. Una estrategia de acceso
-distinta requerirá otra decisión versionada y un alcance expresamente autorizado.
+Q3-Técnico conserva `VALIDATED_WITH_OBSERVATIONS`; Q3-Público y la transición general B03
+conservan `BLOCKED`. Continúan prohibidos merge, B04, cookies, autenticación, otro extractor,
+descargas, tags, releases y cualquier afirmación de certificación.
 
 El rework B02 permanece separado y no integrado. Los recordatorios corporativos ajenos no cambian
 este plan ni autorizan fases posteriores.
