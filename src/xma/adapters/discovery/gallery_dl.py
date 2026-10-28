@@ -76,6 +76,9 @@ def _run_gallery_dl(url: str, limit: int) -> GalleryDlExtraction:
     config.set(("extractor", "twitter"), "text-tweets", False)
     config.set(("extractor",), "download", False)
     config.set(("downloader",), "enabled", False)
+    # Keep discovery read-only with respect to the host filesystem. gallery-dl
+    # otherwise creates ~/.cache/gallery-dl/cache.sqlite3 for guest tokens.
+    config.set(("cache",), "file", ":memory:")
     config.set(("output",), "private", False)
 
     try:

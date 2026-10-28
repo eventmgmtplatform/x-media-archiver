@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from gallery_dl import exception  # type: ignore[import-untyped]
+from gallery_dl import config, exception  # type: ignore[import-untyped]
 
 from xma.adapters.discovery.gallery_dl import (
     GalleryDlDiscoveryProvider,
@@ -153,6 +153,7 @@ def test_live_runner_boundary_has_no_download_and_classifies_failures(
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", SuccessfulJob)
     result = _run_gallery_dl("https://x.com/Reuters", 1)
     assert len(result.media_records) == 1
+    assert config.get(("cache",), "file") == ":memory:"
 
     class FailedJob(SuccessfulJob):
         exception: BaseException | None = RuntimeError("HTTP 429")
