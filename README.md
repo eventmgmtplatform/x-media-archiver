@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03-REWORK-005 — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03 AUTHENTICATED DISCOVERY — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -74,6 +74,10 @@ uv run xma sync @Reuters --limit 2 --repository ./repository --dry-run
 
 # Catálogo local; solo se ejecuta si X permite discovery anónimo
 uv run xma sync @Reuters --limit 2 --repository ./repository
+
+# Sesión local explícita; ambos parámetros son obligatorios
+uv run xma sync @Reuters --limit 2 --repository ./repository \
+  --auth-browser firefox --auth-profile <LOCAL_PROFILE>
 ```
 
 La salida JSON omite las URLs de variantes multimedia. `inspect` no abre el catálogo;
@@ -152,3 +156,15 @@ reemplaza esa validación por inspección léxica del signo y significando, sin 
 Así se aceptan exponentes extremos positivos y ceros con signo, mientras todo signo negativo con
 significando no cero se rechaza antes de perderse como `-0.0`. La conversión histórica, los límites
 SQLite y el mensaje sanitizado permanecen intactos; el smoke público no se repitió.
+
+### Discovery autenticado controlado
+
+PRM-0009 añade una selección explícita de sesión Firefox a `inspect` y `sync`; el modo anónimo
+sigue siendo el predeterminado. Navegador y perfil deben proporcionarse juntos, solo se admite
+Firefox y no se aceptan rutas de cookies. La aplicación solicita a `gallery-dl` lectura directa de
+la sesión local, mantiene caché en memoria y descarga deshabilitada, y no imprime, exporta ni
+persiste cookies o el identificador local.
+
+La aceptación gobernada Reuters → AP → BBCWorld, siempre con `--limit 2`, obtuvo códigos 3, 3 y 0.
+BBCWorld catalogó exactamente dos activos públicos distintos; el repositorio temporal contenía
+solo `.sqlite3`, sin medios, miniaturas ni sidecars. Q3-Público permanece pendiente de auditoría.

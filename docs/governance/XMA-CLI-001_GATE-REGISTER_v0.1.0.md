@@ -18,6 +18,7 @@
 | 2026-10-28 | Q3 documental / B03 | AUD-0004 v0.1.0 y DOC-01 | `WAITING_VALIDATION`; se precisa que el conteo aceptado debe ser exactamente 2 con `--limit 2` | Leonel autorizó rework documental y publicación de DOT-PRM-0010 |
 | 2026-10-28 | Q3 documental / B03 | AUD-0004 v0.1.1, DOC-01 y CI #28 | `VALIDATED_WITH_OBSERVATIONS`; DOC-01 cerrado documentalmente | Leonel autorizó versionado y reconciliación; Q3-Público/B03 continúan `BLOCKED` |
 | 2026-10-28 | Q3-Público / B03 Auth | ADR-0003, PRM-0009 y DOT-PRM-0011 | `AUTHORIZED_FOR_ONE_EXECUTION`; gate aún `BLOCKED` hasta evidencia y auditoría | Leonel autorizó sesión local Firefox y smoke `--limit 2`; identificadores locales no se publican; sin B04 ni merge |
+| 2026-10-28 | Q3-Público / B03 Auth | HND-0003 v0.2.0 y aceptación Reuters → AP → BBCWorld | `WAITING_VALIDATION`; BBCWorld acreditó exactamente 2 activos distintos | PRM-0009 consumido una vez; DOT-PRM-0011 debe auditar; sin merge ni B04 |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -33,6 +34,7 @@
 | GOV-DEC-0008 | B03 / Q3 | AUD-0003 v0.1.5 cerró los reworks técnicos y mantuvo bloqueada la aceptación pública por `AuthRequired`. | Q3 se divide en Q3-Técnico y Q3-Público conforme a ADR-0002. | Leonel autorizó versionar la auditoría y la decisión; no autorizó merge, B04, cookies, autenticación ni otro extractor. |
 | GOV-RWK-0009 | B03 / Q3 | AUD-0004 v0.1.0 detectó que «hasta dos» expresaba solo el máximo y no el mínimo de aceptación. | `CLOSED — VALIDATED_WITH_OBSERVATIONS`; DOC-01 fija conteo requerido exactamente 2 y `--limit 2` como máximo operativo. | AUD-0004 v0.1.1 valida el cierre; Q3-Público/B03 siguen `BLOCKED` y no se autorizan smoke, merge o B04. |
 | GOV-DEC-0010 | B03 / Q3-Público | El modo anónimo terminó en `AuthRequired`; el humano confirmó una cuenta dedicada y visibilidad pública. | ADR-0003 autoriza una prueba local autenticada, sin descarga y con parámetros redactados. | Una ejecución PRM-0009 y auditoría DOT-PRM-0011; secretos/identificadores locales fuera de Git; B04/merge prohibidos. |
+| GOV-EVD-0011 | B03 / Q3-Público | Reuters y AP terminaron con código 3; BBCWorld terminó con código 0 y exactamente 2 activos distintos. | `WAITING_VALIDATION`; evidencia sanitizada, solo `.sqlite3`, sin medios. | DOT-PRM-0011 debe auditar HND/CI; no autoriza transición, merge ni B04. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

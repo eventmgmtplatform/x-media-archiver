@@ -22,6 +22,8 @@
 - Contrato de discovery independiente del proveedor y adaptador `gallery-dl` sin descarga.
 - Casos de uso y comandos `inspect` y `sync`, con JSON seguro, dry-run y códigos de salida.
 - Fixtures offline, pruebas de mapeo y sincronización idempotente para B03.
+- Autenticación B03 opcional mediante lectura directa de una sesión local de Firefox, sin exportar
+  cookies y conservando modo anónimo por defecto.
 
 ### Changed
 
@@ -36,9 +38,12 @@
   sin retirar las regresiones de duraciones negativas ni alterar los límites SQLite.
 - B03-REWORK-005 elimina el límite decimal de exponente mediante validación léxica del significando,
   preservando cadenas compatibles con `float()` y el rechazo de negativos que subdesbordan.
+- La aceptación controlada autenticada acreditó exactamente dos activos distintos sin descargar
+  medios; Q3-Público queda en `WAITING_VALIDATION` hasta la auditoría independiente.
 
 ### Known Limitations
 
 - B02 no incluye discovery, acceso a X ni descarga de medios.
-- El smoke B03 anónimo está bloqueado por `AuthRequired` de X en Reuters, AP y BBCWorld.
+- El modo anónimo permanece restringido por `AuthRequired`; la evidencia autenticada espera
+  auditoría independiente y no autoriza B04.
 - La arquitectura sigue en validación incremental y el producto no está certificado.

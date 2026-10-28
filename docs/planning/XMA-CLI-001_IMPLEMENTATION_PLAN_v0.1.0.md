@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / Q3-TÉCNICO VALIDATED WITH OBSERVATIONS / Q3-PÚBLICO BLOCKED
+**Estado:** ACTIVE / Q2 CLOSED / Q3-TÉCNICO VALIDATED WITH OBSERVATIONS / Q3-PÚBLICO WAITING VALIDATION
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -56,16 +56,16 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso autorizado
 
-ADR-0003 autoriza una ejecución de PRM-0009 para extender B03 con autenticación explícita mediante
-una sesión local de Firefox. Los identificadores concretos se suministran solo en el entorno local
-y no se publican. Codex se ejecuta primero; DOT-PRM-0011 solo después de HND-0003 v0.2.0 y CI.
+Ejecutar exclusivamente DOT-PRM-0011 después de HND-0003 v0.2.0 y CI verde. PRM-0009 se consumió
+una vez: la secuencia Reuters → AP → BBCWorld con `--limit 2` se detuvo en BBCWorld al catalogar
+exactamente dos activos distintos. Los identificadores locales permanecen fuera de Git.
 
 El modo anónimo continúa por defecto. La app puede solicitar a `gallery-dl` lectura directa del
 perfil local, pero no almacenar, exportar, imprimir ni versionar cookies o credenciales. CI sigue
 offline.
 
-Q3-Público y B03 permanecen `BLOCKED` hasta catalogar exactamente dos activos públicos distintos
-con `--limit 2` y obtener auditoría favorable. Cero o uno no pasan. Siguen prohibidos merge, B04,
-descargas, otros extractores, API X, tags, releases y certificación.
+Q3-Público queda `WAITING_VALIDATION`; B03 no se considera cerrado hasta auditoría y decisión
+humana. Siguen prohibidos merge, B04, descargas, otros extractores, API X, tags, releases y
+certificación.
 
 El rework B02 permanece separado y no integrado.
