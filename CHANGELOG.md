@@ -32,6 +32,8 @@
   difiere la creación del catálogo hasta después de discovery.
 - B03-REWORK-003 rechaza duraciones negativas antes de redondear, incluidas cadenas con magnitud
   subnormal, y conserva el redondeo histórico de cero y duraciones positivas submilisegundo.
+- B03-REWORK-004 restaura exactamente el redondeo positivo histórico después de validar el signo,
+  sin retirar las regresiones de duraciones negativas ni alterar los límites SQLite.
 
 ### Known Limitations
 

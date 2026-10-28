@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03-REWORK-003 — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03-REWORK-004 — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -134,3 +134,12 @@ semánticamente negativa se rechaza con salida 5 sanitizada y sin crear catálog
 Cero y las duraciones positivas menores a medio milisegundo siguen siendo válidas y se redondean
 a cero milisegundos; las demás usan redondeo al entero par más cercano. Esto conserva la política
 histórica de conversión y no introduce un límite de producto. No se repitió el smoke público.
+
+### Rework B03-REWORK-004
+
+AUD-0003 v0.1.3 detectó que REWORK-003 cambió involuntariamente los empates positivos de `float`
+al usar `Decimal.from_float()`: `0.0005` y `0.0025` dejaron de producir `0 ms` y `2 ms`. PRM-0007
+restaura la secuencia histórica `float(value)`, multiplicación por 1000 y `round()` después de la
+validación semántica. Los cinco negativos siguen rechazándose antes del redondeo y los límites
+SQLite y el mensaje sanitizado permanecen intactos. Esto corrige la afirmación incompatible de
+HND v0.1.3 sobre compatibilidad positiva; no reescribe ese documento histórico ni repite el smoke.

@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03-REWORK-003 WAITING VALIDATION
+**Estado:** ACTIVE / Q2 CLOSED / B03-REWORK-004 WAITING VALIDATION
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -56,14 +56,16 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso autorizado
 
-Ejecutar exclusivamente `XMA-CLI-001-DOT-PRM-0006 v0.1.0` para auditar B03-REWORK-003. El smoke
+Ejecutar exclusivamente `XMA-CLI-001-DOT-PRM-0007 v0.1.0` para auditar B03-REWORK-004. El smoke
 anónimo conserva el bloqueo `AuthRequired`; no se autorizan cookies, otro extractor ni B04.
 
 B03-REWORK-001 aplicó las correcciones autorizadas por PRM-0004; B03-REWORK-002 normalizó la
 frontera numérica según PRM-0005; B03-REWORK-003 cierra el caso negativo submilisegundo de
-AUD-0003 v0.1.2. El rework B02 permanece separado y no integrado. Q3 espera la auditoría del nuevo
+AUD-0003 v0.1.2; B03-REWORK-004 restaura la compatibilidad positiva señalada por AUD-0003 v0.1.3.
+El rework B02 permanece separado y no integrado. Q3 espera la auditoría del nuevo
 snapshot; el ejecutor entrega `WAITING_VALIDATION` con evidencia.
 Los recordatorios corporativos ajenos no cambian este plan ni autorizan B04.
 
-PRM-0006 se consumió una sola vez para cerrar RW-01/R-05. AUD-0003 v0.1.2 es el origen canónico
-del rework; la decisión de Q3 corresponde ahora a dot mediante DOT-PRM-0006.
+PRM-0007 se consumió una sola vez para cerrar la incompatibilidad de redondeo positivo. AUD-0003
+v0.1.3 es el origen canónico del rework; la decisión de Q3 corresponde ahora a dot mediante
+DOT-PRM-0007.
