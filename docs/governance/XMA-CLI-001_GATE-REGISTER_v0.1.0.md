@@ -16,6 +16,7 @@
 | 2026-10-28 | Q3-Técnico / B03 | PR #3, HND-0003 v0.1.5, CI #26, AUD-0003 v0.1.5 y ADR-0002 | `VALIDATED_WITH_OBSERVATIONS`; implementación y controles técnicos aceptados | Leonel: división Q3 autorizada |
 | 2026-10-28 | Q3-Público / B03 | Smoke anónimo Reuters → AP → BBCWorld y AUD-0003 v0.1.5 | `BLOCKED`; no se acreditaron dos activos públicos catalogados | Sin waiver; B04, merge y ampliación de acceso no autorizados |
 | 2026-10-28 | Q3 documental / B03 | AUD-0004 v0.1.0 y DOC-01 | `WAITING_VALIDATION`; se precisa que el conteo aceptado debe ser exactamente 2 con `--limit 2` | Leonel autorizó rework documental y publicación de DOT-PRM-0010 |
+| 2026-10-28 | Q3 documental / B03 | AUD-0004 v0.1.1, DOC-01 y CI #28 | `VALIDATED_WITH_OBSERVATIONS`; DOC-01 cerrado documentalmente | Leonel autorizó versionado y reconciliación; Q3-Público/B03 continúan `BLOCKED` |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -29,7 +30,7 @@
 | GOV-RWK-0006 | B03 | AUD-0003 v0.1.3 detectó que `Decimal.from_float()` alteró los empates positivos históricos. | `WAITING_VALIDATION` tras B03-REWORK-004. | Leonel autorizó una ejecución de PRM-0007; DOT-PRM-0007 debe auditar el HEAD final. |
 | GOV-RWK-0007 | B03 | AUD-0003 v0.1.4 detectó que `Decimal(value)` rechazaba exponentes extremos aceptados por la baseline. | `WAITING_VALIDATION` tras B03-REWORK-005. | Leonel autorizó una ejecución de PRM-0008; DOT-PRM-0008 debe auditar el HEAD final. |
 | GOV-DEC-0008 | B03 / Q3 | AUD-0003 v0.1.5 cerró los reworks técnicos y mantuvo bloqueada la aceptación pública por `AuthRequired`. | Q3 se divide en Q3-Técnico y Q3-Público conforme a ADR-0002. | Leonel autorizó versionar la auditoría y la decisión; no autorizó merge, B04, cookies, autenticación ni otro extractor. |
-| GOV-RWK-0009 | B03 / Q3 | AUD-0004 v0.1.0 detectó que «hasta dos» expresaba solo el máximo y no el mínimo de aceptación. | `WAITING_VALIDATION` tras DOC-01: conteo requerido exactamente 2; `--limit 2` es el máximo operativo. | Leonel autorizó el rework documental y DOT-PRM-0010; sin autorización de smoke, merge o B04. |
+| GOV-RWK-0009 | B03 / Q3 | AUD-0004 v0.1.0 detectó que «hasta dos» expresaba solo el máximo y no el mínimo de aceptación. | `CLOSED — VALIDATED_WITH_OBSERVATIONS`; DOC-01 fija conteo requerido exactamente 2 y `--limit 2` como máximo operativo. | AUD-0004 v0.1.1 valida el cierre; Q3-Público/B03 siguen `BLOCKED` y no se autorizan smoke, merge o B04. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

@@ -56,17 +56,16 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso autorizado
 
-DOC-01 publica una precisión exclusivamente documental: Q3-Público requiere exactamente dos
-activos públicos de video distintos y catalogados; `--limit 2` es el máximo operativo de la
-prueba y no permite aceptar cero o uno.
+AUD-0004 v0.1.1 cierra DOC-01 como `VALIDATED_WITH_OBSERVATIONS`. La regla permanece: la prueba
+usa `--limit 2` como máximo operativo y Q3-Público solo pasa con exactamente dos activos públicos
+de video distintos y catalogados; cero o uno no pasan.
 
-Leonel autorizó publicar y ejecutar una vez DOT-PRM-0010 para reauditar exclusivamente esta
-coherencia documental. No existe prompt de implementación para Codex y no se autoriza repetir el
-smoke.
+No existe una ejecución activa para Codex o dot. Q3-Técnico conserva
+`VALIDATED_WITH_OBSERVATIONS`; Q3-Público y la transición general B03 conservan `BLOCKED`.
 
-Q3-Técnico conserva `VALIDATED_WITH_OBSERVATIONS`; Q3-Público y la transición general B03
-conservan `BLOCKED`. Continúan prohibidos merge, B04, cookies, autenticación, otro extractor,
-descargas, tags, releases y cualquier afirmación de certificación.
+El siguiente movimiento requiere una decisión humana nueva y versionada sobre cómo intentar o
+resolver la aceptación pública. Hasta entonces continúan prohibidos smoke, merge, B04, cookies,
+autenticación, otro extractor, descargas, tags, releases y certificación.
 
 El rework B02 permanece separado y no integrado. Los recordatorios corporativos ajenos no cambian
 este plan ni autorizan fases posteriores.
