@@ -10,6 +10,7 @@
 - Gobierno inicial de Git, releases y prompt PRM-0001.
 - Scaffold Python instalable con comandos `xma --help` y `xma version`.
 - Pruebas unitarias, Ruff, mypy, pre-commit y workflow de CI.
+- Prompts gobernados de ejecución Codex y auditoría dot para B02.
 
 ### Known Limitations
 
