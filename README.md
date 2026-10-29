@@ -178,7 +178,7 @@ podía propagar un error de resolución. PRM-0011 implementó el fail-closed de 
 `ct0`, y normalizó específicamente ese error. AUD-0005 v0.1.2 validó R-01–R-03 con
 observaciones sobre los límites de la reproducción sintética y de CI.
 
-La evidencia SQLite original permanece `EVIDENCE_NOT_AVAILABLE`. PRM-0012 y DOT-PRM-0014
-quedan preparados para una recuperación controlada de A-06, pero no autorizan por sí mismos su
-ejecución. Q3-Público y la transición general B03 permanecen `BLOCKED`; merge y B04 continúan
-sin autorización.
+La evidencia SQLite original permanece `EVIDENCE_NOT_AVAILABLE`. Leonel liberó PRM-0012 para
+una única ejecución controlada de recuperación A-06; DOT-PRM-0014 continúa inactivo hasta que
+existan HND-0003 v0.3.0, CI verde y el paquete local verificable. Q3-Público y la transición
+general B03 permanecen `BLOCKED`; merge y B04 continúan sin autorización.

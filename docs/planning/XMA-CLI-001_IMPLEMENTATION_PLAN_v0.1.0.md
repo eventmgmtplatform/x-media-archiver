@@ -61,9 +61,9 @@ auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tre
 acredita la aceptación pública histórica.
 
 A-06 permanece `EVIDENCE_NOT_AVAILABLE`; por ello Q3-Público y la transición general B03 siguen
-`BLOCKED`. PRM-0012 y DOT-PRM-0014 quedan preparados para recuperar y auditar evidencia mediante
-una única prueba pública controlada. Su publicación no consume ni libera la ejecución: Codex no
-debe ejecutar PRM-0012 hasta recibir una autorización humana explícita posterior.
+`BLOCKED`. Leonel liberó PRM-0012 para una sola prueba pública controlada. Codex debe ejecutar
+únicamente la secuencia gobernada, publicar HND-0003 v0.3.0, esperar CI verde, entregar el paquete
+local verificable y detenerse. DOT-PRM-0014 permanece inactivo hasta entonces.
 
 La prueba, si se libera, conservará temporalmente fuera de Git el catálogo y un paquete sanitizado
 con hash, integridad, conteo e identidades de activos. El paquete deberá entregarse a dot para

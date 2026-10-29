@@ -1,9 +1,9 @@
 # XMA-CLI-001 — PRM-0012 A-06 Public Evidence Recovery
 
 **Versión:** 0.1.0
-**Estado:** PREPARED / NOT EXECUTED
+**Estado:** APPROVED FOR ONE EXECUTION / NOT_STARTED
 **Autoridad de preparación:** Leonel, 2026-10-28 America/Mexico_City
-**Ejecución:** requiere liberación humana explícita posterior
+**Ejecución:** liberada una vez por Leonel el 2026-10-28 (America/Mexico_City)
 **Repositorio:** eventmgmtplatform/x-media-archiver
 **PR:** #3, feature/xma-b03-discovery
 
@@ -19,7 +19,7 @@ Este mandato no autoriza merge, B04/B05, descarga de medios, certificación, tag
 
 Antes de ejecutar, Codex debe:
 
-1. Recibir de Leonel una frase explícita que libere PRM-0012 para una ejecución.
+1. Confirmar en Gate Register GOV-AUTH-0016 y la baseline de gobernanza que libera PRM-0012 una sola vez.
 2. Confirmar PR #3 abierto y draft, rama feature/xma-b03-discovery.
 3. Registrar el SHA y tree de gobernanza que contengan AUD-0005 v0.1.2, este prompt y DOT-PRM-0014.
 4. Confirmar CI verde sobre ese tree y worktree limpio.
