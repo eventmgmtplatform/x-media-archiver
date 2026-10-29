@@ -30,7 +30,9 @@ manifest de distribución.
 
 ## Método B — wheel local en un entorno virtual
 
-El wheel puede construirse desde el tag gobernado:
+Después de la publicación autorizada, el wheel puede construirse desde el tag gobernado. Antes de
+esa decisión, los siguientes comandos describen la comprobación del candidato local y no una
+distribución publicada:
 
 ```bash
 uv build

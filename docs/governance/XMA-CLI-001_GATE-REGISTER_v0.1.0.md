@@ -95,6 +95,7 @@
 | GOV-RC-0039 | Release | PRM-0033 limita el rework a cumplimiento y operabilidad del RC. | GPL-2.0-only completo, source gallery-dl verificado, bundle autocontenido y manifest/checksums validados. | Espera validación humana; sin merge, tag, Release, PyPI o acceso a X. |
 | GOV-RWK-0042 | v0.1.1 | PRM-0032 y Addendum 001 autorizan recovery, modo aditivo, scan acotado y quality provider-best. | Implementación/offline validation en rama hotfix; download absoluto/aditivo 1–10, global máximo 10. | Requiere CI y aceptación pública 0→1→2→5; sin dot, merge, tag, Release, PyPI o operación masiva. |
 | GOV-VAL-0043 | v0.1.1 | PRM-0032 completó CI y la aceptación pública única 0→1→2→5 más no-op 5→5. | `V0.1.1_HOTFIX_VALIDATED / WAITING_CHAT_RELEASE_DECISION`; cinco artifacts íntegros y provider-best verificado. | Requiere decisión humana separada; sin dot, merge, tag, Release, PyPI, total >10 u operación masiva. |
+| GOV-RC-0044 | v0.1.1 | PRM-0034 autoriza preparar el candidato desde el hotfix validado sin cambios funcionales. | Documentación, bundle, checksums, manifest, SBOM, CI quality y portabilidad Ubuntu quedan sujetos al gate RC. | Mantener PR draft; sin X, merge, tag, Release, PyPI o versión posterior. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

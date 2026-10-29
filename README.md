@@ -18,6 +18,9 @@ macOS are not certified. A local filesystem with `flock` is required for durable
 
 Recommended release bundle:
 
+After an authorized v0.1.1 publication, download the immutable release assets, verify
+`SHA256SUMS`, and then extract the bundle:
+
 ```bash
 tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
 cd xma-v0.1.1-linux-x86_64
@@ -25,9 +28,12 @@ cd xma-v0.1.1-linux-x86_64
 ./xma version
 ```
 
-The bundle does not require a system Python or uv.
+The candidate bundle does not require a system Python or uv. These installation commands describe
+the future immutable v0.1.1 release and must not be used to imply that publication already occurred.
 
 Advanced source installation:
+
+Use this only after the immutable `v0.1.1` tag is published:
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git

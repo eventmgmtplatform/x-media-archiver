@@ -247,3 +247,7 @@ flujo permite más de diez, operación masiva o scheduler. La promoción requier
 La implementación completó 391 pruebas con cobertura 90.63%, CI verde y la secuencia pública única
 0→1→2→5. El `--limit 1` posterior fue un no-op offline que conservó cinco artifacts. Estado:
 `V0.1.1_HOTFIX_VALIDATED / WAITING_CHAT_RELEASE_DECISION`; publicación sigue sin autorización.
+
+PRM-0034 autoriza únicamente la preparación del release candidate: reconciliación documental,
+validación local/distributiva, rama `release/v0.1.1` fast-forward y CI quality/RC sobre el mismo
+commit. No autoriza cambios runtime, X, merge, tag, GitHub Release, PyPI, v0.1.2 o v0.2.0.

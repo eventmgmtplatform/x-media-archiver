@@ -2,7 +2,8 @@
 
 ## Install and verify
 
-Extract the Linux x86_64 bundle, enter its directory, and verify the embedded CLI:
+After an authorized v0.1.1 publication, verify `SHA256SUMS`, extract the immutable Linux x86_64
+release bundle, enter its directory, and verify the embedded CLI:
 
 ```bash
 tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
@@ -12,7 +13,9 @@ cd xma-v0.1.1-linux-x86_64
 ```
 
 The version must be `0.1.1`. The bundle needs neither Python nor `uv`. Before extraction, verify
-the distributed `SHA256SUMS` from the parent directory with `sha256sum -c SHA256SUMS`.
+the distributed `SHA256SUMS` from the parent directory with `sha256sum -c SHA256SUMS`. Until the
+tag and Release are separately authorized and published, this document describes a validated
+candidate rather than an available release.
 
 ## Firefox authentication
 

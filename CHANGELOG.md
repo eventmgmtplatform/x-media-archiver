@@ -5,6 +5,10 @@ Versioning.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.1.1] - 2026-10-29
+
 ### Added
 
 - Additive interactive download through `--add 1..10`, bounded scanning and explicit
@@ -24,17 +28,6 @@ Versioning.
 ### Security
 
 - Reject invalid or additive totals above ten before provider/authentication/network construction.
-
-### Known Limitations
-
-- Operation remains capped at ten videos.
-
-## [0.1.1] - 2026-10-29
-
-### Fixed
-
-- Download retry/reconciliation, additive semantics, bounded scan exhaustion and provider-best
-  metadata for the v0.1.1 hotfix candidate.
 
 ### Known Limitations
 
