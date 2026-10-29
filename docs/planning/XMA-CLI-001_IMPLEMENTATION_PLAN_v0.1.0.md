@@ -134,6 +134,10 @@ reanudación BBCWorld completó `4 → 5`, preservó los cuatro hashes iniciales
 artifact/job. Estado `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; el gate humano sigue
 pendiente y no se autoriza descarga masiva, merge o B05.
 
+Leonel cerró B04 como `VALIDATED_WITH_OBSERVATIONS`. B05 puede comenzar exclusivamente en la rama
+apilada `feature/xma-b05-durable-archive`, con paginación `RESCAN_DEDUP_V1`, checkpoints, rate
+limiting, reanudación y status; la primera aceptación queda limitada a diez videos.
+
 
 ## Reauditoría A-06
 

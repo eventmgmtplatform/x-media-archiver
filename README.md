@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 LIMIT 5 VALIDATED / WAITING_CHAT_VALIDATION`
+- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 VALIDATED_WITH_OBSERVATIONS`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -139,6 +139,10 @@ candidato entregado podía convertirse en `WORKER_FAILED`. La reanudación únic
 los cuatro hashes originales y completó `4 → 5` descargando exactamente un activo nuevo. HND-0004
 v1.0.0 registra `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; no habilita descarga masiva,
 merge o B05.
+
+Leonel cerró posteriormente B04 como `VALIDATED_WITH_OBSERVATIONS`: quedan demostrados los cortes
+1/2/5, SINGLE_POST, integridad, deduplicación y reanudación. Operación masiva, paginación eficiente,
+scheduler, release y certificación permanecen fuera de B04.
 
 ## Discovery B03
 

@@ -35,6 +35,7 @@
 | 2026-10-29 | B04 single-post acceptance retry | PRM-0024 y HND-0004 v0.8.1 | `SINGLE_POST_NO_VIDEO`; arnés separado, post exacto agotado sin candidato, total 0 | Una ejecución consumida; sin retry, cambios funcionales ni B05 |
 | 2026-10-29 | B04 single-post parity/download | PRM-0025 y HND-0004 v0.9.0 | `SINGLE_POST_DOWNLOAD_VALIDATED / WAITING_CHAT_VALIDATION`; inspect y descarga exacta pasaron con un activo íntegro | Una ejecución de cada fase consumida; sin retry, masivo, merge ni B05 |
 | 2026-10-29 | B04 fifth-asset recovery | PRM-0026 y HND-0004 v1.0.0 | `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; reanudación BBCWorld preservó 4 y descargó 1 | Una ejecución consumida; gate humano pendiente, sin retry, masivo, merge ni B05 |
+| 2026-10-29 | B04 gate closure | PRM-0027 y HND-0004 v1.0.1 | `VALIDATED_WITH_OBSERVATIONS` | Leonel cierra B04; no autoriza merge, release, operación masiva ni dot |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -69,6 +70,7 @@
 | GOV-BLK-0029 | B04 | PRM-0024 corrigió el arnés y el post exacto terminó `PROVIDER_EXHAUSTED` tras iniciar extractor, sin video o candidato. | `SINGLE_POST_NO_VIDEO`; código 8, total 0, sin SQLite, medios o residuos. | No repetir ni probar otro post/perfil; siguiente decisión corresponde al gate humano. |
 | GOV-EVD-0030 | B04 | PRM-0025 corrigió `/timeline` en inspect SINGLE_POST; inspect y download del post autorizado terminaron código 0. | `SINGLE_POST_DOWNLOAD_VALIDATED / WAITING_CHAT_VALIDATION`; un MP4 y evidencia íntegra. | Gate humano pendiente; no autoriza retry, merge, descarga masiva o B05. |
 | GOV-EVD-0031 | B04 | PRM-0026 reprodujo el falso `WORKER_FAILED` posterior al candidato final y corrigió la clasificación. | `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; BBCWorld completó `4 → 5` con integridad. | Gate humano pendiente; no autoriza retry, merge, descarga masiva o B05. |
+| GOV-DEC-0032 | B04/B05 | Leonel acepta la evidencia acumulada B04 y sus observaciones. | B04 `VALIDATED_WITH_OBSERVATIONS`; B05 autorizado en rama/PR apilados con máximo público 10. | Sin merge, tag, release, dot o miles de descargas. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

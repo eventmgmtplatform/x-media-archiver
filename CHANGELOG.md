@@ -28,6 +28,8 @@
   descarga exacta con integridad completa (`SINGLE_POST_DOWNLOAD_VALIDATED`).
 - Evita clasificar como `WORKER_FAILED` el EOF/terminal posterior al último candidato válido y
   valida la reanudación BBCWorld `4 → 5` sin sobrescribir progreso.
+- Cierra formalmente B04 como `VALIDATED_WITH_OBSERVATIONS`, conservando como límites la ausencia
+  de operación masiva, paginación eficiente, scheduler, release y certificación.
 
 ## [Unreleased]
 
