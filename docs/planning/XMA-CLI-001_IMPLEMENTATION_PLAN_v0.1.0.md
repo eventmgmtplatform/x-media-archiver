@@ -107,6 +107,10 @@ las regresiones offline quedaron verdes, pero la única aceptación límite 2 no
 `EXTRACTOR_STARTED` antes de dos timeouts. El repositorio conserva exactamente un activo íntegro;
 Q4 continúa `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED` y límite 5 no se habilitó.
 
+GOV-AUTH-0026/PRM-0021 ejecutó BBCWorld límite 2 una sola vez desde cero. Los dos workers alcanzaron
+el extractor sin candidato y el total permaneció cero; no se creó SQLite ni medio y límite 5 quedó
+inhabilitado. Q4 continúa `PROVIDER_BLOCKED`; no hubo cambio funcional.
+
 
 ## Reauditoría A-06
 

@@ -106,6 +106,11 @@ extractor, pero no observaron perfil o video antes de `PROVIDER_TIMEOUT`; el act
 íntegro y límite 5 no se ejecutó. HND-0004 v0.5.0 mantiene
 `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`.
 
+PRM-0021 probó una sola vez BBCWorld en un repositorio nuevo. Los dos workers cargaron autenticación
+e iniciaron el extractor, pero no emitieron perfil, video o candidato antes de
+`PROVIDER_TIMEOUT`. El manifest registra `0 → 0`, sin SQLite, medios o residuos; límite 5 no se
+habilitó. HND-0004 v0.6.0 clasifica el resultado `PROVIDER_BLOCKED`.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.

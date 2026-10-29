@@ -16,6 +16,8 @@
   reanudación; PRM-0019 preservó el lote inicial pero no descubrió un segundo activo.
 - Sustituye la Queue incremental por Pipe síncrono, DTO primitivo versionado, terminales explícitos y
   telemetría sanitizada; PRM-0020 preservó el activo inicial y quedó bloqueado por timeout externo.
+- Registra la aceptación alternativa BBCWorld de PRM-0021: dos workers sin candidatos, total 0 y
+  `PROVIDER_BLOCKED`; límite 5 no ejecutado y sin cambios funcionales.
 
 ## [Unreleased]
 

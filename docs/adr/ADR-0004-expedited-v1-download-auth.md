@@ -97,3 +97,11 @@ Las pruebas offline no reprodujeron pérdida por feeder de Queue, de modo que es
 siendo una inferencia histórica, no causa confirmada. La única prueba pública PRM-0020 cargó auth e
 inició el extractor en dos workers de 30 s, pero no emitió `PROFILE_SEEN` ni candidatos y terminó
 `PROVIDER_TIMEOUT`. El total permaneció en uno; límite 5 no se ejecutó.
+
+## Aceptación alternativa PRM-0021
+
+GOV-AUTH-0026 autorizó una única ejecución BBCWorld límite 2 en un repositorio nuevo y límite 5
+solo si se alcanzaban exactamente dos activos. Ambos workers emitieron `WORKER_STARTED`,
+`AUTH_LOADED` y `EXTRACTOR_STARTED`, sin perfil, video o candidato, y el comando terminó código 8 /
+`PROVIDER_TIMEOUT`. El manifest quedó incompleto con total cero; no se creó SQLite ni medio. Límite
+5 no se ejecutó y el estado es `PROVIDER_BLOCKED`.

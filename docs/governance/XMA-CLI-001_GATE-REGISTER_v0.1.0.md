@@ -29,6 +29,7 @@
 | 2026-10-29 | B04 bounded recovery | PRM-0018 y HND-0004 v0.3.0 | `BLOCKED_PUBLIC_DOWNLOAD`; límite 2 no produjo activos; ejecución final 180 s terminó `PROVIDER_TIMEOUT` sin residuos | Leonel amplió expresamente 120/180 s; límite 1 no repetido, límite 5 no ejecutado |
 | 2026-10-29 | B04 incremental recovery | PRM-0019 y HND-0004 v0.4.0 | `PARTIAL_PROGRESS_PRESERVED / BLOCKED`; copia límite 1 íntegra, dos workers sin candidato nuevo | Una ejecución límite 2 consumida; límite 5 no autorizado al no alcanzar total 2 |
 | 2026-10-29 | B04 IPC recovery | PRM-0020 y HND-0004 v0.5.0 | `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`; Pipe/DTO verde, dos workers llegaron a extractor sin candidato | Una ejecución límite 2 consumida; sin retry y límite 5 no ejecutado |
+| 2026-10-29 | B04 BBCWorld acceptance | GOV-AUTH-0026, PRM-0021 y HND-0004 v0.6.0 | `PROVIDER_BLOCKED`; repositorio nuevo, dos workers sin perfil/video/candidato, total 0 | Una ejecución límite 2 consumida; límite 5 no ejecutado y sin cambios funcionales |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -57,6 +58,7 @@
 | GOV-BLK-0023 | B04 | PRM-0018 acotó discovery; límite 2 falló con Firefox y COOKIE_FILE, incluida ampliación humana final a 180 s. | `BLOCKED_PUBLIC_DOWNLOAD`; total exitoso gobernado permanece en un video. | No ejecutar límite 5 ni nuevos intentos sin otra autorización humana. |
 | GOV-BLK-0024 | B04 | PRM-0019 implementó worker incremental/reanudable; ambos intentos internos de 30 s expiraron sin candidato. | `PARTIAL_PROGRESS_PRESERVED / BLOCKED`; total antes/después 1, sin corrupción o residuos. | No repetir límite 2 ni iniciar límite 5 sin nueva decisión humana. |
 | GOV-BLK-0025 | B04 | PRM-0020 sustituyó Queue por Pipe/DTO; la aceptación emitió auth/extractor pero no perfil, video o candidato antes del timeout. | `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`; no se reprodujo una falla IPC y el total permaneció en uno. | No repetir límite 2 ni ejecutar límite 5; requiere decisión humana posterior. |
+| GOV-BLK-0026 | B04 | PRM-0021 probó BBCWorld desde un repositorio vacío; ambos workers agotaron 30 s tras iniciar extractor sin candidato. | `PROVIDER_BLOCKED`; total 0, manifest incompleto, sin SQLite, medios o residuos. | No repetir ni ejecutar límite 5; cualquier nueva prueba requiere otra autorización. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin
