@@ -341,6 +341,56 @@ def test_provider_maps_candidate_then_completed_and_closes_pipe(
     assert context.process is not None and context.process.joined == 1
 
 
+def test_consumer_suspension_does_not_consume_discovery_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.loads(FIXTURE.read_text())
+    messages = [
+        {
+            "version": 1,
+            "kind": "candidate",
+            "profile": incremental._profile_dto(payload["profile_record"]),
+            "post": incremental._candidate_dto(
+                payload["media_records"][0]["_source_url"], payload["media_records"][0]
+            ),
+        },
+        {"version": 1, "kind": "terminal", "status": "COMPLETED"},
+    ]
+    provider, context = _provider(monkeypatch, messages, alive=True)
+    ticks = iter((0.0, 0.0, 0.0, 31.0, 31.0))
+    monkeypatch.setattr("xma.adapters.discovery.incremental.time.monotonic", lambda: next(ticks))
+
+    batches = list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
+
+    assert len(batches) == 1
+    assert context.process is not None and context.process.joined
+
+
+def test_pending_ipc_is_drained_before_expired_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.loads(FIXTURE.read_text())
+    messages = [
+        {
+            "version": 1,
+            "kind": "candidate",
+            "profile": incremental._profile_dto(payload["profile_record"]),
+            "post": incremental._candidate_dto(
+                payload["media_records"][0]["_source_url"], payload["media_records"][0]
+            ),
+        },
+        {"version": 1, "kind": "terminal", "status": "COMPLETED"},
+    ]
+    provider, _ = _provider(monkeypatch, messages, alive=True)
+    ticks = iter((0.0, 31.0, 31.0, 31.0, 31.0))
+    monkeypatch.setattr("xma.adapters.discovery.incremental.time.monotonic", lambda: next(ticks))
+
+    assert (
+        len(list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30)))
+        == 1
+    )
+
+
 def test_single_post_batch_fails_closed_for_post_or_author_mismatch() -> None:
     payload = json.loads(FIXTURE.read_text())
     batch = map_gallery_dl_extraction(
