@@ -122,6 +122,7 @@ class DownloadService:
         from xma.domain.discovery import normalize_discovery_target
 
         normalized = normalize_discovery_target(request.target)
+        manifest_request = DownloadRequest(normalized.canonical_url, request.limit)
         identities, manifest_artifacts = self._load_existing(normalized.handle)
         existing_before = len(identities)
         if existing_before > request.limit:
@@ -131,7 +132,7 @@ class DownloadService:
         downloaded = 0
         if existing_before >= request.limit:
             self._write_manifest(
-                request,
+                manifest_request,
                 run_id,
                 started_at,
                 self._clock(),
@@ -186,7 +187,7 @@ class DownloadService:
                             downloaded += 1
                             progress(f"downloaded {len(identities)}/{request.limit}")
                             self._write_manifest(
-                                request,
+                                manifest_request,
                                 run_id,
                                 started_at,
                                 self._clock(),
@@ -214,7 +215,7 @@ class DownloadService:
 
         complete = len(identities) >= request.limit
         self._write_manifest(
-            request,
+            manifest_request,
             run_id,
             started_at,
             self._clock(),

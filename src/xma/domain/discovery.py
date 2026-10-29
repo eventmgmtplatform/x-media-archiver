@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from enum import StrEnum
 from urllib.parse import urlparse
 
 from xma.domain.enums import MediaType, PostType
@@ -9,15 +10,35 @@ from xma.domain.errors import DomainError, InvalidIdentityError
 from xma.domain.identity import normalize_handle, utc_datetime, validate_non_negative, validate_x_id
 
 
+class DiscoveryTargetKind(StrEnum):
+    """Explicit provider traversal mode."""
+
+    PROFILE = "PROFILE"
+    SINGLE_POST = "SINGLE_POST"
+
+
 @dataclass(frozen=True, slots=True)
 class DiscoveryTarget:
-    """Normalized public X profile target."""
+    """Normalized public X profile or single-post target."""
 
     handle: str
+    kind: DiscoveryTargetKind = DiscoveryTargetKind.PROFILE
+    post_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.kind is DiscoveryTargetKind.SINGLE_POST:
+            if self.post_id is None:
+                raise InvalidIdentityError("single-post target requires a post ID")
+            validate_x_id(self.post_id, "post_id")
+        elif self.post_id is not None:
+            raise InvalidIdentityError("profile target must not include a post ID")
 
     @property
     def canonical_url(self) -> str:
-        return f"https://x.com/{self.handle}"
+        base = f"https://x.com/{self.handle}"
+        if self.kind is DiscoveryTargetKind.SINGLE_POST:
+            return f"{base}/status/{self.post_id}"
+        return base
 
 
 def normalize_discovery_target(value: str) -> DiscoveryTarget:
@@ -30,16 +51,26 @@ def normalize_discovery_target(value: str) -> DiscoveryTarget:
 
     parsed = urlparse(raw)
     host = (parsed.hostname or "").lower()
-    if parsed.scheme != "https" or host not in {
+    profile_hosts = {
         "x.com",
         "www.x.com",
         "mobile.x.com",
         "twitter.com",
         "www.twitter.com",
         "mobile.twitter.com",
-    }:
+    }
+    if parsed.scheme != "https" or host not in profile_hosts:
         raise InvalidIdentityError("target URL must be an HTTPS X or Twitter profile")
     parts = tuple(part for part in parsed.path.split("/") if part)
+    status_hosts = {"x.com", "www.x.com", "twitter.com", "www.twitter.com"}
+    if len(parts) == 3 and parts[1] == "status":
+        if host not in status_hosts or not parts[2].isdecimal():
+            raise InvalidIdentityError("target URL must identify one public X status")
+        return DiscoveryTarget(
+            normalize_handle(parts[0]),
+            DiscoveryTargetKind.SINGLE_POST,
+            validate_x_id(parts[2], "post_id"),
+        )
     if len(parts) != 1 or parsed.query or parsed.fragment:
         raise InvalidIdentityError("target URL must identify one public profile")
     return DiscoveryTarget(normalize_handle(parts[0]))

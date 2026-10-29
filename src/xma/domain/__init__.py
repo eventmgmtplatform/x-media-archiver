@@ -6,6 +6,7 @@ from xma.domain.discovery import (
     DiscoveredProfile,
     DiscoveryBatch,
     DiscoveryTarget,
+    DiscoveryTargetKind,
     normalize_discovery_target,
 )
 from xma.domain.enums import DownloadStatus, MediaType, PostType, RunStatus
@@ -19,6 +20,7 @@ __all__ = [
     "DiscoveryBatch",
     "DiscoveryRun",
     "DiscoveryTarget",
+    "DiscoveryTargetKind",
     "DownloadJob",
     "DownloadStatus",
     "MediaAsset",

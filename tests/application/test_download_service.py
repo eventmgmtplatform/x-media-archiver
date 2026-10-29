@@ -204,6 +204,28 @@ def test_incremental_complete_repository_performs_zero_discovery(tmp_path: Path)
     assert provider.calls == []
 
 
+def test_single_post_incremental_repeat_is_offline_idempotent(tmp_path: Path) -> None:
+    repository = tmp_path / "single-post-repeat"
+    _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", 1))
+    provider = IncrementalFixture([])
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("https://x.com/Reuters/status/9001?share=secret#fragment", 1),
+        provider,
+        30,
+        1,
+        lambda message: None,
+    )
+    assert result.downloaded_count == 0
+    assert result.total_after == 1
+    assert result.target == "https://x.com/Reuters/status/9001"
+    assert provider.calls == []
+    assert "secret" not in json.dumps(result.public_dict())
+    manifest = (repository / "manifests/latest.json").read_text()
+    assert '"target": "https://x.com/Reuters/status/9001"' in manifest
+    assert "secret" not in manifest
+    assert all("secret" not in path.read_text() for path in repository.rglob("metadata.json"))
+
+
 def test_incremental_timeout_preserves_progress_and_second_attempt_completes(
     tmp_path: Path,
 ) -> None:

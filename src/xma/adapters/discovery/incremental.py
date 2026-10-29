@@ -19,7 +19,7 @@ from xma.adapters.discovery.firefox_auth import (
     load_firefox_x_cookies,
 )
 from xma.adapters.discovery.gallery_dl import GalleryDlExtraction, map_gallery_dl_extraction
-from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget
+from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget, DiscoveryTargetKind
 from xma.domain.errors import DiscoveryContractError, DiscoveryTransientError
 
 _VIDEO_TYPES = {"video", "animated_gif"}
@@ -90,6 +90,18 @@ def _terminal(connection: Connection, status: str) -> None:
     _send(connection, {"version": _IPC_VERSION, "kind": "terminal", "status": status})
 
 
+def _target_dto(target: DiscoveryTarget) -> dict[str, str | None]:
+    result = {
+        "kind": target.kind.value,
+        "canonical_url": target.canonical_url,
+        "handle": target.handle,
+        "post_id": target.post_id,
+    }
+    if not _is_ipc_primitive(result):
+        raise ValueError
+    return result
+
+
 class _StreamingDataJob(job.DataJob):  # type: ignore[misc]
     def __init__(
         self, url: str, remaining: int, existing: frozenset[str], output: Connection
@@ -158,7 +170,7 @@ def _configure_worker(
 
 
 def _worker_main(
-    url: str,
+    target: dict[str, str | None],
     remaining: int,
     existing: frozenset[str],
     authentication: BrowserAuthentication | CookieFileAuthentication | None,
@@ -170,7 +182,13 @@ def _worker_main(
         _telemetry(output, "WORKER_STARTED")
         _configure_worker(authentication, timeout_seconds)
         _telemetry(output, "AUTH_LOADED")
-        data_job = _StreamingDataJob(url.rstrip("/") + "/timeline", remaining, existing, output)
+        if target["kind"] == DiscoveryTargetKind.SINGLE_POST.value:
+            job_url = str(target["canonical_url"])
+        elif target["kind"] == DiscoveryTargetKind.PROFILE.value:
+            job_url = str(target["canonical_url"]).rstrip("/") + "/timeline"
+        else:
+            raise ValueError
+        data_job = _StreamingDataJob(job_url, remaining, existing, output)
         _telemetry(output, "EXTRACTOR_STARTED")
         data_job.run()
         terminal = "COMPLETED" if data_job.emitted else "PROVIDER_EXHAUSTED"
@@ -192,6 +210,17 @@ def _reconstruct(profile: Mapping[str, Any], post: Mapping[str, Any]) -> Gallery
     profile_record, post_record = dict(profile), dict(post)
     post_record["_source_url"] = post_record.pop("source_url")
     return GalleryDlExtraction(profile_record, (post_record,))
+
+
+def _validate_target_batch(target: DiscoveryTarget, batch: DiscoveryBatch) -> None:
+    if target.kind is not DiscoveryTargetKind.SINGLE_POST:
+        return
+    if (
+        batch.profile.handle.casefold() != target.handle.casefold()
+        or not batch.posts
+        or any(post.post_id != target.post_id for post in batch.posts)
+    ):
+        raise DiscoveryContractError("single-post provider response violates the target contract")
 
 
 class IncrementalGalleryDlDiscoveryProvider:
@@ -219,7 +248,7 @@ class IncrementalGalleryDlDiscoveryProvider:
         process = context.Process(
             target=_worker_main,
             args=(
-                target.canonical_url,
+                _target_dto(target),
                 remaining,
                 existing_identities,
                 self._authentication,
@@ -261,13 +290,15 @@ class IncrementalGalleryDlDiscoveryProvider:
                     )
                     self._telemetry(f"worker {event}" + (f" {counters}" if counters else ""))
                 elif kind == "candidate":
-                    yield map_gallery_dl_extraction(
+                    batch = map_gallery_dl_extraction(
                         _reconstruct(message["profile"], message["post"]),
                         target,
                         1,
                         datetime.now(UTC),
                         f"gallery-dl:{gallery_dl.__version__}",
                     )
+                    _validate_target_batch(target, batch)
+                    yield batch
                 elif kind == "terminal" and message.get("status") in {
                     "COMPLETED",
                     *_TRANSIENT_TERMINALS,

@@ -7,6 +7,7 @@ from xma.domain.discovery import (
     DiscoveredPost,
     DiscoveredProfile,
     DiscoveryBatch,
+    DiscoveryTargetKind,
     normalize_discovery_target,
 )
 from xma.domain.enums import MediaType, PostType
@@ -32,9 +33,43 @@ def test_normalize_public_profile_targets(value: str, handle: str) -> None:
 
 @pytest.mark.parametrize(
     "value",
-    ["", "https://example.com/Reuters", "http://x.com/Reuters", "https://x.com/a/status/1"],
+    ["", "https://example.com/Reuters", "http://x.com/Reuters"],
 )
 def test_rejects_non_profile_targets(value: str) -> None:
+    with pytest.raises(InvalidIdentityError):
+        normalize_discovery_target(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://x.com/tedmetal/status/2115531877855732095?share=secret#fragment",
+        "https://www.x.com/tedmetal/status/2115531877855732095",
+        "https://twitter.com/tedmetal/status/2115531877855732095",
+        "https://www.twitter.com/tedmetal/status/2115531877855732095",
+    ],
+)
+def test_normalizes_single_post_target_without_query_or_fragment(value: str) -> None:
+    target = normalize_discovery_target(value)
+    assert target.kind is DiscoveryTargetKind.SINGLE_POST
+    assert target.handle == "tedmetal"
+    assert target.post_id == "2115531877855732095"
+    assert target.canonical_url == "https://x.com/tedmetal/status/2115531877855732095"
+    assert "secret" not in target.canonical_url
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://x.com/tedmetal/status/2115531877855732095",
+        "https://example.com/tedmetal/status/2115531877855732095",
+        "https://mobile.x.com/tedmetal/status/2115531877855732095",
+        "https://x.com/tedmetal/status/not-numeric",
+        "https://x.com/tedmetal/status/2115531877855732095/photo/1",
+        "https://t.co/example",
+    ],
+)
+def test_rejects_invalid_single_post_target(value: str) -> None:
     with pytest.raises(InvalidIdentityError):
         normalize_discovery_target(value)
 

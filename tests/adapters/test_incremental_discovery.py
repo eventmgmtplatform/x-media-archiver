@@ -11,6 +11,7 @@ from gallery_dl import config, exception  # type: ignore[import-untyped]
 
 import xma.adapters.discovery.incremental as incremental
 from xma.adapters.discovery.firefox_auth import BrowserAuthentication, CookieFileAuthentication
+from xma.adapters.discovery.gallery_dl import GalleryDlExtraction, map_gallery_dl_extraction
 from xma.domain.discovery import normalize_discovery_target
 from xma.domain.errors import DiscoveryContractError, DiscoveryTransientError
 
@@ -168,7 +169,19 @@ def test_worker_terminal_classification(
             return None
 
     monkeypatch.setattr(incremental, "_StreamingDataJob", Job)
-    incremental._worker_main("https://example.invalid", 1, frozenset(), None, 30, cast(Any, output))
+    incremental._worker_main(
+        {
+            "kind": "PROFILE",
+            "canonical_url": "https://x.com/example",
+            "handle": "example",
+            "post_id": None,
+        },
+        1,
+        frozenset(),
+        None,
+        30,
+        cast(Any, output),
+    )
     assert output.messages[-1] == {"version": 1, "kind": "terminal", "status": terminal}
     assert output.closed
     assert "secret" not in json.dumps(output.messages)
@@ -243,6 +256,48 @@ def test_spawn_target_and_authentication_are_importable_and_serializable() -> No
     assert not hasattr(restored, "ct0")
 
 
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [
+        ("PROFILE", "https://x.com/example/timeline"),
+        ("SINGLE_POST", "https://x.com/example/status/123"),
+    ],
+)
+def test_worker_uses_explicit_target_mode_without_mutating_single_post(
+    monkeypatch: pytest.MonkeyPatch, kind: str, expected: str
+) -> None:
+    output = Connection()
+    observed: list[str] = []
+    monkeypatch.setattr(incremental, "_configure_worker", lambda auth, timeout: None)
+
+    class Job:
+        emitted = 0
+
+        def __init__(self, url: str, *args: object) -> None:
+            observed.append(url)
+
+        def run(self) -> None:
+            return None
+
+    monkeypatch.setattr(incremental, "_StreamingDataJob", Job)
+    incremental._worker_main(
+        {
+            "kind": kind,
+            "canonical_url": "https://x.com/example/status/123"
+            if kind == "SINGLE_POST"
+            else "https://x.com/example",
+            "handle": "example",
+            "post_id": "123" if kind == "SINGLE_POST" else None,
+        },
+        1,
+        frozenset(),
+        None,
+        30,
+        cast(Any, output),
+    )
+    assert observed == [expected]
+
+
 def test_provider_maps_candidate_then_completed_and_closes_pipe(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -267,6 +322,42 @@ def test_provider_maps_candidate_then_completed_and_closes_pipe(
     assert telemetry == ["worker VIDEO_SEEN videos_seen=1"]
     assert context.receiver.closed and context.sender.closed
     assert context.process is not None and context.process.joined == 1
+
+
+def test_single_post_batch_fails_closed_for_post_or_author_mismatch() -> None:
+    payload = json.loads(FIXTURE.read_text())
+    batch = map_gallery_dl_extraction(
+        GalleryDlExtraction(payload["profile_record"], (payload["media_records"][0],)),
+        normalize_discovery_target("Reuters"),
+        1,
+        datetime.now(UTC),
+        "fixture",
+    )
+    target = normalize_discovery_target("https://x.com/Reuters/status/9001?share=secret")
+    incremental._validate_target_batch(target, batch)
+    with pytest.raises(DiscoveryContractError, match="target contract"):
+        incremental._validate_target_batch(
+            normalize_discovery_target("https://x.com/Reuters/status/9999"), batch
+        )
+    with pytest.raises(DiscoveryContractError, match="target contract"):
+        incremental._validate_target_batch(
+            normalize_discovery_target("https://x.com/Other/status/9001"), batch
+        )
+
+
+def test_single_post_target_dto_is_primitive_and_sanitized() -> None:
+    target = normalize_discovery_target(
+        "https://www.twitter.com/tedmetal/status/2115531877855732095?share=secret#fragment"
+    )
+    dto = incremental._target_dto(target)
+    assert incremental._is_ipc_primitive(dto)
+    assert dto == {
+        "kind": "SINGLE_POST",
+        "canonical_url": "https://x.com/tedmetal/status/2115531877855732095",
+        "handle": "tedmetal",
+        "post_id": "2115531877855732095",
+    }
+    assert "secret" not in json.dumps(dto)
 
 
 @pytest.mark.parametrize(
