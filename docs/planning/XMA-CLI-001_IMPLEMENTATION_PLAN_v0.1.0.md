@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 PARTIAL_PROGRESS_PRESERVED / BLOCKED
+**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 VALIDATED_WITH_OBSERVATIONS / B05 REWORK_REQUIRED
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -137,6 +137,11 @@ pendiente y no se autoriza descarga masiva, merge o B05.
 Leonel cerró B04 como `VALIDATED_WITH_OBSERVATIONS`. B05 puede comenzar exclusivamente en la rama
 apilada `feature/xma-b05-durable-archive`, con paginación `RESCAN_DEDUP_V1`, checkpoints, rate
 limiting, reanudación y status; la primera aceptación queda limitada a diez videos.
+
+PRM-0027 implementó el corte durable y obtuvo 332 pruebas verdes con 90.44 % de cobertura. La
+migración preservó cinco assets B04 e integridad, pero la aceptación única terminó código 9 antes
+de discovery: el run inició conteo cero, calculó una página absoluta de dos y chocó con los cinco
+existentes. El run quedó `RUNNING` en página cero. Estado `REWORK_REQUIRED`; no hay retry autorizado.
 
 
 ## Reauditoría A-06

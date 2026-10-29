@@ -26,3 +26,12 @@ media URL, header, token or raw exception enters the checkpoint.
 
 Rollback is code rollback plus retaining schema v2 tables; migration is monotonic and preserves B04
 catalogs. Dropping v2 tables is not automated because it could erase durable run evidence.
+
+## Acceptance observation
+
+The governed PRM-0027 acceptance exposed an orchestration defect before discovery. A migrated B04
+repository contained five valid assets, while the new run initialized `downloaded_total` to zero
+and requested an absolute page total of two. The download boundary correctly rejected
+`existing_before=5 > limit=2`; code 9 preserved all assets. The run remained `RUNNING` because this
+failure was not normalized to `PAUSED` or `FAILED`. B05 is therefore `REWORK_REQUIRED`; no retry is
+authorized by this decision.

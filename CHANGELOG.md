@@ -30,6 +30,9 @@
   valida la reanudación BBCWorld `4 → 5` sin sobrescribir progreso.
 - Cierra formalmente B04 como `VALIDATED_WITH_OBSERVATIONS`, conservando como límites la ausencia
   de operación masiva, paginación eficiente, scheduler, release y certificación.
+- Añade B05 con `archive`, `status`, SQLite v2, checkpoints, lock local y `RESCAN_DEDUP_V1`. La
+  aceptación única sobre cinco activos expuso una inicialización incorrecta del total y terminó
+  código 9 sin redescarga ni pérdida; B05 queda `REWORK_REQUIRED`.
 
 ## [Unreleased]
 

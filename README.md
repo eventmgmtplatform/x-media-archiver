@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 VALIDATED_WITH_OBSERVATIONS`
+- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 VALIDATED_WITH_OBSERVATIONS / B05 REWORK_REQUIRED`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -143,6 +143,32 @@ merge o B05.
 Leonel cerró posteriormente B04 como `VALIDATED_WITH_OBSERVATIONS`: quedan demostrados los cortes
 1/2/5, SINGLE_POST, integridad, deduplicación y reanudación. Operación masiva, paginación eficiente,
 scheduler, release y certificación permanecen fuera de B04.
+
+## Archive B05 — corte durable experimental
+
+`xma archive` acepta únicamente perfiles, un total de 1–10, lotes de 1–5 y un intervalo entre
+páginas de 1–60 segundos. `xma status` consulta el último run completamente offline:
+
+```bash
+uv run xma archive @BBCWorld --limit 10 --batch-size 2 \
+  --repository ./repository --auth-browser firefox --auth-profile <LOCAL_PROFILE> \
+  --request-interval 2 --discovery-timeout 30 --json
+uv run xma status --repository ./repository
+uv run xma status --repository ./repository --json
+```
+
+El repositorio normalizado contiene catálogo, artifacts, sidecars y manifests; nunca debe contener
+cookies, selectores locales ni URLs multimedia firmadas. Los estados son `PENDING`, `RUNNING`,
+`PAUSED`, `COMPLETED` y `FAILED`. `COMPLETED` confirma el total; `PAUSED` o `FAILED` conserva el
+progreso y requiere diagnóstico antes de reanudar.
+
+`RESCAN_DEDUP_V1` vuelve a recorrer el perfil, omite identidades catalogadas y confirma cada página
+antes del checkpoint. Es adecuada para el corte gobernado de diez, pero no para miles.
+
+La aceptación PRM-0027 no descargó ni alteró medios: con cinco activos B04, el servicio inició el
+run con conteo cero y pidió un total absoluto de dos; el downloader rechazó correctamente que ya
+existieran cinco. Terminó código 9 y el run quedó incorrectamente `RUNNING` en página cero. B05
+queda `REWORK_REQUIRED`; no debe repetirse hasta reconciliar conteo y transición terminal.
 
 ## Discovery B03
 
