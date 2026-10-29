@@ -126,7 +126,12 @@ def _classified_error(error: BaseException) -> DiscoveryError:
     detail = f"{error.__class__.__name__}: {error}".lower()
     if "429" in detail or "rate limit" in detail or "ratelimit" in detail:
         return DiscoveryRateLimitError("provider request was limited [PROVIDER_RATE_LIMIT]")
-    if isinstance(error, TimeoutError) or "timeout" in detail or "timed out" in detail:
+    if (
+        isinstance(error, TimeoutError)
+        or "timeout" in detail
+        or "timed out" in detail
+        or "discoverydeadlineexceeded" in detail
+    ):
         return DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
     if "502" in detail:
         return DiscoveryTransientError("temporary provider failure [PROVIDER_HTTP_502]")

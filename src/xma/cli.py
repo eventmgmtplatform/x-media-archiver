@@ -187,7 +187,7 @@ def download_profile(
         typer.Option(
             "--discovery-timeout",
             min=5,
-            max=60,
+            max=120,
             help="Total discovery deadline in seconds (Linux only).",
         ),
     ] = 30,
@@ -256,7 +256,7 @@ def _download_discovery_provider(
     try:
         return BoundedDiscoveryProvider(provider, discovery_timeout)
     except ValueError as error:
-        raise InvalidIdentityError("discovery timeout must be between 5 and 60 seconds") from error
+        raise InvalidIdentityError("discovery timeout must be between 5 and 120 seconds") from error
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:

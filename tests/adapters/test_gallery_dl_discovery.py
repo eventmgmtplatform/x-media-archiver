@@ -96,6 +96,11 @@ def test_classifies_external_errors(error: Exception, expected: type[Exception])
             DiscoveryTransientError,
             "PROVIDER_TIMEOUT",
         ),
+        (
+            RuntimeError("_DiscoveryDeadlineExceeded SENSITIVE"),
+            DiscoveryTransientError,
+            "PROVIDER_TIMEOUT",
+        ),
         (ConnectionError("secret=SENSITIVE"), DiscoveryTransientError, "PROVIDER_CONNECTION"),
         (
             RuntimeError("HTTP 502 https://media.invalid/?secret=SENSITIVE"),

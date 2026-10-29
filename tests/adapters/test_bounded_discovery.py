@@ -75,10 +75,10 @@ def test_watchdog_restores_prior_handler_and_timer(monkeypatch: pytest.MonkeyPat
     assert timers == [(30, 0.0), (0, 0.0), (7.0, 2.0)]
 
 
-@pytest.mark.parametrize("seconds", [4, 61])
+@pytest.mark.parametrize("seconds", [4, 121])
 def test_watchdog_rejects_out_of_range_timeout(seconds: int) -> None:
     marker = cast(DiscoveryBatch, object())
-    with pytest.raises(ValueError, match="between 5 and 60"):
+    with pytest.raises(ValueError, match="between 5 and 120"):
         BoundedDiscoveryProvider(Provider(lambda: marker), seconds)
 
 
