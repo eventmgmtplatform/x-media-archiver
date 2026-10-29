@@ -31,6 +31,7 @@
 | 2026-10-29 | B04 IPC recovery | PRM-0020 y HND-0004 v0.5.0 | `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`; Pipe/DTO verde, dos workers llegaron a extractor sin candidato | Una ejecución límite 2 consumida; sin retry y límite 5 no ejecutado |
 | 2026-10-29 | B04 BBCWorld acceptance | GOV-AUTH-0026, PRM-0021 y HND-0004 v0.6.0 | `PROVIDER_BLOCKED`; repositorio nuevo, dos workers sin perfil/video/candidato, total 0 | Una ejecución límite 2 consumida; límite 5 no ejecutado y sin cambios funcionales |
 | 2026-10-29 | B04 provider parity/spawn | PRM-0022 y HND-0004 v0.7.0 | `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`; inspect pasó, spawn logró 2 y preservó 4 antes de `WORKER_FAILED` | Inspect, límite 2 y límite 5 consumidos una vez; sin retries ni B05 |
+| 2026-10-29 | B04 single-post | PRM-0023 y HND-0004 v0.8.0 | `REWORK_REQUIRED`; implementación/CI verdes, aceptación bloqueada localmente antes de red | Comando consumido una vez; sin retry, medios ni acceso público efectivo |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -61,6 +62,7 @@
 | GOV-BLK-0025 | B04 | PRM-0020 sustituyó Queue por Pipe/DTO; la aceptación emitió auth/extractor pero no perfil, video o candidato antes del timeout. | `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`; no se reprodujo una falla IPC y el total permaneció en uno. | No repetir límite 2 ni ejecutar límite 5; requiere decisión humana posterior. |
 | GOV-BLK-0026 | B04 | PRM-0021 probó BBCWorld desde un repositorio vacío; ambos workers agotaron 30 s tras iniciar extractor sin candidato. | `PROVIDER_BLOCKED`; total 0, manifest incompleto, sin SQLite, medios o residuos. | No repetir ni ejecutar límite 5; cualquier nueva prueba requiere otra autorización. |
 | GOV-BLK-0027 | B04 | PRM-0022 confirmó paridad principal y spawn cambió el resultado: límite 2 pasó, límite 5 llegó a cuatro antes de `WORKER_FAILED`. | `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`; progreso 4 íntegro, cero residuos. | No repetir; el fallo del quinto activo requiere decisión/rework posterior. |
+| GOV-RWK-0028 | B04 | PRM-0023 colocó la captura del smoke dentro del repositorio nuevo, que dejó de estar vacío antes de iniciar XMA. | `REWORK_REQUIRED`; código 9 local, control fail-closed correcto, cero persistencia o red. | No repetir bajo esta autorización; se requiere nuevo mandato para aceptar SINGLE_POST públicamente. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

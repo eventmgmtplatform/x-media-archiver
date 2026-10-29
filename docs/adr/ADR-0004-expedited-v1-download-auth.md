@@ -117,3 +117,14 @@ Con spawn, BBCWorld límite 2 completó `0 → 2` con integridad plena. La ejecu
 `2 → 4` y preservó cuatro activos íntegros antes de terminar código 5 / `WORKER_FAILED`. El cambio
 observable respalda a fork como causa del bloqueo anterior sin candidatos; no demuestra que fork
 cause el fallo posterior del quinto activo. Estado: `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`.
+
+## Target SINGLE_POST PRM-0023
+
+Discovery distingue explícitamente `PROFILE` de `SINGLE_POST`. Una URL HTTPS permitida de estado se
+normaliza a `https://x.com/<handle>/status/<post_id>` sin query/fragment. El DTO spawn contiene solo
+modo, URL canónica, handle y post ID; el worker usa esa URL directamente sin `/timeline`. El padre
+rechaza post o autor distintos antes de descargar.
+
+La única aceptación no alcanzó la red: los archivos locales de captura ocuparon accidentalmente el
+repositorio que debía estar vacío y el control de consistencia terminó código 9. No se creó SQLite,
+manifest, sidecar o medio. No hubo retry conforme al mandato. Estado público: `REWORK_REQUIRED`.

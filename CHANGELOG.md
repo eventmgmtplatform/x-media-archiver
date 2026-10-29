@@ -20,6 +20,8 @@
   `PROVIDER_BLOCKED`; límite 5 no ejecutado y sin cambios funcionales.
 - Cambia el worker incremental de `fork` a `spawn` tras una paridad principal exitosa; BBCWorld
   alcanzó dos activos y preservó cuatro al bloquearse la ampliación a cinco.
+- Añade descarga acotada por URL canónica de un estado mediante target `SINGLE_POST`, con validación
+  fail-closed de post/autor y eliminación de query; la aceptación PRM-0023 quedó `REWORK_REQUIRED`.
 
 ## [Unreleased]
 

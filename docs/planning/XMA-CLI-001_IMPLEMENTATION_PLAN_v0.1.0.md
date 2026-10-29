@@ -115,6 +115,10 @@ PRM-0022 verificó que discovery principal sí producía un activo y migró el w
 BBCWorld límite 2 pasó con dos activos; límite 5 preservó cuatro y terminó `WORKER_FAILED`. Q4 queda
 `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`; no se habilitan B05 ni nuevas ejecuciones.
 
+PRM-0023 implementó el target `SINGLE_POST` con URL canónica y validación fail-closed. Pruebas y CI
+funcionales pasaron, pero la única aceptación se bloqueó localmente antes de red porque la captura
+ocupó el repositorio vacío. Estado `REWORK_REQUIRED`; no se repitió ni se habilita B05.
+
 
 ## Reauditoría A-06
 

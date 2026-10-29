@@ -117,6 +117,12 @@ de `WORKER_FAILED`. El cambio observable respalda `fork` como causa del bloqueo 
 explica el fallo del quinto activo. HND-0004 v0.7.0 registra
 `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`.
 
+PRM-0023 añadió targets explícitos `PROFILE` y `SINGLE_POST`: las URLs HTTPS de estado admitidas se
+canonicalizan sin query/fragment, el worker usa directamente el estado y valida post/autor. La
+aceptación pública no alcanzó discovery porque la captura local ocupó el repositorio vacío y activó
+el control de conflicto; no hubo red ni descarga. HND-0004 v0.8.0 registra `REWORK_REQUIRED` sin
+repetir el comando.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.
