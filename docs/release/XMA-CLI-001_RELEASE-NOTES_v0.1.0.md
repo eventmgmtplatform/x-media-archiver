@@ -13,3 +13,5 @@ quick start, and operating documentation.
 Known limits: Linux x86_64 only; maximum ten; no scheduler, daemon, mass operation or efficient
 remote cursor. Provider availability remains external. Publication still requires the authorized
 human release action.
+
+Product wiki source and its deployment workflow are included. GitHub Pages activation and the Pages deployment remain deferred; this does not affect the CLI artifacts or release verification.

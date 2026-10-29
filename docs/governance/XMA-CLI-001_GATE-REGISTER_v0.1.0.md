@@ -46,6 +46,8 @@
 
 | 2026-10-29 | v0.1.0 product wiki | PR #7, HND-0007 v0.1.1 y workflow `pages.yml` integrados en `release/v0.1.0` | `WIKI_INTEGRATED / PAGES_ACTIVATION_PENDING`; fuente y despliegue automático preparados, URL aún no verificada | Leonel autorizó la configuración; activación administrativa de Pages y ejecución de Pages Actions quedan pendientes por falta de acceso web; sin merge a main, tag o release |
 
+| 2026-10-29 | v0.1.0 publication | PRM-0034, PR #6 y workflow acotado `publish-v0.1.0.yml` | `AUTHORIZED_FOR_PUBLICATION`; squash a main, tag anotado `v0.1.0`, GitHub Release y smoke offline postrelease | Leonel autorizó concluir y publicar v0.1.0; Pages/Pages Actions quedan pendientes y PyPI permanece fuera de alcance |
+
 ## Registro de desviaciones, alertas y rework
 
 | ID | Bloque | Evento | Clasificación | Resolución |
