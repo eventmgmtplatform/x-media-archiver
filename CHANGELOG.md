@@ -52,6 +52,15 @@ Versioning.
 - Authentication remains read-only and fail-closed; cookies, signed URLs and raw provider errors
   are excluded from persistent/public output.
 - Release validation scans dependencies, licenses, tracked secrets and forbidden local artifacts.
+- The v0.1.0 distribution carries the complete GPL-2.0-only text and the verified corresponding
+  source archive for gallery-dl 1.32.18.
+
+### Distribution
+
+- Added a self-contained quick start, README and operating runbooks to the standalone bundle.
+- Added a versioned product wiki and GitHub Pages workflow for release and roadmap control.
+- Added a sanitized `RELEASE-MANIFEST.json` and complete checksums for distributed assets without
+  self-referential hashes.
 
 ### Known Limitations
 
