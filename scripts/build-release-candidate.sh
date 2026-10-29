@@ -15,6 +15,8 @@ mkdir -p "$artifact_dir"
 uv build --out-dir "$artifact_dir"
 uv run pyinstaller --clean --noconfirm --distpath "$work_dir/dist" \
   --workpath "$work_dir/work" packaging/xma.spec
+cp LICENSE THIRD_PARTY_NOTICES.md QUICKSTART.md \
+  "$work_dir/dist/xma-v0.1.0-linux-x86_64/"
 
 tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner \
   -C "$work_dir/dist" -czf "$artifact_dir/xma-v0.1.0-linux-x86_64.tar.gz" \

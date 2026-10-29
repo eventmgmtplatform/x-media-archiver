@@ -21,3 +21,5 @@ done
 test -f "$artifact_dir/sbom.cdx.json"
 test -f "$artifact_dir/THIRD_PARTY_NOTICES.md"
 test -f "$test_dir/xma-v0.1.0-linux-x86_64/LICENSE"
+test -f "$test_dir/xma-v0.1.0-linux-x86_64/THIRD_PARTY_NOTICES.md"
+test -f "$test_dir/xma-v0.1.0-linux-x86_64/QUICKSTART.md"
