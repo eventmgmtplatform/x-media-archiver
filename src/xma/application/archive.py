@@ -10,7 +10,7 @@ from xma.adapters.archive import RepositoryArchiveLock, SQLiteArchiveStore
 from xma.application.download import DownloadService
 from xma.domain.archive import ArchiveRequest, ArchiveRun, ArchiveStatus
 from xma.domain.download import DownloadRequest
-from xma.domain.errors import DiscoveryError, DomainError
+from xma.domain.errors import CatalogError, DiscoveryError, DomainError, DownloadError
 from xma.domain.ports import IncrementalDiscoveryProvider
 
 _STRATEGY = "RESCAN_DEDUP_V1"
@@ -51,8 +51,16 @@ class ArchiveService:
                 current is not None
                 and current.target.casefold() != request.target.handle.casefold()
             ):
+                self._persist_terminal(current, ArchiveStatus.FAILED, "TARGET_CONFLICT")
                 raise DomainError("archive target conflicts with the durable checkpoint")
+            try:
+                verified_total = self._download.verified_total(request.target.handle)
+            except DownloadError:
+                if current is not None:
+                    self._persist_terminal(current, ArchiveStatus.FAILED, "REPOSITORY_INCONSISTENT")
+                raise
             if current is not None and request.requested_total < current.downloaded_total:
+                self._persist_terminal(current, ArchiveStatus.FAILED, "TOTAL_REDUCTION")
                 raise DomainError("archive total must not reduce durable progress")
             if current is None:
                 current = ArchiveRun(
@@ -62,14 +70,38 @@ class ArchiveService:
                     request.batch_size,
                     request.request_interval_seconds,
                     ArchiveStatus.PENDING,
-                    0,
-                    0,
+                    verified_total,
+                    verified_total,
                     0,
                     _STRATEGY,
                     now,
                     now,
                 )
             else:
+                if current.downloaded_total > verified_total:
+                    failed = replace(
+                        current,
+                        status=ArchiveStatus.FAILED,
+                        updated_at=now,
+                        last_error_code="CHECKPOINT_AHEAD_OF_REPOSITORY",
+                    )
+                    self._store.put(failed)
+                    raise DomainError("archive checkpoint is inconsistent with repository")
+                if current.status is ArchiveStatus.RUNNING:
+                    current = replace(
+                        current,
+                        status=ArchiveStatus.PAUSED,
+                        updated_at=now,
+                        last_error_code="INTERRUPTED_PREVIOUS_RUN",
+                    )
+                    self._store.put(current)
+                current = replace(
+                    current,
+                    downloaded_total=verified_total,
+                    existing_before=verified_total
+                    if current.page_number == 0 and current.existing_before != verified_total
+                    else current.existing_before,
+                )
                 current = replace(
                     current,
                     requested_total=max(current.requested_total, request.requested_total),
@@ -85,23 +117,23 @@ class ArchiveService:
                 current, status=ArchiveStatus.RUNNING, updated_at=now, last_error_code=None
             )
             self._store.put(current)
-            first_page = True
-            while current.downloaded_total < request.requested_total:
-                if (
-                    first_page
-                    and current.next_allowed_at is not None
-                    and current.next_allowed_at > self._clock()
-                ):
-                    self._sleep((current.next_allowed_at - self._clock()).total_seconds())
-                elif not first_page:
-                    started = self._monotonic()
-                    self._sleep(float(request.request_interval_seconds))
-                    if self._monotonic() < started:
-                        raise DomainError("archive monotonic clock moved backwards")
-                page_total = min(
-                    request.requested_total, current.downloaded_total + request.batch_size
-                )
-                try:
+            try:
+                first_page = True
+                while current.downloaded_total < request.requested_total:
+                    if (
+                        first_page
+                        and current.next_allowed_at is not None
+                        and current.next_allowed_at > self._clock()
+                    ):
+                        self._sleep((current.next_allowed_at - self._clock()).total_seconds())
+                    elif not first_page:
+                        started = self._monotonic()
+                        self._sleep(float(request.request_interval_seconds))
+                        if self._monotonic() < started:
+                            raise DomainError("archive monotonic clock moved backwards")
+                    page_total = min(
+                        request.requested_total, current.downloaded_total + request.batch_size
+                    )
                     summary = self._download.execute_incremental(
                         DownloadRequest(request.target.handle, page_total),
                         self._provider,
@@ -109,31 +141,48 @@ class ArchiveService:
                         1,
                         progress,
                     )
-                except DiscoveryError as error:
-                    paused = replace(
+                    if summary.total_after != page_total:
+                        raise DownloadError("archive page did not reach its confirmed target")
+                    page = current.page_number + 1
+                    completed = summary.total_after >= request.requested_total
+                    current = replace(
                         current,
-                        status=ArchiveStatus.PAUSED,
+                        status=ArchiveStatus.COMPLETED if completed else ArchiveStatus.RUNNING,
+                        downloaded_total=summary.total_after,
+                        page_number=page,
                         updated_at=self._clock(),
-                        last_error_code=error.__class__.__name__,
+                        completed_at=self._clock() if completed else None,
+                        next_allowed_at=None
+                        if completed
+                        else self._clock() + timedelta(seconds=request.request_interval_seconds),
                     )
-                    self._store.put(paused)
-                    raise
-                page = current.page_number + 1
-                completed = summary.total_after >= request.requested_total
-                current = replace(
-                    current,
-                    status=ArchiveStatus.COMPLETED if completed else ArchiveStatus.RUNNING,
-                    existing_before=summary.existing_before
-                    if current.page_number == 0
-                    else current.existing_before,
-                    downloaded_total=summary.total_after,
-                    page_number=page,
-                    updated_at=self._clock(),
-                    completed_at=self._clock() if completed else None,
-                    next_allowed_at=None
-                    if completed
-                    else self._clock() + timedelta(seconds=request.request_interval_seconds),
-                )
-                self._store.put(current)
-                first_page = False
+                    self._store.put(current)
+                    first_page = False
+            except DiscoveryError as error:
+                self._persist_terminal(current, ArchiveStatus.PAUSED, error.__class__.__name__)
+                raise
+            except KeyboardInterrupt:
+                self._persist_terminal(current, ArchiveStatus.PAUSED, "INTERRUPTED")
+                raise
+            except InterruptedError:
+                self._persist_terminal(current, ArchiveStatus.PAUSED, "INTERRUPTED")
+                raise
+            except (DownloadError, CatalogError, DomainError) as error:
+                self._persist_terminal(current, ArchiveStatus.FAILED, error.__class__.__name__)
+                raise
+            except Exception:
+                self._persist_terminal(current, ArchiveStatus.FAILED, "UNEXPECTED_FAILURE")
+                raise
             return current
+
+    def _persist_terminal(
+        self, current: ArchiveRun, status: ArchiveStatus, error_code: str
+    ) -> None:
+        self._store.put(
+            replace(
+                current,
+                status=status,
+                updated_at=self._clock(),
+                last_error_code=error_code,
+            )
+        )

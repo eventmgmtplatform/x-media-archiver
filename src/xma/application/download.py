@@ -243,10 +243,17 @@ class DownloadService:
             True,
         )
 
+    def verified_total(self, handle: str) -> int:
+        """Return the target-scoped count after verifying catalog and filesystem state."""
+        identities, _ = self._load_existing(handle)
+        return len(identities)
+
     def _load_existing(self, handle: str) -> tuple[set[str], list[dict[str, object]]]:
         database = self._repository / "catalog.sqlite3"
         if not database.exists():
-            if self._repository.exists() and any(self._repository.iterdir()):
+            if self._repository.exists() and any(
+                path.name != ".archive.lock" for path in self._repository.iterdir()
+            ):
                 raise DownloadConflictError("catalog and filesystem do not agree")
             return set(), []
         identities: set[str] = set()
@@ -276,8 +283,11 @@ class DownloadService:
                     sidecar_data = json.loads(sidecar.read_text(encoding="utf-8"))
                 except (OSError, ValueError) as error:
                     raise DownloadConflictError("catalog and filesystem do not agree") from error
-                if sidecar_data.get("profile_handle") != handle:
+                profile_handle = sidecar_data.get("profile_handle")
+                if not isinstance(profile_handle, str):
                     raise DownloadConflictError("catalog and filesystem do not agree")
+                if profile_handle.casefold() != handle.casefold():
+                    continue
                 identities.add(job.asset_id)
                 manifest_artifacts.append(
                     _manifest_artifact(

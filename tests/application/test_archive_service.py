@@ -8,9 +8,9 @@ import pytest
 
 from xma.adapters.archive import RepositoryArchiveLock, SQLiteArchiveStore
 from xma.application.archive import ArchiveService
-from xma.domain.archive import ArchiveRequest, ArchiveStatus
+from xma.domain.archive import ArchiveRequest, ArchiveRun, ArchiveStatus
 from xma.domain.download import DownloadSummary
-from xma.domain.errors import CatalogError, DomainError
+from xma.domain.errors import CatalogError, DiscoveryTransientError, DomainError, DownloadError
 
 NOW = datetime(2026, 10, 29, tzinfo=UTC)
 
@@ -36,6 +36,10 @@ class Download:
             self.total,
             True,
         )
+
+    def verified_total(self, handle: str) -> int:
+        del handle
+        return self.total
 
 
 def service(tmp_path: Path, download: Download, sleeps: list[float]) -> ArchiveService:
@@ -73,7 +77,106 @@ def test_archive_five_to_ten_only_requests_new_total(tmp_path: Path) -> None:
     )
     assert result.existing_before == 5
     assert result.downloaded_total == 10
-    assert download.calls == [2, 7, 9, 10]
+    assert download.calls == [7, 9, 10]
+
+
+def test_reconciles_defective_running_run_five_to_seven_nine_ten(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    store = SQLiteArchiveStore(repository / "catalog.sqlite3")
+    store.put(
+        ArchiveRun(
+            "defective-run",
+            "BBCWorld",
+            10,
+            2,
+            1,
+            ArchiveStatus.RUNNING,
+            0,
+            0,
+            0,
+            "RESCAN_DEDUP_V1",
+            NOW,
+            NOW,
+        )
+    )
+    download, sleeps = Download(5), []  # type: Download, list[float]
+    result = service(tmp_path, download, sleeps).execute(
+        ArchiveRequest.create("BBCWorld", 10, 2, 1), 30, lambda message: None
+    )
+    assert download.calls == [7, 9, 10]
+    assert result.existing_before == 5
+    assert result.downloaded_total == 10
+    assert result.page_number == 3
+    assert result.status is ArchiveStatus.COMPLETED
+    assert result.remaining == 0
+
+
+class FailingDownload(Download):
+    def __init__(self, error: BaseException) -> None:
+        super().__init__()
+        self.error = error
+
+    def execute_incremental(self, request: Any, *args: object) -> DownloadSummary:
+        del request, args
+        raise self.error
+
+
+@pytest.mark.parametrize(
+    ("error", "status", "code"),
+    [
+        (DomainError("invalid"), ArchiveStatus.FAILED, "DomainError"),
+        (DownloadError("failed"), ArchiveStatus.FAILED, "DownloadError"),
+        (
+            DiscoveryTransientError("timeout"),
+            ArchiveStatus.PAUSED,
+            "DiscoveryTransientError",
+        ),
+        (InterruptedError(), ArchiveStatus.PAUSED, "INTERRUPTED"),
+        (KeyboardInterrupt(), ArchiveStatus.PAUSED, "INTERRUPTED"),
+        (RuntimeError("synthetic"), ArchiveStatus.FAILED, "UNEXPECTED_FAILURE"),
+    ],
+)
+def test_every_exit_persists_terminal_state(
+    tmp_path: Path, error: BaseException, status: ArchiveStatus, code: str
+) -> None:
+    archive = service(tmp_path, FailingDownload(error), [])
+    with pytest.raises(type(error)):
+        archive.execute(ArchiveRequest.create("BBCWorld", 1, 1, 1), 30, lambda message: None)
+    restored = SQLiteArchiveStore(tmp_path / "repository/catalog.sqlite3").latest()
+    assert restored is not None
+    assert restored.status is status
+    assert restored.last_error_code == code
+
+
+def test_checkpoint_ahead_of_repository_fails_without_discovery(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    store = SQLiteArchiveStore(repository / "catalog.sqlite3")
+    store.put(
+        ArchiveRun(
+            "ahead",
+            "BBCWorld",
+            10,
+            2,
+            1,
+            ArchiveStatus.PAUSED,
+            5,
+            6,
+            1,
+            "RESCAN_DEDUP_V1",
+            NOW,
+            NOW,
+        )
+    )
+    download = Download(5)
+    with pytest.raises(DomainError, match="checkpoint is inconsistent"):
+        service(tmp_path, download, []).execute(
+            ArchiveRequest.create("BBCWorld", 10, 2, 1), 30, lambda message: None
+        )
+    restored = store.latest()
+    assert restored is not None
+    assert restored.status is ArchiveStatus.FAILED
+    assert restored.last_error_code == "CHECKPOINT_AHEAD_OF_REPOSITORY"
+    assert download.calls == []
 
 
 def test_completed_run_finishes_offline_and_incompatible_target_fails(tmp_path: Path) -> None:
