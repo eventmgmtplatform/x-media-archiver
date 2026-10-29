@@ -84,6 +84,42 @@ def test_reader_failure_is_constant_sanitized_and_has_no_fallback(
 
 
 @pytest.mark.parametrize(
+    "rows",
+    [
+        (),
+        (("ct0", "synthetic-csrf-value", "x.com"),),
+        (("auth_token", "synthetic-auth-value", ".x.com"),),
+        (
+            ("auth_token", "", ".x.com"),
+            ("ct0", "synthetic-csrf-value", "x.com"),
+        ),
+        (
+            ("auth_token", "synthetic-auth-value", ".x.com"),
+            ("ct0", "", "x.com"),
+        ),
+    ],
+    ids=["empty", "ct0-only", "auth-token-only", "empty-auth-token", "empty-ct0"],
+)
+def test_incomplete_session_fails_closed_without_exposing_values(
+    caplog: pytest.LogCaptureFixture,
+    tmp_path: Path,
+    rows: tuple[tuple[str, str, str], ...],
+) -> None:
+    root = _firefox_root(tmp_path, rows=rows)
+
+    with pytest.raises(DiscoveryRestrictedError) as captured:
+        load_firefox_x_cookies(
+            BrowserAuthentication("firefox", "contained-profile"),
+            roots=(root,),
+        )
+
+    public_text = str(captured.value) + caplog.text
+    assert public_text == "authenticated Firefox session is unavailable"
+    assert "synthetic-auth-value" not in public_text
+    assert "synthetic-csrf-value" not in public_text
+
+
+@pytest.mark.parametrize(
     "profile",
     [
         "",
@@ -130,3 +166,27 @@ def test_symlink_escape_is_rejected(tmp_path: Path) -> None:
         DiscoveryRestrictedError, match="authenticated Firefox session is unavailable"
     ):
         load_firefox_x_cookies(BrowserAuthentication("firefox", "contained-profile"), roots=(root,))
+
+
+def test_circular_symlink_is_rejected_with_sanitized_contract(
+    caplog: pytest.LogCaptureFixture, tmp_path: Path
+) -> None:
+    marker = "SYNTHETIC-CIRCULAR-PATH-MARKER"
+    root = tmp_path / "firefox"
+    root.mkdir()
+    circular = root / marker
+    circular.symlink_to(circular)
+    (root / "profiles.ini").write_text(
+        f"[Profile0]\nName=contained-profile\nIsRelative=1\nPath={marker}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(DiscoveryRestrictedError) as captured:
+        load_firefox_x_cookies(
+            BrowserAuthentication("firefox", "contained-profile"),
+            roots=(root,),
+        )
+
+    assert str(captured.value) == "authenticated Firefox session is unavailable"
+    assert captured.value.__cause__ is None
+    assert marker not in str(captured.value) + caplog.text

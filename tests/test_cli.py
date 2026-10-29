@@ -10,7 +10,10 @@ from typer.testing import CliRunner
 
 import xma.cli as cli
 from xma import __version__
-from xma.adapters.discovery.firefox_auth import BrowserAuthentication
+from xma.adapters.discovery.firefox_auth import (
+    BrowserAuthentication,
+    load_firefox_x_cookies,
+)
 from xma.adapters.discovery.gallery_dl import (
     GalleryDlDiscoveryProvider,
     GalleryDlExtraction,
@@ -225,6 +228,112 @@ def test_authenticated_reader_failure_is_sanitized_without_anonymous_fallback(
     assert "authenticated Firefox session is unavailable" in result.stderr
     assert marker not in result.stdout + result.stderr
     assert "Traceback" not in result.stderr
+    assert not repository.exists()
+
+
+@pytest.mark.parametrize("command", ["inspect", "sync"])
+def test_incomplete_authenticated_session_stops_before_job_or_catalog(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, command: str
+) -> None:
+    root = tmp_path / "firefox"
+    profile_directory = root / "Profiles" / "contained"
+    profile_directory.mkdir(parents=True)
+    (root / "profiles.ini").write_text(
+        "[Profile0]\nName=contained-profile\nIsRelative=1\nPath=Profiles/contained\n",
+        encoding="utf-8",
+    )
+    with sqlite3.connect(profile_directory / "cookies.sqlite") as connection:
+        connection.execute("CREATE TABLE moz_cookies(name TEXT, value TEXT, host TEXT)")
+        connection.execute(
+            "INSERT INTO moz_cookies VALUES (?, ?, ?)",
+            ("ct0", "SYNTHETIC-INCOMPLETE-SESSION", "x.com"),
+        )
+
+    def load(authentication: BrowserAuthentication) -> dict[str, str]:
+        return load_firefox_x_cookies(authentication, roots=(root,))
+
+    class UnexpectedJob:
+        def __init__(self, url: str, limit: int) -> None:
+            raise AssertionError("incomplete auth session must not construct a job")
+
+    def unexpected_uow(database: Path) -> object:
+        raise AssertionError("incomplete auth session must not initiate a UoW")
+
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl.load_firefox_x_cookies", load)
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", UnexpectedJob)
+    monkeypatch.setattr(cli, "SQLiteUnitOfWork", unexpected_uow)
+    repository = tmp_path / "must-not-exist"
+    arguments = [
+        command,
+        "Reuters",
+        "--auth-browser",
+        "firefox",
+        "--auth-profile",
+        "contained-profile",
+    ]
+    if command == "sync":
+        arguments.extend(["--repository", str(repository)])
+
+    result = runner.invoke(app, arguments)
+
+    public_text = result.stdout + result.stderr
+    assert result.exit_code == cli.EXIT_RESTRICTED
+    assert "authenticated Firefox session is unavailable" in result.stderr
+    assert "SYNTHETIC-INCOMPLETE-SESSION" not in public_text
+    assert "Traceback" not in public_text
+    assert not repository.exists()
+
+
+@pytest.mark.parametrize("command", ["inspect", "sync"])
+def test_circular_symlink_auth_failure_stops_before_job_or_catalog(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    tmp_path: Path,
+    command: str,
+) -> None:
+    marker = "SYNTHETIC-CIRCULAR-PATH-MARKER"
+    root = tmp_path / "firefox"
+    root.mkdir()
+    circular = root / marker
+    circular.symlink_to(circular)
+    (root / "profiles.ini").write_text(
+        f"[Profile0]\nName=contained-profile\nIsRelative=1\nPath={marker}\n",
+        encoding="utf-8",
+    )
+
+    def load(authentication: BrowserAuthentication) -> dict[str, str]:
+        return load_firefox_x_cookies(authentication, roots=(root,))
+
+    class UnexpectedJob:
+        def __init__(self, url: str, limit: int) -> None:
+            raise AssertionError("circular auth failure must not construct a job")
+
+    def unexpected_uow(database: Path) -> object:
+        raise AssertionError("circular auth failure must not initiate a UoW")
+
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl.load_firefox_x_cookies", load)
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", UnexpectedJob)
+    monkeypatch.setattr(cli, "SQLiteUnitOfWork", unexpected_uow)
+    repository = tmp_path / "must-not-exist"
+    arguments = [
+        command,
+        "Reuters",
+        "--auth-browser",
+        "firefox",
+        "--auth-profile",
+        "contained-profile",
+    ]
+    if command == "sync":
+        arguments.extend(["--repository", str(repository)])
+
+    result = runner.invoke(app, arguments)
+
+    public_text = result.stdout + result.stderr + caplog.text
+    assert result.exit_code == cli.EXIT_RESTRICTED
+    assert "authenticated Firefox session is unavailable" in result.stderr
+    assert marker not in public_text
+    assert "RuntimeError" not in public_text
+    assert "Traceback" not in public_text
     assert not repository.exists()
 
 

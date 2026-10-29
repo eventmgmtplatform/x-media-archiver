@@ -15,6 +15,7 @@ _PROFILE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _AUTH_CONFIGURATION_ERROR = "browser authentication configuration is invalid"
 _AUTH_SESSION_ERROR = "authenticated Firefox session is unavailable"
 _X_COOKIE_HOSTS = ("x.com", ".x.com", "twitter.com", ".twitter.com")
+_REQUIRED_SESSION_COOKIES = ("auth_token", "ct0")
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,8 +52,8 @@ def load_firefox_x_cookies(
                 "SELECT name, value FROM moz_cookies WHERE host IN (?, ?, ?, ?)",
                 _X_COOKIE_HOSTS,
             ).fetchall()
-        cookies = {str(name): str(value) for name, value in rows}
-        if not cookies:
+        cookies = {str(name): value for name, value in rows if isinstance(value, str)}
+        if any(not cookies.get(name) for name in _REQUIRED_SESSION_COOKIES):
             raise ValueError(_AUTH_SESSION_ERROR)
         return cookies
     except (configparser.Error, OSError, sqlite3.Error, ValueError):
@@ -75,8 +76,8 @@ def _resolve_cookie_database(profile: str, roots: tuple[Path, ...]) -> Path:
     matches: list[Path] = []
     for candidate_root in roots:
         try:
-            root = candidate_root.resolve(strict=True)
-            inventory = (root / "profiles.ini").resolve(strict=True)
+            root = _resolve_strict(candidate_root)
+            inventory = _resolve_strict(root / "profiles.ini")
         except OSError:
             continue
         if not inventory.is_relative_to(root) or not inventory.is_file():
@@ -94,17 +95,24 @@ def _resolve_cookie_database(profile: str, roots: tuple[Path, ...]) -> Path:
             if not path_value:
                 raise ValueError(_AUTH_SESSION_ERROR)
             configured = Path(path_value)
-            profile_directory = (
+            profile_directory = _resolve_strict(
                 root / configured
                 if parser.getboolean(section, "IsRelative", fallback=True)
                 else configured
-            ).resolve(strict=True)
+            )
             if not profile_directory.is_relative_to(root) or not profile_directory.is_dir():
                 raise ValueError(_AUTH_SESSION_ERROR)
-            database = (profile_directory / "cookies.sqlite").resolve(strict=True)
+            database = _resolve_strict(profile_directory / "cookies.sqlite")
             if not database.is_relative_to(profile_directory) or not database.is_file():
                 raise ValueError(_AUTH_SESSION_ERROR)
             matches.append(database)
     if len(matches) != 1:
         raise ValueError(_AUTH_SESSION_ERROR)
     return matches[0]
+
+
+def _resolve_strict(path: Path) -> Path:
+    try:
+        return path.resolve(strict=True)
+    except RuntimeError:
+        raise ValueError(_AUTH_SESSION_ERROR) from None

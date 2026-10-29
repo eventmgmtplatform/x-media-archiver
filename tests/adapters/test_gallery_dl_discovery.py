@@ -186,12 +186,18 @@ def test_live_runner_configures_firefox_session_without_export(
     authentication = BrowserAuthentication("firefox", "synthetic-profile")
     monkeypatch.setattr(
         "xma.adapters.discovery.gallery_dl.load_firefox_x_cookies",
-        lambda value: {"auth_token": "synthetic-cookie-value"},
+        lambda value: {
+            "auth_token": "synthetic-auth-value",
+            "ct0": "synthetic-csrf-value",
+        },
     )
 
     _run_gallery_dl("https://x.com/Reuters", 1, authentication)
 
-    expected = {"auth_token": "synthetic-cookie-value"}
+    expected = {
+        "auth_token": "synthetic-auth-value",
+        "ct0": "synthetic-csrf-value",
+    }
     assert config.get(("extractor", "twitter"), "cookies") == expected
     assert config.get(("extractor", "twitter"), "cookies-update") is False
     assert config.get(("cache",), "file") == ":memory:"
