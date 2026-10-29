@@ -105,3 +105,15 @@ solo si se alcanzaban exactamente dos activos. Ambos workers emitieron `WORKER_S
 `AUTH_LOADED` y `EXTRACTOR_STARTED`, sin perfil, video o candidato, y el comando terminó código 8 /
 `PROVIDER_TIMEOUT`. El manifest quedó incompleto con total cero; no se creó SQLite ni medio. Límite
 5 no se ejecutó y el estado es `PROVIDER_BLOCKED`.
+
+## Paridad y spawn PRM-0022
+
+Una única prueba read-only `inspect @BBCWorld --limit 1` en el proceso principal terminó código 0
+en 13 s, observó un perfil público y un activo, y no persistió archivos. Esto aisló la diferencia en
+la frontera multiprocessing. El contexto incremental cambió exclusivamente de `fork` a `spawn`;
+target, autenticación sin cookies, Pipe y argumentos son importables/serializables.
+
+Con spawn, BBCWorld límite 2 completó `0 → 2` con integridad plena. La ejecución límite 5 avanzó
+`2 → 4` y preservó cuatro activos íntegros antes de terminar código 5 / `WORKER_FAILED`. El cambio
+observable respalda a fork como causa del bloqueo anterior sin candidatos; no demuestra que fork
+cause el fallo posterior del quinto activo. Estado: `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`.

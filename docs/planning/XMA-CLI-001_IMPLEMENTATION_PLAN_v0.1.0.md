@@ -111,6 +111,10 @@ GOV-AUTH-0026/PRM-0021 ejecutó BBCWorld límite 2 una sola vez desde cero. Los 
 el extractor sin candidato y el total permaneció cero; no se creó SQLite ni medio y límite 5 quedó
 inhabilitado. Q4 continúa `PROVIDER_BLOCKED`; no hubo cambio funcional.
 
+PRM-0022 verificó que discovery principal sí producía un activo y migró el worker de fork a spawn.
+BBCWorld límite 2 pasó con dos activos; límite 5 preservó cuatro y terminó `WORKER_FAILED`. Q4 queda
+`B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`; no se habilitan B05 ni nuevas ejecuciones.
+
 
 ## Reauditoría A-06
 

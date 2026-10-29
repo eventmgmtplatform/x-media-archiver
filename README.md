@@ -111,6 +111,12 @@ e iniciaron el extractor, pero no emitieron perfil, video o candidato antes de
 `PROVIDER_TIMEOUT`. El manifest registra `0 → 0`, sin SQLite, medios o residuos; límite 5 no se
 habilitó. HND-0004 v0.6.0 clasifica el resultado `PROVIDER_BLOCKED`.
 
+PRM-0022 confirmó paridad en el proceso principal (`inspect`, un activo, 13 s) y sustituyó `fork`
+por `spawn`. BBCWorld límite 2 pasó con dos activos íntegros; límite 5 preservó cuatro activos antes
+de `WORKER_FAILED`. El cambio observable respalda `fork` como causa del bloqueo previo, pero no
+explica el fallo del quinto activo. HND-0004 v0.7.0 registra
+`B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.

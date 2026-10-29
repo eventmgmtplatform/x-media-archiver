@@ -18,6 +18,8 @@
   telemetría sanitizada; PRM-0020 preservó el activo inicial y quedó bloqueado por timeout externo.
 - Registra la aceptación alternativa BBCWorld de PRM-0021: dos workers sin candidatos, total 0 y
   `PROVIDER_BLOCKED`; límite 5 no ejecutado y sin cambios funcionales.
+- Cambia el worker incremental de `fork` a `spawn` tras una paridad principal exitosa; BBCWorld
+  alcanzó dos activos y preservó cuatro al bloquearse la ampliación a cinco.
 
 ## [Unreleased]
 
