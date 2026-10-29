@@ -57,8 +57,8 @@ class BoundedDiscoveryProvider:
         timeout_seconds: int,
         clock: Callable[[], float] | None = None,
     ) -> None:
-        if timeout_seconds < 5 or timeout_seconds > 180:
-            raise ValueError("discovery timeout must be between 5 and 180 seconds")
+        if timeout_seconds < 5 or timeout_seconds > 60:
+            raise ValueError("discovery timeout must be between 5 and 60 seconds")
         self._provider = provider
         self._timeout_seconds = timeout_seconds
         self._clock = clock or time.monotonic

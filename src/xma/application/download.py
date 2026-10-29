@@ -11,10 +11,20 @@ from uuid import uuid4
 from xma.application.discovery import DiscoveryService
 from xma.domain.download import DownloadRequest, DownloadSummary
 from xma.domain.enums import DownloadStatus, RunStatus
-from xma.domain.errors import DownloadConflictError, DownloadError
+from xma.domain.errors import (
+    DiscoveryError,
+    DiscoveryTransientError,
+    DownloadConflictError,
+    DownloadError,
+)
 from xma.domain.identity import media_identity
 from xma.domain.models import Artifact, DiscoveryRun, DownloadJob, MediaAsset, Post, Profile
-from xma.domain.ports import DiscoveryProvider, MediaDownloadProvider, UnitOfWork
+from xma.domain.ports import (
+    DiscoveryProvider,
+    IncrementalDiscoveryProvider,
+    MediaDownloadProvider,
+    UnitOfWork,
+)
 
 
 class DownloadService:
@@ -94,7 +104,190 @@ class DownloadService:
             failed,
             run_id,
             tuple(manifest_artifacts),
+            0,
+            downloaded + skipped,
+            True,
         )
+
+    def execute_incremental(
+        self,
+        request: DownloadRequest,
+        provider: IncrementalDiscoveryProvider,
+        timeout_seconds: int,
+        attempts: int,
+        progress: Callable[[str], None],
+    ) -> DownloadSummary:
+        if attempts < 1 or attempts > 2:
+            raise DownloadError("discovery attempts must be between 1 and 2")
+        from xma.domain.discovery import normalize_discovery_target
+
+        normalized = normalize_discovery_target(request.target)
+        identities, manifest_artifacts = self._load_existing(normalized.handle)
+        existing_before = len(identities)
+        if existing_before > request.limit:
+            raise DownloadConflictError("catalog and filesystem do not agree")
+        run_id = self._run_id_factory()
+        started_at = self._clock()
+        downloaded = 0
+        if existing_before >= request.limit:
+            self._write_manifest(
+                request,
+                run_id,
+                started_at,
+                self._clock(),
+                manifest_artifacts,
+                0,
+                existing_before,
+                0,
+                existing_before=existing_before,
+                complete=True,
+            )
+            return DownloadSummary(
+                normalized.canonical_url,
+                request.limit,
+                0,
+                existing_before,
+                0,
+                run_id,
+                tuple(manifest_artifacts),
+                existing_before,
+                existing_before,
+                True,
+            )
+
+        last_error: DiscoveryError | None = None
+        for attempt in range(1, attempts + 1):
+            progress(f"discovery attempt {attempt}/{attempts}")
+            stream = provider.candidates(
+                normalized,
+                request.limit - len(identities),
+                frozenset(identities),
+                timeout_seconds,
+            )
+            try:
+                for batch in stream:
+                    for post in batch.posts:
+                        for asset in post.assets:
+                            identity = media_identity(asset.post_id, asset.media_index)
+                            if identity in identities:
+                                continue
+                            self._repository.mkdir(parents=True, exist_ok=True)
+                            candidate_run = self._run_id_factory()
+                            self._persist_discovery(batch, candidate_run, self._clock())
+                            result, _ = self._download_asset(
+                                batch.profile.handle,
+                                batch.provider,
+                                post,
+                                asset,
+                                candidate_run,
+                            )
+                            identities.add(identity)
+                            manifest_artifacts.append(result)
+                            downloaded += 1
+                            progress(f"downloaded {len(identities)}/{request.limit}")
+                            self._write_manifest(
+                                request,
+                                run_id,
+                                started_at,
+                                self._clock(),
+                                manifest_artifacts,
+                                downloaded,
+                                existing_before,
+                                0,
+                                existing_before=existing_before,
+                                complete=len(identities) >= request.limit,
+                            )
+                            if len(identities) >= request.limit:
+                                break
+                        if len(identities) >= request.limit:
+                            break
+                    if len(identities) >= request.limit:
+                        break
+            except DiscoveryError as error:
+                last_error = error
+            finally:
+                close = getattr(stream, "close", None)
+                if close is not None:
+                    close()
+            if len(identities) >= request.limit:
+                break
+
+        complete = len(identities) >= request.limit
+        self._write_manifest(
+            request,
+            run_id,
+            started_at,
+            self._clock(),
+            manifest_artifacts,
+            downloaded,
+            existing_before,
+            0,
+            existing_before=existing_before,
+            complete=complete,
+        )
+        if not complete:
+            raise last_error or DiscoveryTransientError(
+                "temporary provider failure [PROVIDER_EXHAUSTED]"
+            )
+        return DownloadSummary(
+            normalized.canonical_url,
+            request.limit,
+            downloaded,
+            existing_before,
+            0,
+            run_id,
+            tuple(manifest_artifacts),
+            existing_before,
+            len(identities),
+            True,
+        )
+
+    def _load_existing(self, handle: str) -> tuple[set[str], list[dict[str, object]]]:
+        database = self._repository / "catalog.sqlite3"
+        if not database.exists():
+            if self._repository.exists() and any(self._repository.iterdir()):
+                raise DownloadConflictError("catalog and filesystem do not agree")
+            return set(), []
+        identities: set[str] = set()
+        manifest_artifacts: list[dict[str, object]] = []
+        with self._unit_of_work_factory() as unit:
+            jobs = {job.job_id: job for job in unit.catalog.list_download_jobs()}
+            artifacts = unit.catalog.list_artifacts()
+            if len(jobs) != len(artifacts):
+                raise DownloadConflictError("catalog and filesystem do not agree")
+            for artifact in artifacts:
+                job = jobs.get(artifact.job_id)
+                if job is None or job.status is not DownloadStatus.COMPLETED:
+                    raise DownloadConflictError("catalog and filesystem do not agree")
+                media = unit.catalog.get_media_asset(job.asset_id)
+                if media is None:
+                    raise DownloadConflictError("catalog and filesystem do not agree")
+                absolute = self._repository / artifact.relative_path
+                sidecar = absolute.parent / "metadata.json"
+                if (
+                    not absolute.is_file()
+                    or absolute.stat().st_size != artifact.size_bytes
+                    or _sha256(absolute) != artifact.sha256
+                    or not sidecar.is_file()
+                ):
+                    raise DownloadConflictError("catalog and filesystem do not agree")
+                try:
+                    sidecar_data = json.loads(sidecar.read_text(encoding="utf-8"))
+                except (OSError, ValueError) as error:
+                    raise DownloadConflictError("catalog and filesystem do not agree") from error
+                if sidecar_data.get("profile_handle") != handle:
+                    raise DownloadConflictError("catalog and filesystem do not agree")
+                identities.add(job.asset_id)
+                manifest_artifacts.append(
+                    _manifest_artifact(
+                        job.asset_id,
+                        artifact.relative_path,
+                        artifact.size_bytes,
+                        artifact.sha256,
+                        sidecar.relative_to(self._repository).as_posix(),
+                    )
+                )
+        return identities, manifest_artifacts
 
     def _persist_discovery(self, batch: object, run_id: str, started_at: datetime) -> None:
         from xma.domain.discovery import DiscoveryBatch
@@ -332,6 +525,9 @@ class DownloadService:
         downloaded: int,
         skipped: int,
         failed: int,
+        *,
+        existing_before: int = 0,
+        complete: bool = True,
     ) -> None:
         directory = self._repository / "manifests"
         directory.mkdir(parents=True, exist_ok=True)
@@ -348,6 +544,11 @@ class DownloadService:
             "finished_at": finished_at.isoformat(),
             "run_id": run_id,
             "artifacts": artifacts,
+            "requested_total": request.limit,
+            "existing_before": existing_before,
+            "downloaded_this_run": downloaded,
+            "total_after": existing_before + downloaded,
+            "complete": complete,
         }
         temporary.write_text(
             json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n",

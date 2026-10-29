@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -67,11 +68,24 @@ class Media:
         )
 
 
+class Incremental:
+    def candidates(
+        self,
+        target: DiscoveryTarget,
+        remaining: int,
+        existing_identities: frozenset[str],
+        timeout_seconds: int,
+    ) -> Iterator[DiscoveryBatch]:
+        del existing_identities, timeout_seconds
+        yield Discovery().discover(target, remaining)
+
+
 def test_download_json_is_stable_and_omits_ephemeral_url(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setattr(cli, "_provider_factory", Discovery)
     monkeypatch.setattr(cli, "_media_provider_factory", Media)
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
     repository = tmp_path / "repository"
 
     result = runner.invoke(
@@ -102,8 +116,8 @@ def test_download_cli_rejects_limit_outside_one_to_five(limit: str) -> None:
     assert result.exit_code == cli.EXIT_INVALID_INPUT
 
 
-@pytest.mark.parametrize("timeout", ["4", "181"])
-def test_download_cli_rejects_timeout_outside_five_to_one_eighty(timeout: str) -> None:
+@pytest.mark.parametrize("timeout", ["4", "61"])
+def test_download_cli_rejects_timeout_outside_five_to_sixty(timeout: str) -> None:
     result = runner.invoke(app, ["download", "Reuters", "--discovery-timeout", timeout])
     assert result.exit_code == cli.EXIT_INVALID_INPUT
 
@@ -113,15 +127,23 @@ def test_download_timeout_is_sanitized_and_creates_no_state(
 ) -> None:
     marker = "SYNTHETIC-COOKIE-URL-PATH-MARKER"
 
-    class TimeoutDiscovery:
-        def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
+    class TimeoutIncremental:
+        def candidates(
+            self,
+            target: DiscoveryTarget,
+            remaining: int,
+            existing_identities: frozenset[str],
+            timeout_seconds: int,
+        ) -> Iterator[DiscoveryBatch]:
+            del target, remaining, existing_identities, timeout_seconds
             raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
+            yield
 
     class UnexpectedMedia:
         def download(self, source_url: str, part_path: str) -> DownloadedArtifact:
             raise AssertionError("media provider must not run after discovery timeout")
 
-    monkeypatch.setattr(cli, "_provider_factory", TimeoutDiscovery)
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: TimeoutIncremental())
     monkeypatch.setattr(cli, "_media_provider_factory", UnexpectedMedia)
     repository = tmp_path / marker
     result = runner.invoke(
@@ -142,7 +164,14 @@ def test_download_timeout_is_sanitized_and_creates_no_state(
     assert "PROVIDER_TIMEOUT" in result.stderr
     assert marker not in result.stdout + result.stderr
     assert "Traceback" not in result.stderr
-    assert not repository.exists()
+    assert not (repository / "catalog.sqlite3").exists()
+    assert not list(repository.rglob("video.*"))
+    assert not list(repository.rglob("metadata.json"))
+    assert not list(repository.rglob("*.part"))
+    assert not list(repository.rglob("*.tmp"))
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["complete"] is False
+    assert manifest["total_after"] == 0
 
 
 def test_download_cli_rejects_mutually_exclusive_auth_without_disclosure(

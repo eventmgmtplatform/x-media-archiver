@@ -49,6 +49,9 @@ class DownloadSummary:
     failed_count: int
     run_id: str
     artifacts: tuple[dict[str, object], ...]
+    existing_before: int = 0
+    total_after: int = 0
+    complete: bool = True
 
     def public_dict(self) -> dict[str, object]:
         return {
@@ -59,4 +62,8 @@ class DownloadSummary:
             "failed_count": self.failed_count,
             "run_id": self.run_id,
             "artifacts": list(self.artifacts),
+            "existing_before": self.existing_before,
+            "downloaded_this_run": self.downloaded_count,
+            "total_after": self.total_after,
+            "complete": self.complete,
         }

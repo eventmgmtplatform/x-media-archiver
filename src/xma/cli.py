@@ -17,6 +17,7 @@ from xma.adapters.discovery import (
     BrowserAuthentication,
     CookieFileAuthentication,
     GalleryDlDiscoveryProvider,
+    IncrementalGalleryDlDiscoveryProvider,
 )
 from xma.adapters.download import HttpMediaDownloadProvider
 from xma.application.discovery import DiscoveryService, SyncResult
@@ -187,10 +188,19 @@ def download_profile(
         typer.Option(
             "--discovery-timeout",
             min=5,
-            max=180,
+            max=60,
             help="Total discovery deadline in seconds (Linux only).",
         ),
     ] = 30,
+    discovery_attempts: Annotated[
+        int,
+        typer.Option(
+            "--discovery-attempts",
+            min=1,
+            max=2,
+            help="Bounded discovery worker attempts.",
+        ),
+    ] = 2,
     json_output: Annotated[
         bool,
         typer.Option("--json", help="Emit stable JSON without credentials or media URLs."),
@@ -202,13 +212,23 @@ def download_profile(
         provider = _download_discovery_provider(
             auth_browser, auth_profile, cookies_file, discovery_timeout
         )
+        incremental_provider = _download_incremental_provider(
+            auth_browser, auth_profile, cookies_file
+        )
         request = DownloadRequest(target, limit)
-        result = DownloadService(
+        service = DownloadService(
             provider,
             _media_provider_factory(),
             lambda: _catalog_unit(database),
             repository,
-        ).execute(request)
+        )
+        result = service.execute_incremental(
+            request,
+            incremental_provider,
+            discovery_timeout,
+            discovery_attempts,
+            lambda message: error_console.print(message, markup=False),
+        )
     except (InvalidIdentityError, DomainError) as error:
         error_console.print(f"invalid input: {error}", markup=False, style="red")
         raise typer.Exit(EXIT_INVALID_INPUT) from error
@@ -273,7 +293,33 @@ def _download_discovery_provider(
     try:
         return BoundedDiscoveryProvider(provider, discovery_timeout)
     except ValueError as error:
-        raise InvalidIdentityError("discovery timeout must be between 5 and 180 seconds") from error
+        raise InvalidIdentityError("discovery timeout must be between 5 and 60 seconds") from error
+
+
+def _download_incremental_provider(
+    browser: str | None,
+    profile: str | None,
+    cookies_file: Path | None,
+) -> IncrementalGalleryDlDiscoveryProvider:
+    if cookies_file is not None and (browser is not None or profile is not None):
+        raise InvalidIdentityError("download authentication options are mutually exclusive")
+    if cookies_file is not None:
+        try:
+            authentication: BrowserAuthentication | CookieFileAuthentication | None = (
+                CookieFileAuthentication(cookies_file)
+            )
+        except ValueError as error:
+            raise InvalidIdentityError("cookie file configuration is invalid") from error
+    elif browser is None and profile is None:
+        authentication = None
+    elif browser is None or profile is None:
+        raise InvalidIdentityError("browser authentication requires both options")
+    else:
+        try:
+            authentication = BrowserAuthentication(browser, profile)
+        except ValueError as error:
+            raise InvalidIdentityError("browser authentication configuration is invalid") from error
+    return IncrementalGalleryDlDiscoveryProvider(authentication)
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:

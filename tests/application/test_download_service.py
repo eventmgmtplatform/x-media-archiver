@@ -3,6 +3,7 @@
 import hashlib
 import json
 import sqlite3
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -19,7 +20,12 @@ from xma.domain.discovery import (
 )
 from xma.domain.download import DownloadedArtifact, DownloadRequest
 from xma.domain.enums import MediaType, PostType
-from xma.domain.errors import DomainError, DownloadConflictError, DownloadError
+from xma.domain.errors import (
+    DiscoveryTransientError,
+    DomainError,
+    DownloadConflictError,
+    DownloadError,
+)
 
 NOW = datetime(2026, 10, 28, 12, tzinfo=UTC)
 
@@ -89,6 +95,148 @@ def _service(repository: Path, media: FixtureMedia) -> DownloadService:
         clock=lambda: NOW,
         run_id_factory=lambda: "download-run",
     )
+
+
+def _candidate_batch(target: DiscoveryTarget, index: int) -> DiscoveryBatch:
+    post_id = str(9000 + index)
+    return DiscoveryBatch(
+        target,
+        "fixture:incremental",
+        DiscoveredProfile("123", target.handle, "Reuters"),
+        (
+            DiscoveredPost(
+                post_id,
+                "123",
+                f"post {index}",
+                NOW,
+                PostType.POST,
+                (
+                    DiscoveredAsset(
+                        post_id,
+                        0,
+                        MediaType.VIDEO,
+                        1000,
+                        1280,
+                        720,
+                        (f"https://media.invalid/video-{index}.mp4?signature=private",),
+                    ),
+                ),
+            ),
+        ),
+        NOW,
+        1,
+    )
+
+
+class IncrementalFixture:
+    def __init__(self, indices_by_attempt: list[list[int]], *, timeout: bool = False) -> None:
+        self.indices_by_attempt = indices_by_attempt
+        self.timeout = timeout
+        self.calls: list[tuple[int, frozenset[str], int]] = []
+
+    def candidates(
+        self,
+        target: DiscoveryTarget,
+        remaining: int,
+        existing_identities: frozenset[str],
+        timeout_seconds: int,
+    ) -> Iterator[DiscoveryBatch]:
+        call = len(self.calls)
+        self.calls.append((remaining, existing_identities, timeout_seconds))
+        for index in self.indices_by_attempt[call]:
+            yield _candidate_batch(target, index)
+        if self.timeout:
+            raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
+
+
+def _incremental_service(repository: Path, media: FixtureMedia) -> DownloadService:
+    identifiers = iter(f"incremental-run-{index}" for index in range(20))
+    return DownloadService(
+        FixtureDiscovery(),
+        media,
+        lambda: SQLiteUnitOfWork(repository / "catalog.sqlite3"),
+        repository,
+        clock=lambda: NOW,
+        run_id_factory=lambda: next(identifiers),
+    )
+
+
+@pytest.mark.parametrize(
+    ("existing", "requested", "new_indices"),
+    [(0, 1, [0]), (1, 2, [1]), (2, 5, [2, 3, 4])],
+)
+def test_incremental_total_limit_downloads_only_remaining(
+    tmp_path: Path, existing: int, requested: int, new_indices: list[int]
+) -> None:
+    repository = tmp_path / f"incremental-{existing}-{requested}"
+    if existing:
+        _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", existing))
+    media = FixtureMedia()
+    service = _incremental_service(repository, media)
+    provider = IncrementalFixture([new_indices])
+
+    result = service.execute_incremental(
+        DownloadRequest("Reuters", requested), provider, 30, 2, lambda message: None
+    )
+
+    assert result.existing_before == existing
+    assert result.downloaded_count == requested - existing
+    assert result.total_after == requested
+    assert result.complete is True
+    assert len(list(repository.glob("profiles/*/posts/*/*/video.mp4"))) == requested
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["requested_total"] == requested
+    assert manifest["existing_before"] == existing
+    assert manifest["downloaded_this_run"] == requested - existing
+    assert manifest["total_after"] == requested
+    assert manifest["complete"] is True
+
+
+def test_incremental_complete_repository_performs_zero_discovery(tmp_path: Path) -> None:
+    repository = tmp_path / "complete"
+    _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", 5))
+    provider = IncrementalFixture([])
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 5), provider, 30, 2, lambda message: None
+    )
+    assert result.downloaded_count == 0
+    assert result.total_after == 5
+    assert provider.calls == []
+
+
+def test_incremental_timeout_preserves_progress_and_second_attempt_completes(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "resume"
+    provider = IncrementalFixture([[0], [1]], timeout=True)
+    progress: list[str] = []
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 2), provider, 30, 2, progress.append
+    )
+    assert result.downloaded_count == 2
+    assert result.complete is True
+    assert progress == [
+        "discovery attempt 1/2",
+        "downloaded 1/2",
+        "discovery attempt 2/2",
+        "downloaded 2/2",
+    ]
+    assert not list(repository.rglob("*.part"))
+    assert not list(repository.rglob("*.tmp"))
+
+
+def test_incremental_two_timeouts_preserve_incomplete_manifest(tmp_path: Path) -> None:
+    repository = tmp_path / "partial"
+    provider = IncrementalFixture([[0], []], timeout=True)
+    with pytest.raises(DiscoveryTransientError, match="PROVIDER_TIMEOUT"):
+        _incremental_service(repository, FixtureMedia()).execute_incremental(
+            DownloadRequest("Reuters", 2), provider, 30, 2, lambda message: None
+        )
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["downloaded_this_run"] == 1
+    assert manifest["total_after"] == 1
+    assert manifest["complete"] is False
+    assert len(list(repository.glob("profiles/*/posts/*/*/video.mp4"))) == 1
 
 
 @pytest.mark.parametrize("limit", [1, 2, 5])
