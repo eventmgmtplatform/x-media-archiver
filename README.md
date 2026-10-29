@@ -100,6 +100,7 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 
 ## Documentation
 
+- [Product wiki](docs/wiki/index.md)
 - [System requirements](docs/requirements/XMA-CLI-001_SYSTEM-REQUIREMENTS_v1.0.0.md)
 - [BAU operations](docs/operations/XMA-CLI-001_BAU-OPERATIONS_v1.0.0.md)
 - [Local CLI runbook](docs/operations/XMA-CLI-001_LOCAL-CLI-RUNBOOK_v0.1.0.md)

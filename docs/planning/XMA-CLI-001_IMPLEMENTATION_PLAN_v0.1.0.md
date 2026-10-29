@@ -185,3 +185,20 @@ La ejecución solo puede comenzar cuando dot reciba directamente exactamente un 
 `.json` cuyos hashes coincidan con HND-0003 v0.3.0. Hasta el dictamen y decisión humana,
 A-06, Q3-Público y B03 continúan `BLOCKED`; merge y B05 siguen sin autorización. La única
 autorización B04 vigente es el corte vertical acotado por GOV-DEC-0020 y ADR-0004.
+
+## Roadmap posterior a v1 — plataforma multimedia extensible
+
+Después de liberar y estabilizar v0.1.0, el producto evolucionará gradualmente hacia un archivador
+multiplataforma local-first. El orden gobernado es: núcleo común de adaptadores, Telegram,
+WhatsApp y posteriormente otras plataformas priorizadas.
+
+La v2 debe separar contratos de identidad, autenticación, discovery, descarga y checkpoints por
+plataforma; preservar compatibilidad con repositorios v1; y añadir cursor remoto durable,
+observabilidad y controles de capacidad antes de autorizar cientos o miles de activos. Cada
+integración requiere revisión de términos, privacidad, autenticación, rate limiting, pruebas offline,
+aceptación pública acotada, rollback y gate humano. No se implementarán bypasses de controles de
+acceso o DRM.
+
+La fuente ejecutiva de seguimiento será `docs/wiki/roadmap.md`, reconciliada con este plan,
+CHANGELOG, ADR, Gate Register y notas de cada release.
+
