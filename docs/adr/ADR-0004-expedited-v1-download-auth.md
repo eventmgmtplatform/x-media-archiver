@@ -128,3 +128,10 @@ rechaza post o autor distintos antes de descargar.
 La única aceptación no alcanzó la red: los archivos locales de captura ocuparon accidentalmente el
 repositorio que debía estar vacío y el control de consistencia terminó código 9. No se creó SQLite,
 manifest, sidecar o medio. No hubo retry conforme al mandato. Estado público: `REWORK_REQUIRED`.
+
+## Repetición de aceptación PRM-0024
+
+Repositorio y logs se crearon como directorios temporales distintos, vacíos, no anidados y fuera de
+Git. El único comando alcanzó `WORKER_STARTED`, `AUTH_LOADED` y `EXTRACTOR_STARTED`, y terminó código
+8 / `PROVIDER_EXHAUSTED` en 3 s sin `PROFILE_SEEN`, `VIDEO_SEEN` o candidato. El manifest canónico
+registra total cero; no se creó SQLite, sidecar o medio. Estado: `SINGLE_POST_NO_VIDEO`.

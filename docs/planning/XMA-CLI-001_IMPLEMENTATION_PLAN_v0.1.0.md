@@ -119,6 +119,10 @@ PRM-0023 implementó el target `SINGLE_POST` con URL canónica y validación fai
 funcionales pasaron, pero la única aceptación se bloqueó localmente antes de red porque la captura
 ocupó el repositorio vacío. Estado `REWORK_REQUIRED`; no se repitió ni se habilita B05.
 
+PRM-0024 repitió una sola vez con repositorio/logs separados y sin cambios funcionales. El post
+exacto agotó discovery sin video ni candidato; total cero, manifest incompleto y cero residuos.
+Estado `SINGLE_POST_NO_VIDEO`; no se autoriza otra ejecución ni B05.
+
 
 ## Reauditoría A-06
 

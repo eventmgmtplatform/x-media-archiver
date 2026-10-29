@@ -22,6 +22,8 @@
   alcanzó dos activos y preservó cuatro al bloquearse la ampliación a cinco.
 - Añade descarga acotada por URL canónica de un estado mediante target `SINGLE_POST`, con validación
   fail-closed de post/autor y eliminación de query; la aceptación PRM-0023 quedó `REWORK_REQUIRED`.
+- Registra la repetición pública PRM-0024 con arnés corregido: el post exacto terminó
+  `PROVIDER_EXHAUSTED` sin video, persistencia o residuos (`SINGLE_POST_NO_VIDEO`).
 
 ## [Unreleased]
 

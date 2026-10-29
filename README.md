@@ -123,6 +123,11 @@ aceptación pública no alcanzó discovery porque la captura local ocupó el rep
 el control de conflicto; no hubo red ni descarga. HND-0004 v0.8.0 registra `REWORK_REQUIRED` sin
 repetir el comando.
 
+PRM-0024 corrigió exclusivamente el arnés local y ejecutó una única aceptación con repositorio y
+logs separados. El worker cargó autenticación e inició el extractor, pero el post exacto no produjo
+ningún video/candidato y terminó `PROVIDER_EXHAUSTED`, código 8. El manifest quedó `0 → 0`, sin
+SQLite, medios o residuos. HND-0004 v0.8.1 registra `SINGLE_POST_NO_VIDEO`.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.
