@@ -11,16 +11,16 @@ title: X Media Archiver
 **XMA** es una CLI local-first para descubrir, catalogar, descargar y reanudar archivos de video
 públicos en un repositorio normalizado, verificable y deduplicado.
 
-> Estado actual: **v0.1.0 Release Candidate**. Linux x86_64, máximo operativo de diez videos.
-> El merge, tag y GitHub Release siguen sujetos al gate humano de liberación.
+> Estado actual: **v0.1.1 publicada**. Linux x86_64, máximo operativo de diez videos.
+> [Descargar GitHub Release v0.1.1](https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.1).
 
 ## Capacidades actuales
 
-| Capacidad | v0.1.0 |
+| Capacidad | v0.1.1 |
 |---|---|
 | Perfil de X | Inspección, catálogo y descarga |
 | Publicación individual de X | Descarga por URL exacta |
-| Lotes | 1, 2 y 5 videos |
+| Lotes | Totales o incrementos configurables de 1 a 10 videos |
 | Archivo durable | Hasta 10 videos |
 | Reanudación | Checkpoints, deduplicación y rate limiting |
 | Evidencia | SQLite, sidecars JSON, manifests, tamaños y SHA-256 |
