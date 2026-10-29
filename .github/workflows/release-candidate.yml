@@ -38,7 +38,7 @@ jobs:
           name: xma-v0.1.0-linux-x86_64
           path: release-artifacts
       - run: |
-          sha256sum -c release-artifacts/SHA256SUMS
+          (cd release-artifacts && sha256sum -c SHA256SUMS)
           test_dir=$(mktemp -d)
           tar -C "$test_dir" -xzf release-artifacts/xma-v0.1.0-linux-x86_64.tar.gz
           env -i PATH=/usr/bin:/bin HOME="$test_dir" "$test_dir/xma-v0.1.0-linux-x86_64/xma" --help
