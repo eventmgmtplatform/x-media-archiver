@@ -24,6 +24,8 @@
   fail-closed de post/autor y eliminación de query; la aceptación PRM-0023 quedó `REWORK_REQUIRED`.
 - Registra la repetición pública PRM-0024 con arnés corregido: el post exacto terminó
   `PROVIDER_EXHAUSTED` sin video, persistencia o residuos (`SINGLE_POST_NO_VIDEO`).
+- Corrige la paridad SINGLE_POST del adaptador principal y valida un `inspect` seguido de una
+  descarga exacta con integridad completa (`SINGLE_POST_DOWNLOAD_VALIDATED`).
 
 ## [Unreleased]
 

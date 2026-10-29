@@ -135,3 +135,14 @@ Repositorio y logs se crearon como directorios temporales distintos, vacíos, no
 Git. El único comando alcanzó `WORKER_STARTED`, `AUTH_LOADED` y `EXTRACTOR_STARTED`, y terminó código
 8 / `PROVIDER_EXHAUSTED` en 3 s sin `PROFILE_SEEN`, `VIDEO_SEEN` o candidato. El manifest canónico
 registra total cero; no se creó SQLite, sidecar o medio. Estado: `SINGLE_POST_NO_VIDEO`.
+
+## Paridad principal y aceptación PRM-0025
+
+El adaptador principal aplica la misma selección explícita por modo que la ruta incremental:
+`PROFILE` conserva `/timeline` y `SINGLE_POST` usa la URL canónica del estado. La respuesta se
+valida fail-closed contra post y autor antes de exponerse o persistirse.
+
+Un único `inspect` del nuevo post terminó código 0 con un activo VIDEO y cero persistencia. La
+descarga única condicionada terminó código 0 y produjo un MP4, sidecar, manifest, artifact y job
+`COMPLETED`, con integridad y hashes coincidentes. Estado: `SINGLE_POST_DOWNLOAD_VALIDATED /
+WAITING_CHAT_VALIDATION`; no equivale a aprobar B04 masivo ni habilita B05.

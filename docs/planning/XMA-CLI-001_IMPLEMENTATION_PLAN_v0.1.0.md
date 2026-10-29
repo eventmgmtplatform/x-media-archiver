@@ -123,6 +123,11 @@ PRM-0024 repitió una sola vez con repositorio/logs separados y sin cambios func
 exacto agotó discovery sin video ni candidato; total cero, manifest incompleto y cero residuos.
 Estado `SINGLE_POST_NO_VIDEO`; no se autoriza otra ejecución ni B05.
 
+PRM-0025 alineó el adaptador principal con el modo SINGLE_POST explícito. Inspect encontró el
+video exacto y habilitó una única descarga, que completó `0 → 1` con catálogo, sidecar, manifest,
+hashes e integridad coherentes. Estado `SINGLE_POST_DOWNLOAD_VALIDATED /
+WAITING_CHAT_VALIDATION`; descarga masiva, merge y B05 permanecen fuera de alcance.
+
 
 ## Reauditoría A-06
 

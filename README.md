@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`
+- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 SINGLE_POST VALIDATED / WAITING_CHAT_VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -127,6 +127,12 @@ PRM-0024 corrigió exclusivamente el arnés local y ejecutó una única aceptaci
 logs separados. El worker cargó autenticación e inició el extractor, pero el post exacto no produjo
 ningún video/candidato y terminó `PROVIDER_EXHAUSTED`, código 8. El manifest quedó `0 → 0`, sin
 SQLite, medios o residuos. HND-0004 v0.8.1 registra `SINGLE_POST_NO_VIDEO`.
+
+PRM-0025 corrigió la paridad del adaptador principal: `PROFILE` conserva `/timeline` y
+`SINGLE_POST` entrega al job la URL canónica directa. Un `inspect` read-only encontró el video
+exacto y la única descarga posterior produjo un MP4 íntegro, sidecar, manifest y catálogo con un
+job `COMPLETED`. HND-0004 v0.9.0 registra `SINGLE_POST_DOWNLOAD_VALIDATED /
+WAITING_CHAT_VALIDATION`; esto no autoriza descarga masiva, merge o B05.
 
 ## Discovery B03
 
