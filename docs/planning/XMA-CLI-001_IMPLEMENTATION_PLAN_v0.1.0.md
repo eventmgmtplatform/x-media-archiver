@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 R-01–R-03 VALIDATED_WITH_OBSERVATIONS / A-06 BLOCKED
+**Estado:** ACTIVE / Q2 CLOSED / B03 R-01–R-03 VALIDATED_WITH_OBSERVATIONS / A-06 WAITING_VALIDATION
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -60,14 +60,14 @@ AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.
 
-A-06 permanece `EVIDENCE_NOT_AVAILABLE`; por ello Q3-Público y la transición general B03 siguen
-`BLOCKED`. Leonel liberó PRM-0012 para una sola prueba pública controlada. Codex debe ejecutar
-únicamente la secuencia gobernada, publicar HND-0003 v0.3.0, esperar CI verde, entregar el paquete
-local verificable y detenerse. DOT-PRM-0014 permanece inactivo hasta entonces.
+A-06 dispone ahora de un paquete local verificable y queda `WAITING_VALIDATION`; no se declara
+aprobado. PRM-0012 se consumió una vez: Reuters produjo exactamente dos activos distintos con
+`--limit 2` y la secuencia se detuvo antes de AP y BBCWorld. HND-0003 v0.3.0 enlaza el catálogo
+y manifest por hash. Q3-Público y la transición general B03 siguen `BLOCKED`.
 
-La prueba, si se libera, conservará temporalmente fuera de Git el catálogo y un paquete sanitizado
-con hash, integridad, conteo e identidades de activos. El paquete deberá entregarse a dot para
-auditoría independiente; si falta o no coincide su hash, A-06 continúa bloqueado.
+El catálogo y manifest permanecen temporalmente fuera de Git para entrega local a Leonel.
+DOT-PRM-0014 puede activarse únicamente después de HND v0.3.0, CI verde y recepción del paquete
+exacto. Si falta o no coincide su hash, A-06 vuelve a quedar bloqueado.
 
 Siguen prohibidos merge, B04/B05, descargas, medios, otros extractores, API X, cookies exportadas,
 tags, releases y certificación. El rework B02 permanece separado y no integrado.
