@@ -41,6 +41,7 @@
 | 2026-10-29 | B05 durable baseline repair | PRM-0029, PR #5 y HND-0005 v0.1.2 | `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`; status durable 5 → 10 reparado offline | Máximo 10; operación masiva y optimización de escala diferidas; sin acceso X, dot, merge, tag o release |
 | 2026-10-29 | B05 local operability closure | PRM-0030 y HND-0005 v0.2.0 | `VALIDATED_WITH_OBSERVATIONS`; runbook y paquetes locales construidos, instalación aislada bloqueada por caché incompleta | Máximo 10; sin red, descargas, merge, tag, release o soporte masivo |
 | 2026-10-29 | B05 isolated install acceptance | PRM-0031 y HND-0005 v0.2.1 | `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; instalación aislada Python 3.12, lock, entry point y status sintético PASS | Máximo 10; sin acceso X, Firefox, descargas, merge, tag, release o soporte masivo |
+| 2026-10-29 | v0.1.0 release candidate | PRM-0032, release/v0.1.0 y HND-0006 | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; snapshot B05 consolidado, B02 reconciliado, bundle/CI preparados | PR draft; sin merge, tag, GitHub Release o PyPI |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -81,6 +82,7 @@
 | GOV-VAL-0035 | B05 | PRM-0029 corrigió el UPSERT y reparó el run bajo precondiciones transaccionales. | `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`; status 5/10, página 3, checkpoint 10, integridad ok. | Decisión humana pendiente; máximo 10, sin acceso X ni operación masiva. |
 | GOV-DEC-0036 | B05 | Leonel autoriza cierre de operabilidad local con observaciones y máximo diez. | B05 `VALIDATED_WITH_OBSERVATIONS`; instalación wheel Python 3.12 no reproducida por ausencia de intérprete/dependencias en caché offline. | No habilitar red; operación masiva, scheduler, cursor remoto y release siguen fuera de alcance. |
 | GOV-VAL-0037 | B05 | PRM-0031 autorizó una instalación aislada y red limitada a Python/PyPI oficiales. | `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; wheel, dependencias bloqueadas, entry point y status sintético verificados. | El wheel sigue local y no publicado; máximo 10, sin X, merge, tag o release. |
+| GOV-RC-0038 | Release | PRM-0032 autoriza preparar v0.1.0 desde main sin publicar. | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; controles de rama, artifacts, SBOM, portabilidad y documentación preparados. | Requiere decisión humana; no autoriza merge, tag, Release o PyPI. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

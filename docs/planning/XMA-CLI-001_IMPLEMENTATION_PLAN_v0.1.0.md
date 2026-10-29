@@ -163,6 +163,11 @@ instalación aislada autorizada. CPython 3.12.13, las dependencias Linux de prod
 desde `uv.lock`, el wheel local, todos los comandos help/version y `status` sintético offline
 pasaron. Estado `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; máximo diez, sin release.
 
+PRM-0032 crea `release/v0.1.0` desde main, consolida mediante squash el snapshot validado B05 y
+reconcilia manualmente las defensas B02 compatibles con B03–B05. Prepara versión/licencia,
+bundle Linux, SBOM, checksums, documentación y workflows; el PR hacia main permanece draft. No se
+autoriza merge, tag, GitHub Release ni PyPI.
+
 
 ## Reauditoría A-06
 

@@ -18,7 +18,7 @@ procedimiento podrá cambiar.
 
 ```bash
 git clone \
-  --branch feature/xma-b05-durable-archive \
+  --branch release/v0.1.0 \
   --single-branch \
   https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
@@ -29,7 +29,7 @@ uv run xma --help
 uv run xma version
 ```
 
-El branch esperado es `feature/xma-b05-durable-archive`. Compare el HEAD con la revisión gobernada
+El branch esperado para el candidato es `release/v0.1.0`. Compare el HEAD con la revisión gobernada
 del handoff vigente.
 
 ## Método B — wheel local en un entorno virtual
