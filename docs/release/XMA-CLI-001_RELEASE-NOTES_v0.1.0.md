@@ -11,7 +11,7 @@ The distribution includes the complete GPL-2.0-only license, third-party notices
 quick start, and operating documentation.
 
 Known limits: Linux x86_64 only; maximum ten; no scheduler, daemon, mass operation or efficient
-remote cursor. Provider availability remains external. Publication still requires the authorized
-human release action.
+remote cursor. Provider availability remains external. This release was published under the
+human authorization recorded in PRM-0034.
 
 Product wiki source and its deployment workflow are included. GitHub Pages activation and the Pages deployment remain deferred; this does not affect the CLI artifacts or release verification.

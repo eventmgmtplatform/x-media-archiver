@@ -219,3 +219,19 @@ sesión GitHub autorizada. La URL no se declara publicada ni verificada.
 
 Este pendiente no modifica funcionalidad, dependencias, esquema, `uv.lock` ni artifacts del
 candidato. Tampoco autoriza merge a `main`, tag, GitHub Release o publicación PyPI.
+
+## Cierre de v0.1.0
+
+PRM-0034 fue autorizado por Leonel y PR #6 se integró mediante squash en `main`. El primer intento
+del workflow de publicación falló antes de crear jobs por sintaxis de evaluación y quedó registrado
+como GOV-RWK-0041. PR #8 corrigió únicamente esa frontera.
+
+El commit `c997cce488b4486ffd8dc079cd25819bec402b77` quedó fijado por el tag anotado e inmutable
+`v0.1.0`. GitHub Release 428337129 fue publicada el 2026-10-29 con diez assets, incluyendo bundle
+Linux, wheel, sdist, manifest, SBOM, requisitos, licencia, avisos, source de gallery-dl y checksums.
+El workflow descargó de nuevo los assets, verificó `SHA256SUMS`, extrajo el bundle y ejecutó
+help/version sin Python o uv.
+
+Estado final: `V0.1.0_RELEASED / POSTRELEASE_VERIFIED`. GitHub Pages y su despliegue permanecen
+pendientes; PyPI no fue autorizado ni publicado. La siguiente evolución funcional pertenece al
+backlog v2 y requiere nuevo gate humano.
