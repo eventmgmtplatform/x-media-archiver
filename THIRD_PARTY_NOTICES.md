@@ -1,6 +1,6 @@
 # Third-party notices
 
-This inventory describes the release-candidate composition; it is not legal advice. Exact
+This inventory describes the v0.1.0 distribution composition; it is not legal advice. Exact
 resolved versions are recorded in `requirements-linux-x86_64.txt` and the CycloneDX SBOM.
 
 | Component | Version/range | License observed | Official source |
@@ -21,8 +21,8 @@ resolved versions are recorded in `requirements-linux-x86_64.txt` and the Cyclon
 
 ## gallery-dl corresponding source
 
-The bundle records `gallery-dl==1.32.18`. Obtain its corresponding source distribution from the
-official PyPI project (`https://pypi.org/project/gallery-dl/1.32.18/#files`) or the upstream tag.
-Official sdist filename: `gallery_dl-1.32.18.tar.gz`; SHA-256:
-`1c5562af3799a0bec96be0f64d95a416aee688fd09fe3893ca3a6c87bbe65bcd`. Download and verify that
-source before distribution. The sdist is not committed to Git.
+The distribution records `gallery-dl==1.32.18` and carries its corresponding official PyPI source
+distribution as `gallery_dl-1.32.18.tar.gz`. Its SHA-256 is
+`1c5562af3799a0bec96be0f64d95a416aee688fd09fe3893ca3a6c87bbe65bcd`. `SHA256SUMS` and
+`RELEASE-MANIFEST.json` bind the distributed copy. The source archive is a generated distribution
+asset and is intentionally not committed to Git.

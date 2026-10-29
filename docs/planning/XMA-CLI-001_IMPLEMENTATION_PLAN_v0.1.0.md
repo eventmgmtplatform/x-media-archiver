@@ -168,6 +168,11 @@ reconcilia manualmente las defensas B02 compatibles con B03–B05. Prepara versi
 bundle Linux, SBOM, checksums, documentación y workflows; el PR hacia main permanece draft. No se
 autoriza merge, tag, GitHub Release ni PyPI.
 
+PRM-0033 completa el cumplimiento del candidato sin cambiar funcionalidad: sustituye el resumen de
+licencia por GPL-2.0-only completo, incorpora como asset el source oficial verificado de gallery-dl
+1.32.18, vuelve autocontenido el bundle y liga source SHA/tree, `uv.lock` y artifacts mediante
+`RELEASE-MANIFEST.json` y `SHA256SUMS`. PR #6 permanece draft y en validación humana.
+
 
 ## Reauditoría A-06
 

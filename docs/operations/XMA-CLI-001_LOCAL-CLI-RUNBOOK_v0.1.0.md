@@ -12,34 +12,29 @@ desatendida, `yt-dlp`, FFmpeg, miniaturas ni `ficha.md`.
 
 ## Método A — ejecución desde source
 
-Mientras PR #5 no esté integrado, `main` no contiene esta versión. No omita `--branch`, no presente
-esta rama como release y verifique branch/HEAD antes de operar. Tras una integración gobernada este
-procedimiento podrá cambiar.
+Clone la revisión publicada y fije el tag inmutable `v0.1.0`. No opere desde una rama móvil.
 
 ```bash
-git clone \
-  --branch release/v0.1.0 \
-  --single-branch \
-  https://github.com/eventmgmtplatform/x-media-archiver.git
+git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git branch --show-current
+git checkout --detach v0.1.0
 git rev-parse HEAD
 uv sync --locked --all-groups
 uv run xma --help
 uv run xma version
 ```
 
-El branch esperado para el candidato es `release/v0.1.0`. Compare el HEAD con la revisión gobernada
-del handoff vigente.
+Confirme que `git describe --exact-match --tags HEAD` devuelve `v0.1.0` y compare el HEAD con el
+manifest de distribución.
 
 ## Método B — wheel local en un entorno virtual
 
-El wheel no es una release ni está publicado. Debe construirse desde el source gobernado:
+El wheel puede construirse desde el tag gobernado:
 
 ```bash
 uv build
 uv venv .venv-xma --python 3.12
-uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.0.dev0-py3-none-any.whl
+uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.0-py3-none-any.whl
 .venv-xma/bin/xma --help
 .venv-xma/bin/xma version
 ```

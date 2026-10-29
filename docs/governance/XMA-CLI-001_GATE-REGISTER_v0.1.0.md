@@ -42,6 +42,7 @@
 | 2026-10-29 | B05 local operability closure | PRM-0030 y HND-0005 v0.2.0 | `VALIDATED_WITH_OBSERVATIONS`; runbook y paquetes locales construidos, instalación aislada bloqueada por caché incompleta | Máximo 10; sin red, descargas, merge, tag, release o soporte masivo |
 | 2026-10-29 | B05 isolated install acceptance | PRM-0031 y HND-0005 v0.2.1 | `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; instalación aislada Python 3.12, lock, entry point y status sintético PASS | Máximo 10; sin acceso X, Firefox, descargas, merge, tag, release o soporte masivo |
 | 2026-10-29 | v0.1.0 release candidate | PRM-0032, release/v0.1.0 y HND-0006 | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; snapshot B05 consolidado, B02 reconciliado, bundle/CI preparados | PR draft; sin merge, tag, GitHub Release o PyPI |
+| 2026-10-29 | v0.1.0 RC compliance | PRM-0033 y HND-0006 v0.1.1 | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; licencia completa, corresponding source, documentación autocontenida y manifest trazable | PR #6 draft; publicación y merge siguen sin autorización |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -83,6 +84,7 @@
 | GOV-DEC-0036 | B05 | Leonel autoriza cierre de operabilidad local con observaciones y máximo diez. | B05 `VALIDATED_WITH_OBSERVATIONS`; instalación wheel Python 3.12 no reproducida por ausencia de intérprete/dependencias en caché offline. | No habilitar red; operación masiva, scheduler, cursor remoto y release siguen fuera de alcance. |
 | GOV-VAL-0037 | B05 | PRM-0031 autorizó una instalación aislada y red limitada a Python/PyPI oficiales. | `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; wheel, dependencias bloqueadas, entry point y status sintético verificados. | El wheel sigue local y no publicado; máximo 10, sin X, merge, tag o release. |
 | GOV-RC-0038 | Release | PRM-0032 autoriza preparar v0.1.0 desde main sin publicar. | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; controles de rama, artifacts, SBOM, portabilidad y documentación preparados. | Requiere decisión humana; no autoriza merge, tag, Release o PyPI. |
+| GOV-RC-0039 | Release | PRM-0033 limita el rework a cumplimiento y operabilidad del RC. | GPL-2.0-only completo, source gallery-dl verificado, bundle autocontenido y manifest/checksums validados. | Espera validación humana; sin merge, tag, Release, PyPI o acceso a X. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin
