@@ -22,6 +22,7 @@ from xma.domain.errors import (
     DiscoveryError,
     DiscoveryRateLimitError,
     DiscoveryRestrictedError,
+    DiscoveryTransientError,
 )
 
 NOW = datetime(2026, 10, 28, 12, tzinfo=UTC)
@@ -85,6 +86,46 @@ def test_provider_uses_normalized_url_and_clock() -> None:
 )
 def test_classifies_external_errors(error: Exception, expected: type[Exception]) -> None:
     assert isinstance(_classified_error(error), expected)
+
+
+@pytest.mark.parametrize(
+    ("error", "expected_type", "classification"),
+    [
+        (
+            TimeoutError("signed=https://media.invalid/?secret=SENSITIVE"),
+            DiscoveryTransientError,
+            "PROVIDER_TIMEOUT",
+        ),
+        (ConnectionError("secret=SENSITIVE"), DiscoveryTransientError, "PROVIDER_CONNECTION"),
+        (
+            RuntimeError("HTTP 502 https://media.invalid/?secret=SENSITIVE"),
+            DiscoveryTransientError,
+            "PROVIDER_HTTP_502",
+        ),
+        (RuntimeError("HTTP 503 secret=SENSITIVE"), DiscoveryTransientError, "PROVIDER_HTTP_503"),
+        (RuntimeError("HTTP 429 cookie=SENSITIVE"), DiscoveryRateLimitError, "PROVIDER_RATE_LIMIT"),
+        (
+            RuntimeError("AuthRequired cookie=SENSITIVE"),
+            DiscoveryRestrictedError,
+            "PROVIDER_RESTRICTED",
+        ),
+        (
+            RuntimeError("unknown https://media.invalid/?secret=SENSITIVE"),
+            DiscoveryContractError,
+            "PROVIDER_CONTRACT",
+        ),
+    ],
+)
+def test_classifies_provider_failures_with_sanitized_stable_code(
+    error: Exception,
+    expected_type: type[Exception],
+    classification: str,
+) -> None:
+    classified = _classified_error(error)
+    assert isinstance(classified, expected_type)
+    assert classification in str(classified)
+    assert "SENSITIVE" not in str(classified)
+    assert "media.invalid" not in str(classified)
 
 
 def test_rejects_broken_or_cross_author_contract() -> None:
@@ -281,7 +322,7 @@ def test_live_runner_rejects_missing_profile_and_constructor_error(
             raise RuntimeError("network down")
 
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", BrokenJob)
-    with pytest.raises(DiscoveryError, match="discovery contract"):
+    with pytest.raises(DiscoveryTransientError, match="PROVIDER_CONNECTION"):
         _run_gallery_dl("https://x.com/Reuters", 1)
 
 

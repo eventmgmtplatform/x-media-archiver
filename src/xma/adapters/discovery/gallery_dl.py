@@ -125,14 +125,22 @@ def _run_gallery_dl(
 def _classified_error(error: BaseException) -> DiscoveryError:
     detail = f"{error.__class__.__name__}: {error}".lower()
     if "429" in detail or "rate limit" in detail or "ratelimit" in detail:
-        return DiscoveryRateLimitError("gallery-dl was rate limited")
+        return DiscoveryRateLimitError("provider request was limited [PROVIDER_RATE_LIMIT]")
+    if isinstance(error, TimeoutError) or "timeout" in detail or "timed out" in detail:
+        return DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
+    if "502" in detail:
+        return DiscoveryTransientError("temporary provider failure [PROVIDER_HTTP_502]")
+    if "503" in detail:
+        return DiscoveryTransientError("temporary provider failure [PROVIDER_HTTP_503]")
+    if isinstance(error, ConnectionError) or any(
+        word in detail for word in ("connection", "network down", "name resolution", "unreachable")
+    ):
+        return DiscoveryTransientError("temporary provider failure [PROVIDER_CONNECTION]")
     if any(word in detail for word in ("cookie", "login", "auth", "protected", "locked")):
-        return DiscoveryRestrictedError("profile is not available anonymously")
+        return DiscoveryRestrictedError("provider access is restricted [PROVIDER_RESTRICTED]")
     if any(word in detail for word in ("404", "notfound", "not found")):
         return DiscoveryNotFoundError("public profile was not found")
-    if any(word in detail for word in ("timeout", "connection", "503", "502")):
-        return DiscoveryTransientError("temporary provider failure; retry later")
-    return DiscoveryContractError("gallery-dl could not satisfy the discovery contract")
+    return DiscoveryContractError("provider contract failure [PROVIDER_CONTRACT]")
 
 
 class GalleryDlDiscoveryProvider:

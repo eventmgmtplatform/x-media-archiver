@@ -474,6 +474,42 @@ def test_external_error_exit_codes(
 
 
 @pytest.mark.parametrize(
+    ("source", "classification", "exit_code"),
+    [
+        (
+            TimeoutError("SYNTHETIC_SECRET signed=https://invalid.example/?token=SENSITIVE"),
+            "PROVIDER_TIMEOUT",
+            8,
+        ),
+        (ConnectionError("SYNTHETIC_SECRET /local/SENSITIVE"), "PROVIDER_CONNECTION", 8),
+        (RuntimeError("HTTP 502 SYNTHETIC_SECRET"), "PROVIDER_HTTP_502", 8),
+        (RuntimeError("HTTP 503 SYNTHETIC_SECRET"), "PROVIDER_HTTP_503", 8),
+        (RuntimeError("HTTP 429 SYNTHETIC_SECRET"), "PROVIDER_RATE_LIMIT", 4),
+        (RuntimeError("AuthRequired SYNTHETIC_SECRET"), "PROVIDER_RESTRICTED", 3),
+        (RuntimeError("unknown SYNTHETIC_SECRET"), "PROVIDER_CONTRACT", 5),
+    ],
+)
+def test_cli_emits_sanitized_provider_classification(
+    monkeypatch: pytest.MonkeyPatch,
+    source: Exception,
+    classification: str,
+    exit_code: int,
+) -> None:
+    from xma.adapters.discovery.gallery_dl import _classified_error
+
+    class FailedProvider:
+        def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
+            raise _classified_error(source)
+
+    monkeypatch.setattr(cli, "_provider_factory", FailedProvider)
+    result = runner.invoke(app, ["inspect", "Reuters"])
+    assert result.exit_code == exit_code
+    assert classification in result.stderr
+    assert "SENSITIVE" not in result.stdout + result.stderr
+    assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize(
     "invalid_duration",
     [-0.0001, -0.0005, -5e-324, "-0.0001", "-1e-400", "-1e-1999999999999999998"],
     ids=[
