@@ -1,4 +1,4 @@
-# X Media Archiver v0.1.1 validated release-candidate notes
+# X Media Archiver v0.1.1 release notes
 
 This bounded hotfix repairs retry/reconciliation after a final media-download failure, makes lower
 absolute limits offline idempotent, adds `download --add`, bounds scanning, and records the explicit
@@ -10,12 +10,13 @@ network or repository creation and direct larger future work to durable `xma arc
 also capped at ten in v0.1.1.
 
 There is no mass-download, scheduler, unattended-operation, transcoding, yt-dlp or FFmpeg support.
-Publication still requires a separate human merge/tag/release decision.
+Version 0.1.1 was published on 2026-10-29 as an immutable annotated tag and GitHub Release.
 
 Governed validation completed 391 offline tests at 90.63% coverage and the single authorized public
 acceptance sequence 0→1→2→5. A subsequent absolute limit 1 was an offline no-op that preserved all
-five verified artifacts. This evidence does not authorize publication or operation above ten.
+five verified artifacts. This evidence does not authorize operation above ten.
 
-The standalone bundle, checksums, manifest, SBOM and Ubuntu portability evidence are release-gate
-outputs. Their successful validation makes the candidate ready for a publication decision; it does
-not mean that a `v0.1.1` tag, GitHub Release or PyPI distribution already exists.
+The published standalone bundle, checksums, manifest, SBOM and Ubuntu portability evidence passed
+their release gates. The public release is available at
+https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.1. PyPI remains
+intentionally unpublished.

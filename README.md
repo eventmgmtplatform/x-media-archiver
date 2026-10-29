@@ -5,21 +5,21 @@ a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
 ## Version status
 
-Version 0.1.1 is a bounded hotfix candidate based on the published v0.1.0 release. Interactive
-download and durable archive both enforce a repository maximum of ten videos; moving branches are
-development sources, not releases, and the product is not certified for bulk operation.
+Version 0.1.1 is the current published bounded release. Interactive download and durable archive
+both enforce a repository maximum of ten videos; moving branches are development sources, not
+releases, and the product is not certified for bulk operation. Download the immutable assets from
+the [GitHub Release v0.1.1](https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.1).
 
 ## Supported platforms
 
-Linux x86_64 is supported. Ubuntu 22.04 and 24.04 are release-candidate test targets. Windows and
+Linux x86_64 is supported. Ubuntu 22.04 and 24.04 are validated release targets. Windows and
 macOS are not certified. A local filesystem with `flock` is required for durable archive locking.
 
 ## Installation
 
 Recommended release bundle:
 
-After an authorized v0.1.1 publication, download the immutable release assets, verify
-`SHA256SUMS`, and then extract the bundle:
+Download the immutable v0.1.1 release assets, verify `SHA256SUMS`, and then extract the bundle:
 
 ```bash
 tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
@@ -28,12 +28,11 @@ cd xma-v0.1.1-linux-x86_64
 ./xma version
 ```
 
-The candidate bundle does not require a system Python or uv. These installation commands describe
-the future immutable v0.1.1 release and must not be used to imply that publication already occurred.
+The published bundle does not require a system Python or `uv`.
 
 Advanced source installation:
 
-Use this only after the immutable `v0.1.1` tag is published:
+Use the immutable published `v0.1.1` tag:
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
@@ -110,7 +109,7 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 - `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
 - Provider availability and authenticated X behavior can change independently of XMA.
-- Verify the eventual `v0.1.1` tag and `SHA256SUMS`; do not install an arbitrary moving branch.
+- Verify the published `v0.1.1` tag and `SHA256SUMS`; do not install an arbitrary moving branch.
 
 ## Documentation
 

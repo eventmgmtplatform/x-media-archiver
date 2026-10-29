@@ -17,7 +17,7 @@ Los comandos principales son:
 |---|---|
 | `inspect` | Descubre metadatos sin persistir |
 | `sync` | Cataloga metadatos en SQLite |
-| `download` | Descarga 1, 2 o 5 activos |
+| `download` | Descarga un total o incremento configurable de 1 a 10 activos |
 | `archive` | Archiva y reanuda hasta 10 activos |
 | `status` | Consulta offline el estado e integridad |
 

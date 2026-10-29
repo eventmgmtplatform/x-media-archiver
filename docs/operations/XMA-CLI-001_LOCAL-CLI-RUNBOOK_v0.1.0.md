@@ -12,8 +12,7 @@ desatendida, `yt-dlp`, FFmpeg, miniaturas ni `ficha.md`.
 
 ## Método A — ejecución desde source
 
-Tras la publicación autorizada, clone y fije el tag inmutable `v0.1.1`. No opere desde una rama
-móvil.
+Clone el repositorio y fije el tag inmutable publicado `v0.1.1`. No opere desde una rama móvil.
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
@@ -30,9 +29,8 @@ manifest de distribución.
 
 ## Método B — wheel local en un entorno virtual
 
-Después de la publicación autorizada, el wheel puede construirse desde el tag gobernado. Antes de
-esa decisión, los siguientes comandos describen la comprobación del candidato local y no una
-distribución publicada:
+El wheel puede construirse desde el tag gobernado y publicado. Los siguientes comandos preparan
+una instalación local aislada:
 
 ```bash
 uv build

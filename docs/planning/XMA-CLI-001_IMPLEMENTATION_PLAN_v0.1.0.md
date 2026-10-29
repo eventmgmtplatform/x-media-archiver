@@ -1,12 +1,12 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 VALIDATED_WITH_OBSERVATIONS / B05 REWORK_REQUIRED
+**Estado:** V0.1.1 RELEASED / POSTRELEASE RECONCILIATION
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
 
-Producir `xma` v0.1.0 capaz de inspeccionar un perfil público, catalogar videos disponibles y descargarlos con documentación normalizada, reanudación e idempotencia.
+Producir y mantener `xma` v0.1.1 para inspeccionar perfiles públicos, catalogar videos y descargarlos con documentación normalizada, reanudación, idempotencia y límites gobernados de hasta diez.
 
 ## Roles y fuente de verdad
 
@@ -251,3 +251,16 @@ La implementación completó 391 pruebas con cobertura 90.63%, CI verde y la sec
 PRM-0034 autoriza únicamente la preparación del release candidate: reconciliación documental,
 validación local/distributiva, rama `release/v0.1.1` fast-forward y CI quality/RC sobre el mismo
 commit. No autoriza cambios runtime, X, merge, tag, GitHub Release, PyPI, v0.1.2 o v0.2.0.
+
+PRM-0035 integró PR #10 mediante squash en el commit firmado
+`9490dbdfd43517a08c68745147d3a6d34d23af25`, conservando el tree RC
+`f5a154687d984d0e50596a8daf17b7a4bd565dda`. El tag anotado `v0.1.1` apunta a ese commit y
+el workflow 40961716484 creó un Release draft con diez assets verificados.
+
+PRM-0036 publicó exclusivamente ese draft. GitHub Release 428434769 quedó público el 2026-10-29;
+`SHA256SUMS`, bundle autónomo 0.1.1, wheel, sdist, manifest, SBOM, licencia, requisitos y source
+de gallery-dl fueron verificados públicamente. PyPI permanece sin publicar.
+
+Estado de producto: `V0.1.1_RELEASED / POSTRELEASE_VERIFIED`. PRM-0037 limita el cierre a
+documentación y ramas obsoletas. GitHub Pages permanece pendiente de activación administrativa y
+no afecta la disponibilidad del Release.

@@ -2,8 +2,9 @@
 
 ## Install and verify
 
-After an authorized v0.1.1 publication, verify `SHA256SUMS`, extract the immutable Linux x86_64
-release bundle, enter its directory, and verify the embedded CLI:
+Download the immutable assets from the published
+[GitHub Release v0.1.1](https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.1),
+verify `SHA256SUMS`, extract the Linux x86_64 bundle, and verify the embedded CLI:
 
 ```bash
 tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
@@ -13,9 +14,7 @@ cd xma-v0.1.1-linux-x86_64
 ```
 
 The version must be `0.1.1`. The bundle needs neither Python nor `uv`. Before extraction, verify
-the distributed `SHA256SUMS` from the parent directory with `sha256sum -c SHA256SUMS`. Until the
-tag and Release are separately authorized and published, this document describes a validated
-candidate rather than an available release.
+the distributed `SHA256SUMS` from the parent directory with `sha256sum -c SHA256SUMS`.
 
 ## Firefox authentication
 
