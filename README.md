@@ -99,6 +99,13 @@ terminable, hasta dos peticiones de 30 s, persistencia parcial y reanudación. L
 copia íntegra del lote límite 1; ambos workers expiraron sin candidato nuevo. El activo inicial se
 conservó y HND-0004 v0.4.0 registra `PARTIAL_PROGRESS_PRESERVED / BLOCKED`.
 
+PRM-0020 sustituyó la queue incremental por `multiprocessing.Pipe(duplex=False)`, DTOs primitivos
+versionados y telemetría sanitizada. La reproducción offline no confirmó la hipótesis del feeder de
+Queue. En la única aceptación Reuters límite 2, ambos workers cargaron autenticación e iniciaron el
+extractor, pero no observaron perfil o video antes de `PROVIDER_TIMEOUT`; el activo inicial quedó
+íntegro y límite 5 no se ejecutó. HND-0004 v0.5.0 mantiene
+`PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.

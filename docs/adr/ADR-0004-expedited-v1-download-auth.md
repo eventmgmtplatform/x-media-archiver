@@ -83,3 +83,17 @@ válido no se revierte y un manifest incompleto permite reanudación.
 La prueba PRM-0019 partió de una copia del lote límite 1. Dos workers expiraron sin candidato nuevo;
 se conservó exactamente un activo íntegro, límite 5 no se ejecutó y el estado quedó
 `PARTIAL_PROGRESS_PRESERVED / BLOCKED`.
+
+## Frontera IPC PRM-0020
+
+La frontera incremental usa ahora `multiprocessing.Pipe(duplex=False)`: el hijo envía de forma
+síncrona mensajes v1 de telemetría, candidato o terminal, y el padre conserva solo el extremo
+receptor. Perfil y activo se reducen a DTOs explícitos con primitivas finitas; campos ajenos se
+ignoran y una forma inválida termina sanitizadamente como `IPC_SERIALIZATION_FAILED`. EOF sin
+terminal y muerte inesperada son `WORKER_FAILED`; timeout vivo y agotamiento limpio conservan
+código 8. Ambos extremos se cierran y el proceso siempre termina con join.
+
+Las pruebas offline no reprodujeron pérdida por feeder de Queue, de modo que esa explicación sigue
+siendo una inferencia histórica, no causa confirmada. La única prueba pública PRM-0020 cargó auth e
+inició el extractor en dos workers de 30 s, pero no emitió `PROFILE_SEEN` ni candidatos y terminó
+`PROVIDER_TIMEOUT`. El total permaneció en uno; límite 5 no se ejecutó.

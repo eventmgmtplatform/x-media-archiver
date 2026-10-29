@@ -102,6 +102,11 @@ semántica acumulada. El padre persiste cada candidato inmediatamente y permite 
 de 30 s. La ejecución límite 2 conservó el activo inicial pero no encontró otro; límite 5 no se
 ejecutó. Q4 permanece bloqueado y la paginación durable/operación masiva siguen reservadas a B05.
 
+PRM-0020 reemplazó Queue por Pipe síncrono, DTOs primitivos y terminales/telemetría explícitos. CI y
+las regresiones offline quedaron verdes, pero la única aceptación límite 2 no superó
+`EXTRACTOR_STARTED` antes de dos timeouts. El repositorio conserva exactamente un activo íntegro;
+Q4 continúa `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED` y límite 5 no se habilitó.
+
 
 ## Reauditoría A-06
 

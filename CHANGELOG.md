@@ -14,6 +14,8 @@
   PRM-0018 siguió bloqueado en Reuters límite 2 sin residuos ni ejecución de límite 5.
 - Cambia download a semántica acumulada e incremental, worker terminable, dos peticiones acotadas y
   reanudación; PRM-0019 preservó el lote inicial pero no descubrió un segundo activo.
+- Sustituye la Queue incremental por Pipe síncrono, DTO primitivo versionado, terminales explícitos y
+  telemetría sanitizada; PRM-0020 preservó el activo inicial y quedó bloqueado por timeout externo.
 
 ## [Unreleased]
 
