@@ -54,7 +54,8 @@ class SQLiteArchiveStore:
                 "ON CONFLICT(run_id) DO UPDATE SET requested_total=excluded.requested_total, "
                 "batch_size=excluded.batch_size, "
                 "request_interval_seconds=excluded.request_interval_seconds, "
-                "status=excluded.status, downloaded_total=excluded.downloaded_total, "
+                "status=excluded.status, existing_before=excluded.existing_before, "
+                "downloaded_total=excluded.downloaded_total, "
                 "page_number=excluded.page_number, last_error_code=excluded.last_error_code, "
                 "updated_at=excluded.updated_at, completed_at=excluded.completed_at",
                 (

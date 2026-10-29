@@ -1,5 +1,7 @@
 """Offline B05 checkpoints, paging, cooldown and locking."""
 
+import sqlite3
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
@@ -227,3 +229,51 @@ def test_repository_lock_rejects_second_holder_and_releases(tmp_path: Path) -> N
         pass
     with RepositoryArchiveLock(tmp_path):
         pass
+
+
+def test_archive_store_updates_existing_before_and_rolls_back_atomically(tmp_path: Path) -> None:
+    database = tmp_path / "repository/catalog.sqlite3"
+    store = SQLiteArchiveStore(database)
+    original = ArchiveRun(
+        "durable-run",
+        "BBCWorld",
+        10,
+        2,
+        2,
+        ArchiveStatus.COMPLETED,
+        0,
+        10,
+        3,
+        "RESCAN_DEDUP_V1",
+        NOW,
+        NOW,
+        NOW,
+    )
+    store.put(original)
+    repaired = replace(original, existing_before=5, updated_at=NOW + timedelta(seconds=1))
+
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "CREATE TRIGGER fail_checkpoint BEFORE UPDATE ON archive_checkpoints "
+            "BEGIN SELECT RAISE(ABORT, 'synthetic'); END"
+        )
+    with pytest.raises(sqlite3.IntegrityError):
+        store.put(repaired)
+    rolled_back = store.latest()
+    assert rolled_back == original
+
+    with sqlite3.connect(database) as connection:
+        connection.execute("DROP TRIGGER fail_checkpoint")
+    store.put(repaired)
+    restored = store.latest()
+    assert restored is not None
+    assert restored.run_id == original.run_id
+    assert restored.created_at == original.created_at
+    assert restored.existing_before == 5
+    assert restored.downloaded_total == 10
+    assert restored.page_number == 3
+    assert restored.status is ArchiveStatus.COMPLETED
+    with sqlite3.connect(database) as connection:
+        assert connection.execute(
+            "SELECT known_identity_count,last_completed_page FROM archive_checkpoints"
+        ).fetchone() == (10, 3)
