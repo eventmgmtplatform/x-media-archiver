@@ -12,11 +12,13 @@ title: Releases
 
 | Versión | Estado | Plataforma | Alcance |
 |---|---|---|---|
-| 0.1.0 | Release Candidate | Linux x86_64 | X, URL individual, lotes 1/2/5 y archive 10 |
+| 0.1.0 | Released | Linux x86_64 | X, URL individual, lotes 1/2/5 y archive 10 |
 | 0.2.x | Planeada | Linux | Estabilización operativa y deuda v1 |
 | 2.0.0 | Roadmap | Por definir | Núcleo multiplataforma y nuevos adaptadores |
 
 ## v0.1.0
+
+Publicado el 2026-10-29. [Descargar GitHub Release](https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.0).
 
 Incluye discovery, catálogo, descarga, reanudación, estado offline, SQLite v2, hashes, sidecars,
 manifests y bundle standalone.
@@ -25,7 +27,7 @@ Evidencia y control:
 
 - [CHANGELOG](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/CHANGELOG.md)
 - [Release notes v0.1.0](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/docs/release/XMA-CLI-001_RELEASE-NOTES_v0.1.0.md)
-- [HND-0006](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/docs/handoffs/XMA-CLI-001_HND-0006_V0.1.0-RELEASE-CANDIDATE_v0.1.0.md)
+- [HND-0008 postrelease](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/docs/handoffs/XMA-CLI-001_HND-0008_V0.1.0-POSTRELEASE_v0.1.0.md)
 - [Checklist de release](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/docs/release/XMA-CLI-001_RELEASE-CHECKLIST_v1.0.0.md)
 
 Cada nueva release debe actualizar esta matriz, el changelog, las notas, la página de producto y el

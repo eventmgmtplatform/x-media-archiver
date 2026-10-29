@@ -5,9 +5,9 @@ a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
 ## Version status
 
-Version 0.1.0 is the bounded Linux distribution prepared for the `v0.1.0` tag. The repository may
-also expose an unmerged release candidate before publication; consult the tagged revision and
-distributed checksums rather than assuming a branch is a release. The supported maximum is ten
+Version 0.1.0 is the first published bounded Linux distribution. Install from the immutable
+`v0.1.0` GitHub Release and verify the distributed checksums; moving branches are development
+sources, not releases. The supported maximum is ten
 videos and the product is not certified for bulk operation.
 
 ## Supported platforms
