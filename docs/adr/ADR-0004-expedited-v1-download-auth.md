@@ -40,3 +40,15 @@ Docker, yt-dlp ni FFmpeg en este corte.
 La rama obligatoria es `feature/xma-b04-download-slice`, apilada sobre B03. El PR permanece draft.
 Rollback mediante commits revert autorizados; no borrar evidencia, reescribir historia ni modificar
 main. B05, merge, tag, release y certificación requieren decisión humana posterior.
+
+## Recuperación pública PRM-0017
+
+Leonel autorizó un diagnóstico sanitizado y una secuencia de recuperación acotada. El adaptador
+distingue `PROVIDER_TIMEOUT`, `PROVIDER_CONNECTION`, `PROVIDER_HTTP_502`, `PROVIDER_HTTP_503`,
+`PROVIDER_RATE_LIMIT`, `PROVIDER_RESTRICTED` y `PROVIDER_CONTRACT`, preservando los códigos de
+salida y ocultando el detalle crudo.
+
+Firefox obtuvo exactamente un video en Reuters límite 1. Reuters límite 2 terminó antes de descargar
+con `PROVIDER_TIMEOUT`; no dejó residuos. La política fail-closed detuvo límite 5 y no autorizó
+fallback, porque Firefox ya había funcionado en límite 1. El resultado es
+`PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`, no una validación de B04.

@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 BLOCKED_PUBLIC_DOWNLOAD`
+- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -83,6 +83,11 @@ paginación durable, paralelismo ni descarga masiva.
 La implementación y sus pruebas offline están completas, pero la única prueba pública de límite 1
 terminó con código 8 antes de crear el repositorio. PRM-0016 prohíbe reintentar y exige detener los
 límites 2 y 5; HND-0004 registra el bloqueo sanitizado.
+
+PRM-0017 añadió clasificación sanitizada del proveedor. La recuperación Firefox obtuvo exactamente
+un video en el límite 1; el límite 2 terminó con código 8 y `PROVIDER_TIMEOUT`, sin residuos. Por
+contrato no hubo retry, fallback de cookies ni ejecución del límite 5. HND-0004 v0.2.0 conserva la
+matriz sanitizada; el gate permanece bloqueado.
 
 ## Discovery B03
 

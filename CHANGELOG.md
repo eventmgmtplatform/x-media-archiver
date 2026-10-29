@@ -8,6 +8,8 @@
 - Registra GOV-DEC-0020 y la deuda técnica de operación masiva para v2.
 - Registra HND-0004 y el bloqueo público: Reuters límite 1 terminó con código 8, sin retry ni
   ejecución de los límites 2/5.
+- Clasifica fallos públicos como timeout, conexión, HTTP 502/503, rate limit, restricción o contrato
+  sin exponer datos crudos; PRM-0017 recuperó límite 1 y se bloqueó en límite 2 por timeout.
 
 ## [Unreleased]
 

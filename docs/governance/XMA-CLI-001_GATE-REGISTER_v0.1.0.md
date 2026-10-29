@@ -25,6 +25,7 @@
 | 2026-10-28 | A-06 / Q3-Público | PRM-0012 y DOT-PRM-0014 | `AUTHORIZED_FOR_ONE_EXECUTION / NOT_STARTED`; A-06 `EVIDENCE_NOT_AVAILABLE`, Q3-Público/B03 `BLOCKED` | Leonel liberó una única ejecución de PRM-0012; DOT-PRM-0014 espera HND v0.3.0, CI verde y paquete local; sin merge ni B04 |
 | 2026-10-28 | A-06 / Q3-Público | HND-0003 v0.3.0 y paquete local enlazado por hash | `WAITING_VALIDATION`; Reuters produjo exactamente 2 identidades y detuvo la secuencia | PRM-0012 consumido una vez; DOT-PRM-0014 debe auditar el paquete exacto; Q3-Público/B03 siguen `BLOCKED` |
 | 2026-10-28 | B04 vertical slice | GOV-DEC-0020, ADR-0004, PRM-0016 y HND-0004 | `BLOCKED_PUBLIC_DOWNLOAD`; implementación offline verde, smoke límite 1 terminó con código 8 y límites 2/5 no se ejecutaron | Ejecución única consumida sin retry; sin merge, masivo, B05 o release |
+| 2026-10-28 | B04 public recovery | PRM-0017 y HND-0004 v0.2.0 | `PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`; Firefox límite 1 obtuvo un video y límite 2 terminó `PROVIDER_TIMEOUT`; límite 5 no ejecutado | Sin retry ni fallback; cualquier nueva ejecución requiere decisión humana |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -49,6 +50,7 @@
 | GOV-EVD-0017 | B03 / A-06 | Reuters terminó con código 0 y exactamente dos activos/identidades distintos; AP y BBCWorld no se ejecutaron. | `WAITING_VALIDATION`; catálogo y manifest permanecen fuera de Git y enlazados por SHA-256. | DOT-PRM-0014 debe verificar el paquete local; no constituye aprobación de A-06, Q3-Público o B03. |
 | GOV-DEC-0020 | B04 | AUD-0006 bloqueó por discrepancia documental de HEAD; hashes, integridad y dos identidades VIDEO coincidieron. | Leonel acepta el riesgo residual y autoriza el corte vertical 1/2/5 sin certificar el producto. | PRM-0016, máximo ocho descargas, PR draft apilado; dot audita el lote consolidado. |
 | GOV-BLK-0021 | B04 | El único comando público Reuters límite 1 terminó con código 8 antes de crear archivos. | `BLOCKED_PUBLIC_DOWNLOAD`; no se obtuvo el conteo exacto de uno. | PRM-0016 exige detenerse sin retry; límites 2/5 no se ejecutaron y se requiere nueva decisión humana. |
+| GOV-BLK-0022 | B04 | PRM-0017 recuperó exactamente un video con Firefox en límite 1; límite 2 terminó código 8 / `PROVIDER_TIMEOUT` sin residuos. | `PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`; la matriz 1/2/5 no quedó completa. | No hubo fallback, retry o límite 5; se requiere nueva decisión humana. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

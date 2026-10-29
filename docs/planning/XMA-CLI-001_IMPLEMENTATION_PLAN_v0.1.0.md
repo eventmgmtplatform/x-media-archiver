@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 BLOCKED_PUBLIC_DOWNLOAD
+**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 PARTIAL_PUBLIC_DOWNLOAD / BLOCKED
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -87,6 +87,10 @@ La ejecución pública consumida se detuvo en el primer comando: Reuters límite
 8 y cero archivos creados. No hubo retry y los límites 2/5 no se ejecutaron. La implementación
 offline permanece entregada, pero el gate público queda `BLOCKED_PUBLIC_DOWNLOAD` hasta una nueva
 decisión humana.
+
+PRM-0017 incorporó diagnóstico sanitizado y consumió una recuperación pública: Reuters límite 1
+pasó con Firefox; límite 2 terminó `PROVIDER_TIMEOUT` antes de descargar y sin residuos. La política
+detuvo límite 5 y no habilitó fallback. Q4 continúa bloqueado y no autoriza B05.
 
 
 ## Reauditoría A-06
