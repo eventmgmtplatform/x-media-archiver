@@ -3,13 +3,14 @@ name: Publish v0.1.0
 on:
   push:
     branches: [main]
+    paths:
+      - .github/workflows/publish-v0.1.0.yml
 
 permissions:
   contents: write
 
 jobs:
   publish:
-    if: startsWith(github.event.head_commit.message, 'release: XMA v0.1.0')
     runs-on: ubuntu-22.04
     environment: release
     timeout-minutes: 30
