@@ -26,7 +26,8 @@ caller-owned mutuamente excluyentes, puerto tipado de descarga, streaming a `.pa
 movimiento atómico, sidecar, manifest y persistencia con los contratos SQLite existentes. La
 idempotencia verifica catálogo, tamaño, hash y sidecar; cualquier divergencia falla cerrada.
 
-No cambiaron el esquema SQLite, workflow, dependencias ni `uv.lock`. No se inició B05.
+No cambiaron el esquema SQLite, workflow, dependencias ni `uv.lock`. La revisión del tree no
+encontró secretos, cookies, SQLite local ni medios rastreados. No se inició B05.
 
 ## Validación offline
 
@@ -46,6 +47,10 @@ No cambiaron el esquema SQLite, workflow, dependencias ni `uv.lock`. No se inici
 Las pruebas cubren límites 1/2/5, staging, hash y tamaño, sidecars, manifest, transiciones,
 idempotencia, conflicto fail-closed, limpieza de fallo, frontera HTTP y autenticación alternativa.
 Toda la suite automatizada permaneció offline.
+
+Los comandos públicos se ejecutaron con la forma sanitizada
+`xma download @Reuters --limit <1|2|5> --repository <LOCAL_SMOKE_ROOT>/limit-<N>
+--auth-browser firefox --auth-profile <LOCAL_PROFILE>`. Solo se alcanzó el comando de límite 1.
 
 ## Smoke público único
 
@@ -76,6 +81,11 @@ residual. El perfil real y las rutas locales no se versionan.
 El gate público 1/2/5 no está acreditado; el fallo transitorio no autoriza retry ni inferir que la
 descarga funcionaría en X. El corte no implementa paginación durable, concurrencia, retry, progreso
 ni operación masiva. La autenticación sigue siendo local y read-only.
+
+Deuda técnica v2: eliminar o endurecer `--cookies-file`; ofrecer inicio de sesión guiado con
+Firefox; integrar almacenamiento seguro del sistema; añadir paginación durable, reanudación, rate
+limiting y operación para miles; implementar `retry`, `status`, `export` y `doctor`; y ejecutar una
+auditoría final independiente.
 
 Rollback: cerrar el PR draft y borrar la rama B04; la rama B03 y su tree no fueron modificados. Los
 repositorios temporales locales no contienen activos y pueden retirarse después de la auditoría.
