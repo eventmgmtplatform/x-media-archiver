@@ -50,6 +50,7 @@
 
 | ID | Bloque | Evento | Clasificación | Resolución |
 |---|---|---|---|---|
+| GOV-RWK-0040 | v0.1.0 product wiki | El commit documental `7017746` se construyó sobre un árbol anterior y retiró temporalmente archivos ajenos del RC/wiki en `release/v0.1.0`. | `CORRECTED`; no afectó `main` y no hubo merge, tag ni release. | `5ee1c28` restauró el árbol íntegro de `ee9b0e6` y conservó solo Gate Register, Implementation Plan y HND-0007 v0.1.1; comparación final acotada y CI/RC verdes. |
 | GOV-OBS-0001 | B02 | El monitor conservador marcó el merge de PR #2 como desviación porque su propio contrato prohibía mutaciones. | Alerta de alcance del monitor; no defecto de código. | Leonel había autorizado el cierre y después restableció que cada fase futura requiere prompt y gate. No se extiende autorización implícita a B03–B07. |
 | GOV-BLK-0002 | B03 | Reuters, AP y BBCWorld devolvieron `AuthRequired` en la prueba pública anónima. | Bloqueo externo; salida `3`, sin activos catalogados. | No introducir cookies, autenticación ni otro extractor. B04 no inicia. |
 | GOV-RWK-0003 | B03 | AUD-0003 identificó R-01 a R-07: evidencia, PR/gobierno, JSON, errores, idempotencia, límite y cursor. | `REWORK_REQUIRED`. | Leonel autorizó PRM-0004/DOT-PRM-0004; Codex debe detenerse tras handoff y CI. |
