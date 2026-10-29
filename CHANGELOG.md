@@ -1,23 +1,72 @@
 # Changelog
 
+All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic
+Versioning.
+
 ## [Unreleased]
 
 ### Added
 
-- Baseline de arquitectura `XMA-CLI-001`.
-- ADR-0001 para CLI local y monolito modular hexagonal.
-- Plan incremental B00–B07 y gates Q0–Q6.
-- Gobierno inicial de Git, releases y prompt PRM-0001.
-- Scaffold Python instalable con comandos `xma --help` y `xma version`.
-- Pruebas unitarias, Ruff, mypy, pre-commit y workflow de CI.
-- Prompts gobernados de ejecución Codex y auditoría dot para B02.
-- Entidades y validadores de dominio para perfiles, publicaciones, medios, ejecuciones, trabajos y
-  artefactos.
-- Contratos tipados de catálogo, unidad de trabajo y reloj.
-- Catálogo SQLite v1 con migración monotónica, integridad referencial, transacciones e idempotencia.
-- Matriz documentada y probada de transiciones de trabajos de descarga.
+- No unreleased product changes.
+
+### Changed
+
+- Release-candidate stabilization remains subject to human validation.
+
+### Fixed
+
+- No unreleased fixes.
+
+### Security
+
+- No unreleased security changes.
 
 ### Known Limitations
 
-- B02 no incluye discovery, acceso a X ni descarga de medios.
-- La arquitectura sigue en validación incremental y el producto no está certificado.
+- Operation remains capped at ten videos.
+
+## [0.1.0] - 2026-10-29
+
+### Added
+
+- Typed B02 domain contracts, SQLite schema migrations and transactional unit of work.
+- Public discovery/catalog commands, bounded Firefox session authentication and sanitized errors.
+- Profile and exact SINGLE_POST download, integrity sidecars, manifests and atomic staging.
+- Durable archive/status with checkpoints, rate limiting, locking, reconciliation and resumption.
+- Linux x86_64 standalone bundle, wheel, sdist, SBOM and release-candidate automation.
+
+### Changed
+
+- Consolidated validated B03–B05 snapshots onto a temporary release branch.
+- Version metadata promoted from `0.1.0.dev0` to `0.1.0`.
+- README and operations documentation now present current user workflows instead of rework history.
+
+### Fixed
+
+- Reconciled post-merge B02 identity parsing, migration timestamps, discovery-run progress and
+  failed unit-of-work connection cleanup without regressing B03–B05.
+- Preserved final candidates across worker termination and durable counts across archive resumes.
+
+### Security
+
+- Authentication remains read-only and fail-closed; cookies, signed URLs and raw provider errors
+  are excluded from persistent/public output.
+- Release validation scans dependencies, licenses, tracked secrets and forbidden local artifacts.
+- The v0.1.0 distribution carries the complete GPL-2.0-only text and the verified corresponding
+  source archive for gallery-dl 1.32.18.
+
+### Distribution
+
+- Added a self-contained quick start, README and operating runbooks to the standalone bundle.
+- Added a versioned product wiki and GitHub Pages workflow for release and roadmap control.
+- Added a sanitized `RELEASE-MANIFEST.json` and complete checksums for distributed assets without
+  self-referential hashes.
+
+### Known Limitations
+
+- Maximum ten videos; no bulk certification, scheduler, daemon or efficient remote cursor.
+- Linux x86_64 only; Windows and macOS are not certified.
+- Provider availability remains external to XMA.
+
+[Unreleased]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.0

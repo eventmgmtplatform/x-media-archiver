@@ -1,0 +1,118 @@
+# XMA-CLI-001 — Gate Register
+
+**Versión:** 0.1.0
+
+**Fuente canónica:** GitHub, CI, handoffs y auditorías versionadas
+
+| Fecha (America/Mexico_City) | Gate | Evidencia | Decisión / estado | Autorización |
+|---|---|---|---|---|
+| 2026-10-28 | Q0 | Arquitectura, ADR-0001 y plan B00–B07 | Baseline aprobada | Leonel |
+| 2026-10-28 | Q1 | PR #1, HND-0001, CI y merge `2acb88c` | Cerrado | Leonel |
+| 2026-10-28 | Q2 | PR #2, HND-0002, AUD-0002, CI #6 | `VALIDATED_WITH_OBSERVATIONS`; merge `b2bdca7` | Leonel |
+| 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.1 y PRM-0005 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-002 autorizado |
+| 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.2 y PRM-0006 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-003 autorizado |
+| 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.3 y PRM-0007 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-004 autorizado una vez |
+| 2026-10-28 | Q3 / B03 | PR #3, AUD-0003 v0.1.4 y PRM-0008 | `WAITING_VALIDATION`; persiste `AuthRequired` externo | Leonel: B03-REWORK-005 autorizado una vez |
+| 2026-10-28 | Q3-Técnico / B03 | PR #3, HND-0003 v0.1.5, CI #26, AUD-0003 v0.1.5 y ADR-0002 | `VALIDATED_WITH_OBSERVATIONS`; implementación y controles técnicos aceptados | Leonel: división Q3 autorizada |
+| 2026-10-28 | Q3-Público / B03 | Smoke anónimo Reuters → AP → BBCWorld y AUD-0003 v0.1.5 | `BLOCKED`; no se acreditaron dos activos públicos catalogados | Sin waiver; B04, merge y ampliación de acceso no autorizados |
+| 2026-10-28 | Q3 documental / B03 | AUD-0004 v0.1.0 y DOC-01 | `WAITING_VALIDATION`; se precisa que el conteo aceptado debe ser exactamente 2 con `--limit 2` | Leonel autorizó rework documental y publicación de DOT-PRM-0010 |
+| 2026-10-28 | Q3 documental / B03 | AUD-0004 v0.1.1, DOC-01 y CI #28 | `VALIDATED_WITH_OBSERVATIONS`; DOC-01 cerrado documentalmente | Leonel autorizó versionado y reconciliación; Q3-Público/B03 continúan `BLOCKED` |
+| 2026-10-28 | Q3-Público / B03 Auth | ADR-0003, PRM-0009 y DOT-PRM-0011 | `AUTHORIZED_FOR_ONE_EXECUTION`; gate aún `BLOCKED` hasta evidencia y auditoría | Leonel autorizó sesión local Firefox y smoke `--limit 2`; identificadores locales no se publican; sin B04 ni merge |
+| 2026-10-28 | Q3-Público / B03 Auth | HND-0003 v0.2.0 y aceptación Reuters → AP → BBCWorld | `WAITING_VALIDATION`; BBCWorld acreditó exactamente 2 activos distintos | PRM-0009 consumido una vez; DOT-PRM-0011 debe auditar; sin merge ni B04 |
+| 2026-10-28 | Q3-Público / B03 Auth boundary | AUD-0005 v0.1.0, PRM-0010 y HND-0003 v0.2.1 | Entrega `IMPLEMENTED / WAITING_VALIDATION`; auditoría posterior requerida, A-06 no disponible | Leonel autorizó una ejecución acotada; DOT-PRM-0012 auditó; Q3-Público siguió `BLOCKED` |
+| 2026-10-28 | Q3-Público / B03 Auth boundary | AUD-0005 v0.1.1, PRM-0011 y HND-0003 v0.2.2 | `IMPLEMENTED / WAITING_VALIDATION`; R-01/R-02 entregados, validación independiente pendiente | Leonel autorizó una ejecución acotada; DOT-PRM-0013 debe auditar; A-06 `EVIDENCE_NOT_AVAILABLE`, Q3-Público/B03 `BLOCKED` |
+| 2026-10-28 | Q3-Técnico / B03 Auth boundary | HND-0003 v0.2.2, CI #35 y AUD-0005 v0.1.2 | `VALIDATED_WITH_OBSERVATIONS`; R-01–R-03 cerrados dentro del alcance técnico auditado | Leonel autorizó versionado y reconciliación; no autoriza smoke, merge ni B04 |
+| 2026-10-28 | A-06 / Q3-Público | PRM-0012 y DOT-PRM-0014 | `AUTHORIZED_FOR_ONE_EXECUTION / NOT_STARTED`; A-06 `EVIDENCE_NOT_AVAILABLE`, Q3-Público/B03 `BLOCKED` | Leonel liberó una única ejecución de PRM-0012; DOT-PRM-0014 espera HND v0.3.0, CI verde y paquete local; sin merge ni B04 |
+| 2026-10-28 | A-06 / Q3-Público | HND-0003 v0.3.0 y paquete local enlazado por hash | `WAITING_VALIDATION`; Reuters produjo exactamente 2 identidades y detuvo la secuencia | PRM-0012 consumido una vez; DOT-PRM-0014 debe auditar el paquete exacto; Q3-Público/B03 siguen `BLOCKED` |
+| 2026-10-28 | B04 vertical slice | GOV-DEC-0020, ADR-0004, PRM-0016 y HND-0004 | `BLOCKED_PUBLIC_DOWNLOAD`; implementación offline verde, smoke límite 1 terminó con código 8 y límites 2/5 no se ejecutaron | Ejecución única consumida sin retry; sin merge, masivo, B05 o release |
+| 2026-10-28 | B04 public recovery | PRM-0017 y HND-0004 v0.2.0 | `PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`; Firefox límite 1 obtuvo un video y límite 2 terminó `PROVIDER_TIMEOUT`; límite 5 no ejecutado | Sin retry ni fallback; cualquier nueva ejecución requiere decisión humana |
+| 2026-10-29 | B04 bounded recovery | PRM-0018 y HND-0004 v0.3.0 | `BLOCKED_PUBLIC_DOWNLOAD`; límite 2 no produjo activos; ejecución final 180 s terminó `PROVIDER_TIMEOUT` sin residuos | Leonel amplió expresamente 120/180 s; límite 1 no repetido, límite 5 no ejecutado |
+| 2026-10-29 | B04 incremental recovery | PRM-0019 y HND-0004 v0.4.0 | `PARTIAL_PROGRESS_PRESERVED / BLOCKED`; copia límite 1 íntegra, dos workers sin candidato nuevo | Una ejecución límite 2 consumida; límite 5 no autorizado al no alcanzar total 2 |
+| 2026-10-29 | B04 IPC recovery | PRM-0020 y HND-0004 v0.5.0 | `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`; Pipe/DTO verde, dos workers llegaron a extractor sin candidato | Una ejecución límite 2 consumida; sin retry y límite 5 no ejecutado |
+| 2026-10-29 | B04 BBCWorld acceptance | GOV-AUTH-0026, PRM-0021 y HND-0004 v0.6.0 | `PROVIDER_BLOCKED`; repositorio nuevo, dos workers sin perfil/video/candidato, total 0 | Una ejecución límite 2 consumida; límite 5 no ejecutado y sin cambios funcionales |
+| 2026-10-29 | B04 provider parity/spawn | PRM-0022 y HND-0004 v0.7.0 | `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`; inspect pasó, spawn logró 2 y preservó 4 antes de `WORKER_FAILED` | Inspect, límite 2 y límite 5 consumidos una vez; sin retries ni B05 |
+| 2026-10-29 | B04 single-post | PRM-0023 y HND-0004 v0.8.0 | `REWORK_REQUIRED`; implementación/CI verdes, aceptación bloqueada localmente antes de red | Comando consumido una vez; sin retry, medios ni acceso público efectivo |
+| 2026-10-29 | B04 single-post acceptance retry | PRM-0024 y HND-0004 v0.8.1 | `SINGLE_POST_NO_VIDEO`; arnés separado, post exacto agotado sin candidato, total 0 | Una ejecución consumida; sin retry, cambios funcionales ni B05 |
+| 2026-10-29 | B04 single-post parity/download | PRM-0025 y HND-0004 v0.9.0 | `SINGLE_POST_DOWNLOAD_VALIDATED / WAITING_CHAT_VALIDATION`; inspect y descarga exacta pasaron con un activo íntegro | Una ejecución de cada fase consumida; sin retry, masivo, merge ni B05 |
+| 2026-10-29 | B04 fifth-asset recovery | PRM-0026 y HND-0004 v1.0.0 | `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; reanudación BBCWorld preservó 4 y descargó 1 | Una ejecución consumida; gate humano pendiente, sin retry, masivo, merge ni B05 |
+| 2026-10-29 | B04 gate closure | PRM-0027 y HND-0004 v1.0.1 | `VALIDATED_WITH_OBSERVATIONS` | Leonel cierra B04; no autoriza merge, release, operación masiva ni dot |
+| 2026-10-29 | B05 durable archive | PRM-0027, PR #5 y HND-0005 v0.1.0 | `REWORK_REQUIRED`; implementación/CI verdes, aceptación código 9 antes de discovery | Cinco assets B04 preservados; ejecución consumida sin retry, dot, merge, tag o release |
+| 2026-10-29 | B05 existing-state reconciliation | PRM-0028, PR #5 y HND-0005 v0.1.1 | `REWORK_REQUIRED`; descarga `5 → 10` íntegra, pero status persistió `existing_before=0` | Una reanudación consumida; diez assets preservados, sin retry, dot, merge, tag o release |
+| 2026-10-29 | B05 durable baseline repair | PRM-0029, PR #5 y HND-0005 v0.1.2 | `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`; status durable 5 → 10 reparado offline | Máximo 10; operación masiva y optimización de escala diferidas; sin acceso X, dot, merge, tag o release |
+| 2026-10-29 | B05 local operability closure | PRM-0030 y HND-0005 v0.2.0 | `VALIDATED_WITH_OBSERVATIONS`; runbook y paquetes locales construidos, instalación aislada bloqueada por caché incompleta | Máximo 10; sin red, descargas, merge, tag, release o soporte masivo |
+| 2026-10-29 | B05 isolated install acceptance | PRM-0031 y HND-0005 v0.2.1 | `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; instalación aislada Python 3.12, lock, entry point y status sintético PASS | Máximo 10; sin acceso X, Firefox, descargas, merge, tag, release o soporte masivo |
+| 2026-10-29 | v0.1.0 release candidate | PRM-0032, release/v0.1.0 y HND-0006 | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; snapshot B05 consolidado, B02 reconciliado, bundle/CI preparados | PR draft; sin merge, tag, GitHub Release o PyPI |
+| 2026-10-29 | v0.1.0 RC compliance | PRM-0033 y HND-0006 v0.1.1 | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; licencia completa, corresponding source, documentación autocontenida y manifest trazable | PR #6 draft; publicación y merge siguen sin autorización |
+
+| 2026-10-29 | v0.1.0 product wiki | PR #7, HND-0007 v0.1.1 y workflow `pages.yml` integrados en `release/v0.1.0` | `WIKI_INTEGRATED / PAGES_ACTIVATION_PENDING`; fuente y despliegue automático preparados, URL aún no verificada | Leonel autorizó la configuración; activación administrativa de Pages y ejecución de Pages Actions quedan pendientes por falta de acceso web; sin merge a main, tag o release |
+
+| 2026-10-29 | v0.1.0 publication | PRM-0034, PR #6 y workflow acotado `publish-v0.1.0.yml` | `AUTHORIZED_FOR_PUBLICATION`; squash a main, tag anotado `v0.1.0`, GitHub Release y smoke offline postrelease | Leonel autorizó concluir y publicar v0.1.0; Pages/Pages Actions quedan pendientes y PyPI permanece fuera de alcance |
+
+## Registro de desviaciones, alertas y rework
+
+| ID | Bloque | Evento | Clasificación | Resolución |
+|---|---|---|---|---|
+| GOV-RWK-0040 | v0.1.0 product wiki | El commit documental `7017746` se construyó sobre un árbol anterior y retiró temporalmente archivos ajenos del RC/wiki en `release/v0.1.0`. | `CORRECTED`; no afectó `main` y no hubo merge, tag ni release. | `5ee1c28` restauró el árbol íntegro de `ee9b0e6` y conservó solo Gate Register, Implementation Plan y HND-0007 v0.1.1; comparación final acotada y CI/RC verdes. |
+| GOV-OBS-0001 | B02 | El monitor conservador marcó el merge de PR #2 como desviación porque su propio contrato prohibía mutaciones. | Alerta de alcance del monitor; no defecto de código. | Leonel había autorizado el cierre y después restableció que cada fase futura requiere prompt y gate. No se extiende autorización implícita a B03–B07. |
+| GOV-BLK-0002 | B03 | Reuters, AP y BBCWorld devolvieron `AuthRequired` en la prueba pública anónima. | Bloqueo externo; salida `3`, sin activos catalogados. | No introducir cookies, autenticación ni otro extractor. B04 no inicia. |
+| GOV-RWK-0003 | B03 | AUD-0003 identificó R-01 a R-07: evidencia, PR/gobierno, JSON, errores, idempotencia, límite y cursor. | `REWORK_REQUIRED`. | Leonel autorizó PRM-0004/DOT-PRM-0004; Codex debe detenerse tras handoff y CI. |
+| GOV-RWK-0004 | B03 | AUD-0003 v0.1.1 detectó `OverflowError` no normalizado ante metadatos numéricos no finitos. | `WAITING_VALIDATION` tras B03-REWORK-002. | PRM-0005 ejecutado una vez; DOT-PRM-0005 debe auditar el HEAD final. |
+| GOV-RWK-0005 | B03 | AUD-0003 v0.1.2 demostró que duraciones negativas submilisegundo podían redondearse y persistirse como cero. | `WAITING_VALIDATION` tras B03-REWORK-003. | PRM-0006 ejecutado una vez; DOT-PRM-0006 debe auditar el nuevo HEAD. |
+| GOV-RWK-0006 | B03 | AUD-0003 v0.1.3 detectó que `Decimal.from_float()` alteró los empates positivos históricos. | `WAITING_VALIDATION` tras B03-REWORK-004. | Leonel autorizó una ejecución de PRM-0007; DOT-PRM-0007 debe auditar el HEAD final. |
+| GOV-RWK-0007 | B03 | AUD-0003 v0.1.4 detectó que `Decimal(value)` rechazaba exponentes extremos aceptados por la baseline. | `WAITING_VALIDATION` tras B03-REWORK-005. | Leonel autorizó una ejecución de PRM-0008; DOT-PRM-0008 debe auditar el HEAD final. |
+| GOV-DEC-0008 | B03 / Q3 | AUD-0003 v0.1.5 cerró los reworks técnicos y mantuvo bloqueada la aceptación pública por `AuthRequired`. | Q3 se divide en Q3-Técnico y Q3-Público conforme a ADR-0002. | Leonel autorizó versionar la auditoría y la decisión; no autorizó merge, B04, cookies, autenticación ni otro extractor. |
+| GOV-RWK-0009 | B03 / Q3 | AUD-0004 v0.1.0 detectó que «hasta dos» expresaba solo el máximo y no el mínimo de aceptación. | `CLOSED — VALIDATED_WITH_OBSERVATIONS`; DOC-01 fija conteo requerido exactamente 2 y `--limit 2` como máximo operativo. | AUD-0004 v0.1.1 valida el cierre; Q3-Público/B03 siguen `BLOCKED` y no se autorizan smoke, merge o B04. |
+| GOV-DEC-0010 | B03 / Q3-Público | El modo anónimo terminó en `AuthRequired`; el humano confirmó una cuenta dedicada y visibilidad pública. | ADR-0003 autoriza una prueba local autenticada, sin descarga y con parámetros redactados. | Una ejecución PRM-0009 y auditoría DOT-PRM-0011; secretos/identificadores locales fuera de Git; B04/merge prohibidos. |
+| GOV-EVD-0011 | B03 / Q3-Público | Reuters y AP terminaron con código 3; BBCWorld terminó con código 0 y exactamente 2 activos distintos. | `WAITING_VALIDATION`; evidencia sanitizada, solo `.sqlite3`, sin medios. | DOT-PRM-0011 debe auditar HND/CI; no autoriza transición, merge ni B04. |
+| GOV-RWK-0012 | B03 / Auth boundary | AUD-0005 detectó copia temporal alcanzable, filtrado insuficiente, selector no contenido, política pública abierta y deuda documental/evidencial. | Entrega `IMPLEMENTED / WAITING_VALIDATION`; no equivale a cierre ni validación de A-01–A-06. | AUD-0005 v0.1.1 requirió nuevo rework; A-06 siguió `EVIDENCE_NOT_AVAILABLE`. |
+| GOV-RWK-0013 | B03 / Auth boundary | AUD-0005 v0.1.1 reprodujo degradación guest con sesión incompleta y `RuntimeError` ante symlink circular. | `IMPLEMENTED / WAITING_VALIDATION` tras PRM-0011; R-01/R-02 pendientes de auditoría independiente. | HND-0003 v0.2.2 y CI deben ser auditados por DOT-PRM-0013; Q3-Público/B03 permanecen `BLOCKED`. |
+| GOV-VAL-0014 | B03 / Auth boundary | AUD-0005 v0.1.2 verificó R-01–R-03 con pruebas sintéticas y CI #35 sobre el mismo tree. | `VALIDATED_WITH_OBSERVATIONS` limitado al rework técnico. | Cerrar R-01–R-03; no promover A-06, Q3-Público ni B03 general. |
+| GOV-DEC-0015 | B03 / A-06 | La evidencia original no está disponible y la declaración histórica no basta para Q3-Público. | Mandato de recuperación A-06 preparado, no ejecutado. | PRM-0012 exige autorización humana explícita, una única prueba controlada y paquete local verificable; DOT-PRM-0014 audita read-only. |
+| GOV-AUTH-0016 | B03 / A-06 | Leonel emitió liberación humana explícita posterior a la preparación de PRM-0012. | `AUTHORIZED_FOR_ONE_EXECUTION / NOT_STARTED`. | Codex puede ejecutar una sola secuencia Reuters → AP → BBCWorld con `--limit 2`; debe detenerse tras HND v0.3.0, CI y entrega local. Merge y B04 siguen prohibidos. |
+| GOV-EVD-0017 | B03 / A-06 | Reuters terminó con código 0 y exactamente dos activos/identidades distintos; AP y BBCWorld no se ejecutaron. | `WAITING_VALIDATION`; catálogo y manifest permanecen fuera de Git y enlazados por SHA-256. | DOT-PRM-0014 debe verificar el paquete local; no constituye aprobación de A-06, Q3-Público o B03. |
+| GOV-DEC-0020 | B04 | AUD-0006 bloqueó por discrepancia documental de HEAD; hashes, integridad y dos identidades VIDEO coincidieron. | Leonel acepta el riesgo residual y autoriza el corte vertical 1/2/5 sin certificar el producto. | PRM-0016, máximo ocho descargas, PR draft apilado; dot audita el lote consolidado. |
+| GOV-BLK-0021 | B04 | El único comando público Reuters límite 1 terminó con código 8 antes de crear archivos. | `BLOCKED_PUBLIC_DOWNLOAD`; no se obtuvo el conteo exacto de uno. | PRM-0016 exige detenerse sin retry; límites 2/5 no se ejecutaron y se requiere nueva decisión humana. |
+| GOV-BLK-0022 | B04 | PRM-0017 recuperó exactamente un video con Firefox en límite 1; límite 2 terminó código 8 / `PROVIDER_TIMEOUT` sin residuos. | `PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`; la matriz 1/2/5 no quedó completa. | No hubo fallback, retry o límite 5; se requiere nueva decisión humana. |
+| GOV-BLK-0023 | B04 | PRM-0018 acotó discovery; límite 2 falló con Firefox y COOKIE_FILE, incluida ampliación humana final a 180 s. | `BLOCKED_PUBLIC_DOWNLOAD`; total exitoso gobernado permanece en un video. | No ejecutar límite 5 ni nuevos intentos sin otra autorización humana. |
+| GOV-BLK-0024 | B04 | PRM-0019 implementó worker incremental/reanudable; ambos intentos internos de 30 s expiraron sin candidato. | `PARTIAL_PROGRESS_PRESERVED / BLOCKED`; total antes/después 1, sin corrupción o residuos. | No repetir límite 2 ni iniciar límite 5 sin nueva decisión humana. |
+| GOV-BLK-0025 | B04 | PRM-0020 sustituyó Queue por Pipe/DTO; la aceptación emitió auth/extractor pero no perfil, video o candidato antes del timeout. | `PARTIAL_PROGRESS_PRESERVED / PROVIDER_BLOCKED`; no se reprodujo una falla IPC y el total permaneció en uno. | No repetir límite 2 ni ejecutar límite 5; requiere decisión humana posterior. |
+| GOV-BLK-0026 | B04 | PRM-0021 probó BBCWorld desde un repositorio vacío; ambos workers agotaron 30 s tras iniciar extractor sin candidato. | `PROVIDER_BLOCKED`; total 0, manifest incompleto, sin SQLite, medios o residuos. | No repetir ni ejecutar límite 5; cualquier nueva prueba requiere otra autorización. |
+| GOV-BLK-0027 | B04 | PRM-0022 confirmó paridad principal y spawn cambió el resultado: límite 2 pasó, límite 5 llegó a cuatro antes de `WORKER_FAILED`. | `B04_LIMIT_2_VALIDATED / LIMIT_5_BLOCKED`; progreso 4 íntegro, cero residuos. | No repetir; el fallo del quinto activo requiere decisión/rework posterior. |
+| GOV-RWK-0028 | B04 | PRM-0023 colocó la captura del smoke dentro del repositorio nuevo, que dejó de estar vacío antes de iniciar XMA. | `REWORK_REQUIRED`; código 9 local, control fail-closed correcto, cero persistencia o red. | No repetir bajo esta autorización; se requiere nuevo mandato para aceptar SINGLE_POST públicamente. |
+| GOV-BLK-0029 | B04 | PRM-0024 corrigió el arnés y el post exacto terminó `PROVIDER_EXHAUSTED` tras iniciar extractor, sin video o candidato. | `SINGLE_POST_NO_VIDEO`; código 8, total 0, sin SQLite, medios o residuos. | No repetir ni probar otro post/perfil; siguiente decisión corresponde al gate humano. |
+| GOV-EVD-0030 | B04 | PRM-0025 corrigió `/timeline` en inspect SINGLE_POST; inspect y download del post autorizado terminaron código 0. | `SINGLE_POST_DOWNLOAD_VALIDATED / WAITING_CHAT_VALIDATION`; un MP4 y evidencia íntegra. | Gate humano pendiente; no autoriza retry, merge, descarga masiva o B05. |
+| GOV-EVD-0031 | B04 | PRM-0026 reprodujo el falso `WORKER_FAILED` posterior al candidato final y corrigió la clasificación. | `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; BBCWorld completó `4 → 5` con integridad. | Gate humano pendiente; no autoriza retry, merge, descarga masiva o B05. |
+| GOV-DEC-0032 | B04/B05 | Leonel acepta la evidencia acumulada B04 y sus observaciones. | B04 `VALIDATED_WITH_OBSERVATIONS`; B05 autorizado en rama/PR apilados con máximo público 10. | Sin merge, tag, release, dot o miles de descargas. |
+| GOV-RWK-0033 | B05 | El run inició `downloaded_total=0` y solicitó límite absoluto 2 pese a cinco assets existentes. | `REWORK_REQUIRED`; además quedó `RUNNING` en vez de terminal sanitizado. | No repetir; corregir conteo inicial y transición de error bajo nueva autorización. |
+| GOV-RWK-0034 | B05 | PRM-0028 corrigió R-01–R-03 y completó cinco assets nuevos, pero el UPSERT no actualizó `existing_before`. | `REWORK_REQUIRED`; checkpoint 10/página 3 y estado COMPLETED, status diverge solo en conteo inicial. | No repetir; reconciliar persistencia bajo nueva autorización. |
+| GOV-VAL-0035 | B05 | PRM-0029 corrigió el UPSERT y reparó el run bajo precondiciones transaccionales. | `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`; status 5/10, página 3, checkpoint 10, integridad ok. | Decisión humana pendiente; máximo 10, sin acceso X ni operación masiva. |
+| GOV-DEC-0036 | B05 | Leonel autoriza cierre de operabilidad local con observaciones y máximo diez. | B05 `VALIDATED_WITH_OBSERVATIONS`; instalación wheel Python 3.12 no reproducida por ausencia de intérprete/dependencias en caché offline. | No habilitar red; operación masiva, scheduler, cursor remoto y release siguen fuera de alcance. |
+| GOV-VAL-0037 | B05 | PRM-0031 autorizó una instalación aislada y red limitada a Python/PyPI oficiales. | `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; wheel, dependencias bloqueadas, entry point y status sintético verificados. | El wheel sigue local y no publicado; máximo 10, sin X, merge, tag o release. |
+| GOV-RC-0038 | Release | PRM-0032 autoriza preparar v0.1.0 desde main sin publicar. | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; controles de rama, artifacts, SBOM, portabilidad y documentación preparados. | Requiere decisión humana; no autoriza merge, tag, Release o PyPI. |
+| GOV-RC-0039 | Release | PRM-0033 limita el rework a cumplimiento y operabilidad del RC. | GPL-2.0-only completo, source gallery-dl verificado, bundle autocontenido y manifest/checksums validados. | Espera validación humana; sin merge, tag, Release, PyPI o acceso a X. |
+
+Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
+su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin
+importar cambios B02 indiscriminadamente.
+
+## Regla de transición
+
+Ningún bloque posterior empieza por inferencia. Requiere prompt versionado, autorización humana,
+rama aislada, handoff, auditoría y decisión del gate. Un merge nunca autoriza el bloque siguiente.
+
+La validación de Q3-Técnico no satisface Q3-Público. Q3-Público debe acreditar exactamente dos
+activos públicos de video distintos y catalogados en una prueba controlada con `--limit 2`.
+El límite 2 es el máximo operativo y el mínimo de aceptación: cero o uno mantienen `BLOCKED`.
+El criterio solo puede sustituirse mediante una nueva decisión humana versionada. Mientras
+permanezca `BLOCKED`, no se autoriza merge, B04 ni certificación.
+
+## Aislamiento de contexto — 2026-10-28
+
+El recordatorio corporativo Netcool mostrado junto a la auditoría XMA es contexto ajeno a este
+workstream. No modifica autorización, evidencia ni gates XMA. No se afirma resuelta ninguna
+credencial ni se incorpora contenido reservado personal o corporativo como evidencia del proyecto.
+El texto exacto de la reserva mencionada por Leonel no se recuperó; no se reconstruye por inferencia.
+
+Rework B02 verificado en `feature/xma-b02-contracts`, publicación `4b8bdab`, AUD-0002 v0.1.2
+(snapshot auditado `437dcf3`). No está integrado en main/B03; sigue pendiente de PR acotado y CI
+sobre su entrega. Se conserva el cierre histórico Q2 sin convertirlo en certificación del rework.

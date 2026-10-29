@@ -1,0 +1,100 @@
+from datetime import UTC, datetime
+
+import pytest
+
+from xma.domain.discovery import (
+    DiscoveredAsset,
+    DiscoveredPost,
+    DiscoveredProfile,
+    DiscoveryBatch,
+    DiscoveryTargetKind,
+    normalize_discovery_target,
+)
+from xma.domain.enums import MediaType, PostType
+from xma.domain.errors import DomainError, InvalidIdentityError
+
+NOW = datetime(2026, 10, 28, tzinfo=UTC)
+
+
+@pytest.mark.parametrize(
+    ("value", "handle"),
+    [
+        ("Reuters", "Reuters"),
+        ("@Reuters", "Reuters"),
+        ("https://x.com/Reuters", "Reuters"),
+        ("https://twitter.com/Reuters", "Reuters"),
+    ],
+)
+def test_normalize_public_profile_targets(value: str, handle: str) -> None:
+    target = normalize_discovery_target(value)
+    assert target.handle == handle
+    assert target.canonical_url == "https://x.com/Reuters"
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", "https://example.com/Reuters", "http://x.com/Reuters"],
+)
+def test_rejects_non_profile_targets(value: str) -> None:
+    with pytest.raises(InvalidIdentityError):
+        normalize_discovery_target(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://x.com/tedmetal/status/2115531877855732095?share=secret#fragment",
+        "https://www.x.com/tedmetal/status/2115531877855732095",
+        "https://twitter.com/tedmetal/status/2115531877855732095",
+        "https://www.twitter.com/tedmetal/status/2115531877855732095",
+    ],
+)
+def test_normalizes_single_post_target_without_query_or_fragment(value: str) -> None:
+    target = normalize_discovery_target(value)
+    assert target.kind is DiscoveryTargetKind.SINGLE_POST
+    assert target.handle == "tedmetal"
+    assert target.post_id == "2115531877855732095"
+    assert target.canonical_url == "https://x.com/tedmetal/status/2115531877855732095"
+    assert "secret" not in target.canonical_url
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://x.com/tedmetal/status/2115531877855732095",
+        "https://example.com/tedmetal/status/2115531877855732095",
+        "https://mobile.x.com/tedmetal/status/2115531877855732095",
+        "https://x.com/tedmetal/status/not-numeric",
+        "https://x.com/tedmetal/status/2115531877855732095/photo/1",
+        "https://t.co/example",
+    ],
+)
+def test_rejects_invalid_single_post_target(value: str) -> None:
+    with pytest.raises(InvalidIdentityError):
+        normalize_discovery_target(value)
+
+
+def test_batch_public_projection_omits_source_variants() -> None:
+    target = normalize_discovery_target("@Reuters")
+    profile = DiscoveredProfile("123", "Reuters", "Reuters")
+    asset = DiscoveredAsset("9001", 0, MediaType.VIDEO, 1000, 100, 50, ("secret-url",))
+    post = DiscoveredPost("9001", "123", "text", NOW, PostType.POST, (asset,))
+    batch = DiscoveryBatch(target, "fixture:1", profile, (post,), NOW, 2)
+
+    public = batch.public_dict()
+    assert batch.asset_count == 1
+    assert public["asset_count"] == 1
+    assert "secret-url" not in str(public)
+
+
+def test_batch_rejects_cross_profile_posts_and_limit_overflow() -> None:
+    target = normalize_discovery_target("Reuters")
+    profile = DiscoveredProfile("123", "Reuters", "Reuters")
+    asset = DiscoveredAsset("9001", 0, MediaType.VIDEO, None, None, None, ("url",))
+    other_post = DiscoveredPost("9001", "999", "", NOW, PostType.POST, (asset,))
+    with pytest.raises(DomainError, match="target profile"):
+        DiscoveryBatch(target, "fixture", profile, (other_post,), NOW, 1)
+
+    post = DiscoveredPost("9001", "123", "", NOW, PostType.POST, (asset, asset))
+    with pytest.raises(DomainError, match="exceeds"):
+        DiscoveryBatch(target, "fixture", profile, (post,), NOW, 1)

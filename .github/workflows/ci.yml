@@ -30,3 +30,20 @@ jobs:
         run: uv run pytest
       - name: Build
         run: uv build
+      - name: Verify release metadata
+        run: uv run python scripts/verify-release-metadata.py
+      - name: Inspect distributions
+        run: |
+          unzip -l dist/x_media_archiver-0.1.0-py3-none-any.whl
+          tar -tzf dist/x_media_archiver-0.1.0.tar.gz
+          ! unzip -l dist/*.whl | grep -Ei 'cookies|\.sqlite|\.mp4|\.env'
+      - name: Dependency vulnerability scan
+        run: |
+          uv export --locked --no-dev --no-emit-project --no-header -o /tmp/xma-production.txt
+          uv run pip-audit --strict --requirement /tmp/xma-production.txt
+      - name: License inventory
+        run: uv run pip-licenses --format=json --output-file=license-inventory.json
+      - name: Secret and forbidden tracked-file scan
+        run: |
+          ! git grep -nEI '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|xox[baprs]-[A-Za-z0-9-]{20,}|(password|token|secret)[[:space:]]*=[[:space:]]*["'"'][^"'"']{8,}["'"'])' -- ':!docs/**' ':!tests/**'
+          ! git ls-files | grep -Ei '(\.sqlite3?$|\.db$|cookies?|\.(mp4|webm|mkv|part|tmp)$|release-artifacts/)'

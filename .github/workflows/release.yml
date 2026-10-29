@@ -1,0 +1,39 @@
+name: Prepare draft release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing annotated vX.Y.Z tag on main
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-22.04
+    environment: release
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - name: Verify tag and main ancestry
+        run: |
+          [[ "${{ inputs.tag }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          git fetch origin main
+          git merge-base --is-ancestor "${{ inputs.tag }}^{}" origin/main
+      - uses: astral-sh/setup-uv@v7
+      - run: uv python install 3.12
+      - run: uv sync --locked --all-groups
+      - name: Verify version
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: test "$(uv run xma version --short)" = "${RELEASE_TAG#v}"
+      - run: ./scripts/build-release-candidate.sh release-artifacts
+      - run: ./scripts/validate-release-candidate.sh release-artifacts
+      - name: Create draft only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ inputs.tag }}" release-artifacts/* --draft --verify-tag --title "XMA ${{ inputs.tag }}" --notes-file docs/release/XMA-CLI-001_RELEASE-NOTES_v0.1.0.md

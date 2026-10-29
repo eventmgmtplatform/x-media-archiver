@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Git, branching y release governance
 
 **Versión:** 0.1.0  
-**Estado:** PROPOSED
+**Estado:** ACCEPTED
 
 ## Modelo de ramas
 

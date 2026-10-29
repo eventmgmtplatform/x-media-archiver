@@ -1,0 +1,67 @@
+name: Publish v0.1.0
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: startsWith(github.event.head_commit.message, 'release: XMA v0.1.0')
+    runs-on: ubuntu-22.04
+    environment: release
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: v0.1.0
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Verify authorized main snapshot
+        run: |
+          test "$GITHUB_REF" = refs/heads/main
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+      - uses: astral-sh/setup-uv@v7
+      - run: uv python install 3.12
+      - run: uv sync --locked --all-groups
+      - name: Verify version
+        run: test "$(uv run xma version --short)" = "${RELEASE_TAG#v}"
+      - name: Build and validate release
+        run: |
+          ./scripts/build-release-candidate.sh release-artifacts
+          ./scripts/validate-release-candidate.sh release-artifacts
+      - name: Create immutable annotated tag
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG"; then
+            git fetch origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+            test "$(git rev-parse "$RELEASE_TAG^{}")" = "$GITHUB_SHA"
+          else
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git tag -a "$RELEASE_TAG" "$GITHUB_SHA" -m "XMA $RELEASE_TAG"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+      - name: Publish GitHub Release
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = false
+          else
+            gh release create "$RELEASE_TAG" release-artifacts/* \
+              --verify-tag \
+              --title "XMA $RELEASE_TAG" \
+              --notes-file docs/release/XMA-CLI-001_RELEASE-NOTES_v0.1.0.md
+          fi
+      - name: Verify published artifacts offline
+        run: |
+          verify_dir=$(mktemp -d)
+          trap 'rm -rf -- "$verify_dir"' EXIT
+          gh release download "$RELEASE_TAG" --dir "$verify_dir"
+          (cd "$verify_dir" && sha256sum -c SHA256SUMS)
+          tar -C "$verify_dir" -xzf "$verify_dir/xma-v0.1.0-linux-x86_64.tar.gz"
+          binary="$verify_dir/xma-v0.1.0-linux-x86_64/xma"
+          env -i PATH=/usr/bin:/bin HOME="$verify_dir" "$binary" --help
+          env -i PATH=/usr/bin:/bin HOME="$verify_dir" "$binary" version --short | grep -Fx 0.1.0

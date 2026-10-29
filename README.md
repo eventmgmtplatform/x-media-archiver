@@ -1,58 +1,113 @@
-# X Media Archiver CLI
+# X Media Archiver 0.1.0
 
-CLI local para descubrir el contenido audiovisual público de un perfil de X, catalogarlo y descargarlo en un repositorio normalizado con metadatos y evidencia de integridad.
+Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
+a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
-## Estado
+## Version status
 
-- Workstream: `XMA-CLI-001`
-- Madurez: `DESIGN`
-- Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 DOMAIN, CONTRACTS AND CATALOG — WAITING VALIDATION`
-- Certificación de producto: `NOT CERTIFIED`
+Version 0.1.0 is the bounded Linux distribution prepared for the `v0.1.0` tag. The repository may
+also expose an unmerged release candidate before publication; consult the tagged revision and
+distributed checksums rather than assuming a branch is a release. The supported maximum is ten
+videos and the product is not certified for bulk operation.
 
-## Objetivo del MVP
+## Supported platforms
 
-1. Recibir un `@usuario`, URL de perfil o URL de publicación.
-2. Descubrir publicaciones con video, GIF animado, broadcast o Space soportado.
-3. Presentar un resumen y permitir descarga masiva desde la terminal.
-4. Descargar mediante `yt-dlp` y `ffmpeg`.
-5. Crear una carpeta normalizada por publicación con video, `metadata.json`, `ficha.md`, miniatura y URL original.
-6. Registrar catálogo, progreso, errores y deduplicación en SQLite.
-7. Reanudar ejecuciones y sincronizar solamente contenido nuevo.
+Linux x86_64 is supported. Ubuntu 22.04 and 24.04 are release-candidate test targets. Windows and
+macOS are not certified. A local filesystem with `flock` is required for durable archive locking.
 
-## Documentación
+## Installation
 
-- [Arquitectura](docs/architecture/XMA-CLI-001_ARCHITECTURE_v0.1.0.md)
-- [ADR-0001](docs/adr/ADR-0001-cli-modular-monolith.md)
-- [Plan de actividades](docs/planning/XMA-CLI-001_IMPLEMENTATION_PLAN_v0.1.0.md)
-- [Gobierno Git y releases](docs/governance/XMA-CLI-001_GIT_RELEASE_GOVERNANCE_v0.1.0.md)
-- [Prompt inicial de Codex](docs/prompts/XMA-CLI-001_PRM-0001_FOUNDATION-BOOTSTRAP_v0.1.0.md)
-- [Catálogo SQLite v1](docs/architecture/XMA-CLI-001_CATALOG-SCHEMA_v0.1.0.md)
-
-## Principio de operación
-
-`Leonel autoriza → ChatGPT diseña y gobierna → Codex ejecuta → Codex entrega handoff Markdown → ChatGPT valida → Leonel autoriza la transición`.
-
-Codex no encadena fases ni publica releases sin un gate explícito.
-
-## Desarrollo local
+Recommended release bundle:
 
 ```bash
-uv sync --all-groups
-uv run xma --help
-uv run xma version
-uv run ruff format --check .
-uv run ruff check .
-uv run mypy
-uv run pytest
-uv build
+tar -xzf xma-v0.1.0-linux-x86_64.tar.gz
+cd xma-v0.1.0-linux-x86_64
+./xma --help
+./xma version
 ```
 
-### Núcleo B02
+The bundle does not require a system Python or uv.
 
-`xma.domain` contiene entidades inmutables, validadores, estados y puertos sin dependencias de
-CLI o persistencia. `xma.adapters.catalog` implementa el catálogo SQLite mediante una migración
-monotónica, claves foráneas activas y límites transaccionales explícitos.
+Advanced source installation:
 
-Los comandos de discovery y descarga se incorporarán en bloques posteriores; no forman parte de
-B02.
+```bash
+git clone https://github.com/eventmgmtplatform/x-media-archiver.git
+cd x-media-archiver
+git checkout --detach v0.1.0
+uv sync --locked --all-groups
+uv run xma version
+```
+
+Advanced wheel installation uses the locally built `x_media_archiver-0.1.0-py3-none-any.whl` in an
+isolated Python 3.12 environment. See the local CLI runbook.
+
+## Quick start
+
+Firefox authentication is optional for commands that can operate anonymously and explicit for a
+local authenticated session. Pass only the contained Firefox profile name; never export cookies.
+
+```bash
+xma download @HANDLE --limit 1 --repository ./repository-HANDLE \
+  --auth-browser firefox --auth-profile PROFILE_NAME
+xma download @HANDLE --limit 2 --repository ./repository-HANDLE \
+  --auth-browser firefox --auth-profile PROFILE_NAME
+xma download @HANDLE --limit 5 --repository ./repository-HANDLE \
+  --auth-browser firefox --auth-profile PROFILE_NAME
+
+xma archive @HANDLE --limit 10 --batch-size 2 --repository ./repository-HANDLE \
+  --auth-browser firefox --auth-profile PROFILE_NAME \
+  --request-interval 2 --discovery-timeout 30
+
+xma download "https://x.com/HANDLE/status/POST_ID" --limit 1 \
+  --repository ./repository-single \
+  --auth-browser firefox --auth-profile PROFILE_NAME
+```
+
+Use `uv run xma` instead of `xma` when operating from source.
+
+## Repository and resumption
+
+The normalized repository contains a SQLite catalog, media artifacts, JSON sidecars and manifests.
+Completed artifacts are deduplicated and never overwritten. Archive checkpoints are committed only
+after persisted pages. Inspect state without network access:
+
+```bash
+xma status --repository ./repository-HANDLE
+xma status --repository ./repository-HANDLE --json
+```
+
+`COMPLETED` means the requested total is present. `PAUSED` preserves valid progress for controlled
+resumption. `FAILED` requires integrity diagnosis before another run. Back up the entire repository,
+not only SQLite.
+
+## Security
+
+- Cookie values are read through the contained Firefox read-only boundary and are not exported.
+- Signed media URLs, headers, tokens and local profile paths are not persisted.
+- Authentication fails closed when required session cookies are absent.
+- Downloads stage to `.part`, validate size/SHA-256 and move atomically.
+- Never commit repositories, SQLite databases, logs, cookies, media or release artifacts.
+
+Report vulnerabilities according to [SECURITY.md](SECURITY.md).
+
+## Known limitations
+
+- Maximum ten videos; no certified bulk or unattended operation.
+- `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
+- No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
+- Provider availability and authenticated X behavior can change independently of XMA.
+- Verify the `v0.1.0` tag and `SHA256SUMS`; do not install an arbitrary moving branch.
+
+## Documentation
+
+- [Product wiki](docs/wiki/index.md)
+- [System requirements](docs/requirements/XMA-CLI-001_SYSTEM-REQUIREMENTS_v1.0.0.md)
+- [BAU operations](docs/operations/XMA-CLI-001_BAU-OPERATIONS_v1.0.0.md)
+- [Local CLI runbook](docs/operations/XMA-CLI-001_LOCAL-CLI-RUNBOOK_v0.1.0.md)
+- [Architecture](docs/architecture/XMA-CLI-001_ARCHITECTURE_v0.1.0.md)
+- [Release management](docs/release/XMA-CLI-001_RELEASE-MANAGEMENT_v1.0.0.md)
+- [Release checklist](docs/release/XMA-CLI-001_RELEASE-CHECKLIST_v1.0.0.md)
+- [Historical governance, prompts, audits and handoffs](docs/)
+
+License: GPL-2.0-only. Third-party composition is documented in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
