@@ -22,6 +22,7 @@ from xma.domain.discovery import (
     DiscoveredProfile,
     DiscoveryBatch,
     DiscoveryTarget,
+    DiscoveryTargetKind,
 )
 from xma.domain.enums import MediaType, PostType
 from xma.domain.errors import (
@@ -46,6 +47,13 @@ class GalleryDlExtraction:
 
 
 GalleryDlRunner = Callable[[str, int], GalleryDlExtraction]
+
+
+def _job_url(target: DiscoveryTarget) -> str:
+    """Select the concrete gallery-dl URL for an explicit target mode."""
+    if target.kind is DiscoveryTargetKind.SINGLE_POST:
+        return target.canonical_url
+    return target.canonical_url.rstrip("/") + "/timeline"
 
 
 class _LimitedDataJob(job.DataJob):  # type: ignore[misc]
@@ -109,9 +117,9 @@ def _run_gallery_dl(
         config.set(("extractor",), "timeout", request_timeout)
 
     try:
-        # Target the concrete child extractor. DataJob intentionally does not
+        # The caller selects the concrete child extractor URL. DataJob does not
         # follow queue messages unless recursive resolution is requested.
-        data_job = _LimitedDataJob(url.rstrip("/") + "/timeline", limit)
+        data_job = _LimitedDataJob(url, limit)
         data_job.run()
     except Exception as error:
         raise _classified_error(error) from error
@@ -169,14 +177,28 @@ class GalleryDlDiscoveryProvider:
     def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
         if limit < 1 or limit > 100:
             raise DiscoveryContractError("limit must be between 1 and 100")
-        extraction = self._runner(target.canonical_url, limit)
-        return map_gallery_dl_extraction(
+        extraction = self._runner(_job_url(target), limit)
+        batch = map_gallery_dl_extraction(
             extraction,
             target,
             limit,
             self._clock(),
             f"gallery-dl:{gallery_dl.__version__}",
         )
+        _validate_target_batch(target, batch)
+        return batch
+
+
+def _validate_target_batch(target: DiscoveryTarget, batch: DiscoveryBatch) -> None:
+    """Fail closed when a single-post response does not match its target."""
+    if target.kind is not DiscoveryTargetKind.SINGLE_POST:
+        return
+    if (
+        batch.profile.handle.casefold() != target.handle.casefold()
+        or not batch.posts
+        or any(post.post_id != target.post_id for post in batch.posts)
+    ):
+        raise DiscoveryContractError("single-post provider response violates the target contract")
 
 
 def map_gallery_dl_extraction(

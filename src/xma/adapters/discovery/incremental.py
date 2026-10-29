@@ -18,7 +18,14 @@ from xma.adapters.discovery.firefox_auth import (
     load_cookie_file_x_cookies,
     load_firefox_x_cookies,
 )
-from xma.adapters.discovery.gallery_dl import GalleryDlExtraction, map_gallery_dl_extraction
+from xma.adapters.discovery.gallery_dl import (
+    GalleryDlExtraction,
+    _job_url,
+    map_gallery_dl_extraction,
+)
+from xma.adapters.discovery.gallery_dl import (
+    _validate_target_batch as _validate_gallery_target_batch,
+)
 from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget, DiscoveryTargetKind
 from xma.domain.errors import DiscoveryContractError, DiscoveryTransientError
 
@@ -41,6 +48,11 @@ _POST_FIELDS = (
     "quoted_id",
     "reply_id",
 )
+
+
+def _validate_target_batch(target: DiscoveryTarget, batch: DiscoveryBatch) -> None:
+    """Apply the shared fail-closed target contract to streamed batches."""
+    _validate_gallery_target_batch(target, batch)
 
 
 def _is_ipc_primitive(value: object) -> bool:
@@ -182,12 +194,13 @@ def _worker_main(
         _telemetry(output, "WORKER_STARTED")
         _configure_worker(authentication, timeout_seconds)
         _telemetry(output, "AUTH_LOADED")
-        if target["kind"] == DiscoveryTargetKind.SINGLE_POST.value:
-            job_url = str(target["canonical_url"])
-        elif target["kind"] == DiscoveryTargetKind.PROFILE.value:
-            job_url = str(target["canonical_url"]).rstrip("/") + "/timeline"
-        else:
-            raise ValueError
+        job_url = _job_url(
+            DiscoveryTarget(
+                str(target["handle"]),
+                DiscoveryTargetKind(str(target["kind"])),
+                str(target["post_id"]) if target["post_id"] is not None else None,
+            )
+        )
         data_job = _StreamingDataJob(job_url, remaining, existing, output)
         _telemetry(output, "EXTRACTOR_STARTED")
         data_job.run()
@@ -210,17 +223,6 @@ def _reconstruct(profile: Mapping[str, Any], post: Mapping[str, Any]) -> Gallery
     profile_record, post_record = dict(profile), dict(post)
     post_record["_source_url"] = post_record.pop("source_url")
     return GalleryDlExtraction(profile_record, (post_record,))
-
-
-def _validate_target_batch(target: DiscoveryTarget, batch: DiscoveryBatch) -> None:
-    if target.kind is not DiscoveryTargetKind.SINGLE_POST:
-        return
-    if (
-        batch.profile.handle.casefold() != target.handle.casefold()
-        or not batch.posts
-        or any(post.post_id != target.post_id for post in batch.posts)
-    ):
-        raise DiscoveryContractError("single-post provider response violates the target contract")
 
 
 class IncrementalGalleryDlDiscoveryProvider:

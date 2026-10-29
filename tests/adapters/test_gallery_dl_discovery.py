@@ -11,6 +11,7 @@ from xma.adapters.discovery.gallery_dl import (
     GalleryDlDiscoveryProvider,
     GalleryDlExtraction,
     _classified_error,
+    _job_url,
     _LimitedDataJob,
     _run_gallery_dl,
     map_gallery_dl_extraction,
@@ -71,9 +72,52 @@ def test_provider_uses_normalized_url_and_clock() -> None:
 
     provider = GalleryDlDiscoveryProvider(runner, lambda: NOW)
     batch = provider.discover(normalize_discovery_target("@Reuters"), 1)
-    assert calls == [("https://x.com/Reuters", 1)]
+    assert calls == [("https://x.com/Reuters/timeline", 1)]
     assert batch.asset_count == 1
     assert batch.observed_at == NOW
+
+
+def test_job_url_selects_profile_timeline_or_canonical_single_post() -> None:
+    profile = normalize_discovery_target("Reuters")
+    single = normalize_discovery_target(
+        "https://www.x.com/Reuters/status/9001?share=SECRET#fragment"
+    )
+
+    assert _job_url(profile) == "https://x.com/Reuters/timeline"
+    assert _job_url(single) == "https://x.com/Reuters/status/9001"
+    assert "/timeline" not in _job_url(single)
+    assert "SECRET" not in _job_url(single)
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "https://x.com/Reuters/status/9999",
+        "https://x.com/Other/status/9001",
+    ],
+)
+def test_provider_single_post_fails_closed_for_post_or_author_mismatch(target: str) -> None:
+    provider = GalleryDlDiscoveryProvider(lambda url, limit: extraction(), lambda: NOW)
+
+    with pytest.raises(DiscoveryContractError, match="target contract"):
+        provider.discover(normalize_discovery_target(target), 1)
+
+
+def test_provider_single_post_uses_canonical_job_url_and_limit() -> None:
+    calls: list[tuple[str, int]] = []
+
+    def runner(url: str, limit: int) -> GalleryDlExtraction:
+        calls.append((url, limit))
+        return extraction()
+
+    provider = GalleryDlDiscoveryProvider(runner, lambda: NOW)
+    batch = provider.discover(
+        normalize_discovery_target("https://x.com/Reuters/status/9001?share=SECRET#fragment"), 1
+    )
+
+    assert calls == [("https://x.com/Reuters/status/9001", 1)]
+    assert batch.asset_count == 1
+    assert "SECRET" not in json.dumps(batch.public_dict())
 
 
 @pytest.mark.parametrize(
@@ -200,7 +244,7 @@ def test_live_runner_boundary_has_no_download_and_classifies_failures(
             return None
 
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", SuccessfulJob)
-    result = _run_gallery_dl("https://x.com/Reuters", 1)
+    result = _run_gallery_dl("https://x.com/Reuters/timeline", 1)
     assert len(result.media_records) == 1
     assert config.get(("cache",), "file") == ":memory:"
 
@@ -209,7 +253,7 @@ def test_live_runner_boundary_has_no_download_and_classifies_failures(
 
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", FailedJob)
     with pytest.raises(DiscoveryRateLimitError):
-        _run_gallery_dl("https://x.com/Reuters", 1)
+        _run_gallery_dl("https://x.com/Reuters/timeline", 1)
 
 
 def test_live_runner_configures_firefox_session_without_export(
