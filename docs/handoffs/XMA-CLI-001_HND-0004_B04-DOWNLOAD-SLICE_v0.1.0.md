@@ -13,7 +13,11 @@
 - PR draft apilado: #4, base `feature/xma-b03-discovery`.
 - Commit de implementación: `059f902d543e260cf1ee66faa7c0abb5ea03da3c`.
 - Tree de implementación: `8fc0a3c7c80b6879cc8978e29fc5235db553a4ad`.
-- El commit que contiene este handoff es la publicación documental posterior al smoke.
+- Publicación inicial del handoff: `430a707881aefadb183331616de7bbb7a196e2a5`.
+- Tree de esa publicación: `dc76c124c1676a11d45b66945d862e0fe4671ee2`.
+- CI #43 / run `40823455324`: `SUCCESS` sobre esa publicación; 236 pruebas y cobertura 93.24 %.
+- La reconciliación que registra este resultado de CI es exclusivamente documental y se verifica en
+  el siguiente run del mismo PR draft.
 
 ## Alcance entregado
 
