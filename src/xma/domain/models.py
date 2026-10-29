@@ -8,6 +8,7 @@ from xma.domain.errors import DomainError, InvalidTransitionError
 from xma.domain.identity import (
     media_identity,
     normalize_handle,
+    parse_media_identity,
     utc_datetime,
     validate_non_negative,
     validate_relative_path,
@@ -132,8 +133,9 @@ class DownloadJob:
     error_message: str | None = None
 
     def __post_init__(self) -> None:
-        if not self.job_id.strip() or not self.run_id.strip() or ":" not in self.asset_id:
-            raise DomainError("job_id, asset_id, and run_id must be valid")
+        if not self.job_id.strip() or not self.run_id.strip():
+            raise DomainError("job_id and run_id must be valid non-blank values")
+        parse_media_identity(self.asset_id)
         validate_non_negative(self.attempts, "attempts")
         object.__setattr__(self, "created_at", utc_datetime(self.created_at, "created_at"))
         object.__setattr__(self, "updated_at", utc_datetime(self.updated_at, "updated_at"))

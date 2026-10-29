@@ -1,6 +1,8 @@
 """Monotonic, reproducible SQLite schema migrations."""
 
 import sqlite3
+from collections.abc import Callable
+from datetime import UTC, datetime
 from importlib.resources import files
 
 LATEST_SCHEMA_VERSION = 2
@@ -27,8 +29,15 @@ def _statements(script: str) -> list[str]:
     return statements
 
 
-def migrate(connection: sqlite3.Connection) -> int:
+def _utc_timestamp(value: datetime) -> str:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError("migration clock must return a timezone-aware datetime")
+    return value.astimezone(UTC).isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def migrate(connection: sqlite3.Connection, *, now: Callable[[], datetime] | None = None) -> int:
     """Apply every pending migration in one explicit transaction."""
+    clock = now if now is not None else lambda: datetime.now(UTC)
     try:
         connection.execute("BEGIN")
         connection.execute(
@@ -44,7 +53,7 @@ def migrate(connection: sqlite3.Connection) -> int:
                 connection.execute(statement)
             connection.execute(
                 "INSERT INTO schema_version(version, applied_at) VALUES (?, ?)",
-                (version, "2026-10-28T00:00:00.000000Z"),
+                (version, _utc_timestamp(clock())),
             )
         connection.commit()
     except Exception:

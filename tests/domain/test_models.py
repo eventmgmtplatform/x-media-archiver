@@ -4,7 +4,7 @@ import pytest
 
 from xma.domain.enums import DownloadStatus, MediaType, PostType, RunStatus
 from xma.domain.errors import DomainError, InvalidIdentityError, InvalidTransitionError
-from xma.domain.identity import media_identity
+from xma.domain.identity import media_identity, parse_media_identity
 from xma.domain.models import (
     DOWNLOAD_TRANSITIONS,
     Artifact,
@@ -65,6 +65,16 @@ def test_media_identity_and_validation() -> None:
         MediaAsset("456", -1, MediaType.VIDEO)
     with pytest.raises(DomainError, match="blank"):
         MediaAsset("456", 0, MediaType.VIDEO, variants=("",))
+
+
+@pytest.mark.parametrize("asset_id", [":", "bad:0", "1:-1", "1:x", "1:00", "1:0:0"])
+def test_download_job_rejects_invalid_composite_asset_identity(asset_id: str) -> None:
+    with pytest.raises(InvalidIdentityError, match="asset_id"):
+        DownloadJob("job", asset_id, "run", DownloadStatus.QUEUED, 0, NOW, NOW)
+
+
+def test_parse_media_identity_returns_validated_components() -> None:
+    assert parse_media_identity("456:0") == ("456", 0)
 
 
 def test_discovery_run_validates_lifecycle_and_counts() -> None:
@@ -129,7 +139,7 @@ def test_artifact_normalizes_hash_and_rejects_unsafe_paths() -> None:
         "artifact-1", "job-1", "profiles/a/media.mp4", "video/mp4", 12, "A" * 64, NOW
     )
     assert artifact.sha256 == "a" * 64
-    for path in ("/tmp/file", "../file", "safe/../file", "", "safe//file"):
+    for path in ("/tmp/file", "../file", "safe/../file", "", ".", "safe//file"):
         with pytest.raises(DomainError, match="relative POSIX"):
             Artifact("artifact-1", "job-1", path, "video/mp4", 12, "a" * 64, NOW)
     with pytest.raises(DomainError, match="64 hexadecimal"):

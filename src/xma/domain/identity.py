@@ -9,6 +9,7 @@ from xma.domain.errors import DomainError, InvalidIdentityError
 _X_ID = re.compile(r"^[1-9][0-9]*$")
 _HANDLE = re.compile(r"^[A-Za-z0-9_]{1,15}$")
 _SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
+_MEDIA_IDENTITY = re.compile(r"^([1-9][0-9]*):(0|[1-9][0-9]*)$")
 
 
 def validate_x_id(value: str, field: str) -> str:
@@ -44,7 +45,7 @@ def validate_sha256(value: str) -> str:
 
 def validate_relative_path(value: str) -> str:
     path = PurePosixPath(value)
-    if not value or path.is_absolute() or ".." in path.parts or "." in path.parts:
+    if not value or value == "." or path.is_absolute() or ".." in path.parts or "." in path.parts:
         raise DomainError("artifact path must be a normalized relative POSIX path")
     normalized = path.as_posix()
     if normalized != value or value.startswith("/"):
@@ -56,3 +57,10 @@ def media_identity(post_id: str, media_index: int) -> str:
     return (
         f"{validate_x_id(post_id, 'post_id')}:{validate_non_negative(media_index, 'media_index')}"
     )
+
+
+def parse_media_identity(value: str) -> tuple[str, int]:
+    match = _MEDIA_IDENTITY.fullmatch(value)
+    if match is None:
+        raise InvalidIdentityError("asset_id must be <positive post_id>:<non-negative media_index>")
+    return validate_x_id(match.group(1), "post_id"), int(match.group(2))
