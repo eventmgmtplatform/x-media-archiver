@@ -1,18 +1,21 @@
-# XMA v0.1.0 quick start
+# XMA v0.1.1 quick start
 
 ## Install and verify
 
-Extract the Linux x86_64 bundle, enter its directory, and verify the embedded CLI:
+After an authorized v0.1.1 publication, verify `SHA256SUMS`, extract the immutable Linux x86_64
+release bundle, enter its directory, and verify the embedded CLI:
 
 ```bash
-tar -xzf xma-v0.1.0-linux-x86_64.tar.gz
-cd xma-v0.1.0-linux-x86_64
+tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
+cd xma-v0.1.1-linux-x86_64
 ./xma --help
 ./xma version --short
 ```
 
-The version must be `0.1.0`. The bundle needs neither Python nor `uv`. Before extraction, verify
-the distributed `SHA256SUMS` from the parent directory with `sha256sum -c SHA256SUMS`.
+The version must be `0.1.1`. The bundle needs neither Python nor `uv`. Before extraction, verify
+the distributed `SHA256SUMS` from the parent directory with `sha256sum -c SHA256SUMS`. Until the
+tag and Release are separately authorized and published, this document describes a validated
+candidate rather than an available release.
 
 ## Firefox authentication
 
@@ -38,6 +41,12 @@ Download a total of one, two, or five videos from a public profile:
   --auth-browser firefox --auth-profile PROFILE_NAME
 ./xma download @HANDLE --limit 5 --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile PROFILE_NAME
+./xma download @HANDLE --limit 10 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile PROFILE_NAME
+./xma download @HANDLE --add 1 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile PROFILE_NAME
+./xma download @HANDLE --add 5 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile PROFILE_NAME
 ```
 
 Download one exact public status without scanning the profile:
@@ -91,7 +100,8 @@ cataloged files.
 ## Limits and common errors
 
 - Linux x86_64 only; Ubuntu 22.04 and 24.04 are tested.
-- Downloads accept totals 1–5; durable archive accepts totals 1–10 and batches 1–5.
+- Download accepts `--limit 1..10` or `--add 1..10`, never both; the resulting repository total
+  cannot exceed ten. Durable archive remains the checkpointed workflow and is also capped at ten.
 - No scheduler, daemon, mass operation, remote cursor, GUI, API service, yt-dlp, or FFmpeg.
 - Exit `2`: invalid input; `3`: authentication/content restriction; `4`: rate limit; `5`:
   provider/contract failure; `6`: catalog failure; `7`: missing target/run; `8`: transient provider

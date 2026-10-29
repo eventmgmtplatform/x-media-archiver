@@ -1,14 +1,13 @@
-# X Media Archiver 0.1.0
+# X Media Archiver 0.1.1
 
 Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
 a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
 ## Version status
 
-Version 0.1.0 is the first published bounded Linux distribution. Install from the immutable
-`v0.1.0` GitHub Release and verify the distributed checksums; moving branches are development
-sources, not releases. The supported maximum is ten
-videos and the product is not certified for bulk operation.
+Version 0.1.1 is a bounded hotfix candidate based on the published v0.1.0 release. Interactive
+download and durable archive both enforce a repository maximum of ten videos; moving branches are
+development sources, not releases, and the product is not certified for bulk operation.
 
 ## Supported platforms
 
@@ -19,26 +18,32 @@ macOS are not certified. A local filesystem with `flock` is required for durable
 
 Recommended release bundle:
 
+After an authorized v0.1.1 publication, download the immutable release assets, verify
+`SHA256SUMS`, and then extract the bundle:
+
 ```bash
-tar -xzf xma-v0.1.0-linux-x86_64.tar.gz
-cd xma-v0.1.0-linux-x86_64
+tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
+cd xma-v0.1.1-linux-x86_64
 ./xma --help
 ./xma version
 ```
 
-The bundle does not require a system Python or uv.
+The candidate bundle does not require a system Python or uv. These installation commands describe
+the future immutable v0.1.1 release and must not be used to imply that publication already occurred.
 
 Advanced source installation:
+
+Use this only after the immutable `v0.1.1` tag is published:
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach v0.1.0
+git checkout --detach v0.1.1
 uv sync --locked --all-groups
 uv run xma version
 ```
 
-Advanced wheel installation uses the locally built `x_media_archiver-0.1.0-py3-none-any.whl` in an
+Advanced wheel installation uses the locally built `x_media_archiver-0.1.1-py3-none-any.whl` in an
 isolated Python 3.12 environment. See the local CLI runbook.
 
 ## Quick start
@@ -53,6 +58,12 @@ xma download @HANDLE --limit 2 --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile PROFILE_NAME
 xma download @HANDLE --limit 5 --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile PROFILE_NAME
+xma download @HANDLE --limit 10 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile PROFILE_NAME
+xma download @HANDLE --add 1 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile PROFILE_NAME
+xma download @HANDLE --add 5 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile PROFILE_NAME
 
 xma archive @HANDLE --limit 10 --batch-size 2 --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile PROFILE_NAME \
@@ -92,11 +103,14 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 
 ## Known limitations
 
-- Maximum ten videos; no certified bulk or unattended operation.
+- Download accepts absolute `--limit 1..10` or additive `--add 1..10`; the resulting verified total
+  cannot exceed ten. Larger future operations belong to durable `archive`, also currently capped
+  at ten.
+- No certified bulk or unattended operation.
 - `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
 - Provider availability and authenticated X behavior can change independently of XMA.
-- Verify the `v0.1.0` tag and `SHA256SUMS`; do not install an arbitrary moving branch.
+- Verify the eventual `v0.1.1` tag and `SHA256SUMS`; do not install an arbitrary moving branch.
 
 ## Documentation
 

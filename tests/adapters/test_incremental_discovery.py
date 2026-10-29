@@ -116,6 +116,21 @@ def test_streaming_job_sends_candidate_before_stop_and_skips_duplicate() -> None
     assert any(item.get("event") == "DUPLICATE_SKIPPED" for item in output.messages)
 
 
+def test_streaming_job_stops_at_max_scan_after_duplicate() -> None:
+    output = Connection()
+    data_job = incremental._StreamingDataJob.__new__(incremental._StreamingDataJob)
+    data_job.remaining = 1
+    data_job.existing = frozenset({"10:0"})
+    data_job.max_scan = 1
+    data_job.output = cast(Any, output)
+    data_job.profile_record = None
+    data_job.videos_seen = data_job.duplicates_skipped = data_job.emitted = 0
+    with pytest.raises(exception.StopExtraction):
+        data_job.handle_url("old", cast(Any, _post(tweet_id="10")))
+    assert data_job.videos_seen == 1
+    assert data_job.duplicates_skipped == 1
+
+
 @pytest.mark.parametrize("kind", ["anonymous", "firefox", "cookie_file"])
 def test_worker_configuration_keeps_credentials_in_child_memory(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, kind: str
@@ -180,6 +195,7 @@ def test_worker_terminal_classification(
         frozenset(),
         None,
         30,
+        100,
         cast(Any, output),
     )
     assert output.messages[-1] == {"version": 1, "kind": "terminal", "status": terminal}
@@ -293,6 +309,7 @@ def test_worker_uses_explicit_target_mode_without_mutating_single_post(
         frozenset(),
         None,
         30,
+        100,
         cast(Any, output),
     )
     assert observed == [expected]

@@ -114,7 +114,7 @@ DOWNLOAD_TRANSITIONS: dict[DownloadStatus, frozenset[DownloadStatus]] = {
         {DownloadStatus.QUEUED, DownloadStatus.FAILED_FINAL}
     ),
     DownloadStatus.COMPLETED: frozenset(),
-    DownloadStatus.FAILED_FINAL: frozenset(),
+    DownloadStatus.FAILED_FINAL: frozenset({DownloadStatus.QUEUED}),
     DownloadStatus.SKIPPED_DUPLICATE: frozenset(),
     DownloadStatus.RESTRICTED: frozenset(),
 }
@@ -166,6 +166,18 @@ class DownloadJob:
             updated_at=at,
             error_code=error_code,
             error_message=error_message,
+        )
+
+    def retry(self, at: datetime) -> "DownloadJob":
+        """Start an explicit governed retry while preserving the attempt counter."""
+        if self.status is not DownloadStatus.FAILED_FINAL:
+            raise InvalidTransitionError("only a final failed job can be retried")
+        return replace(
+            self,
+            status=DownloadStatus.QUEUED,
+            updated_at=at,
+            error_code=None,
+            error_message=None,
         )
 
 

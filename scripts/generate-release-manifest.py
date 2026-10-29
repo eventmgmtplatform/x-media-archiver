@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate or validate the sanitized v0.1.0 release manifest."""
+"""Generate or validate the sanitized v0.1.1 release manifest."""
 
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ PAYLOADS = (
     "gallery_dl-1.32.18.tar.gz",
     "requirements-linux-x86_64.txt",
     "sbom.cdx.json",
-    "x_media_archiver-0.1.0-py3-none-any.whl",
-    "x_media_archiver-0.1.0.tar.gz",
-    "xma-v0.1.0-linux-x86_64.tar.gz",
+    "x_media_archiver-0.1.1-py3-none-any.whl",
+    "x_media_archiver-0.1.1.tar.gz",
+    "xma-v0.1.1-linux-x86_64.tar.gz",
 )
 
 
@@ -44,15 +44,15 @@ def build_manifest(artifact_dir: Path) -> dict[str, object]:
         artifacts.append({"name": name, "size": path.stat().st_size, "sha256": sha256(path)})
     return {
         "schema": "xma-release-manifest-v1",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "source_sha": source_sha,
         "source_tree": source_tree,
         "uv_lock_sha256": sha256(Path("uv.lock")),
         "build": {"python": platform.python_version(), "platform": platform.platform()},
         "bundle": {
-            "name": "xma-v0.1.0-linux-x86_64.tar.gz",
+            "name": "xma-v0.1.1-linux-x86_64.tar.gz",
             "format": "tar+gzip",
-            "layout": "xma-v0.1.0-linux-x86_64/",
+            "layout": "xma-v0.1.1-linux-x86_64/",
         },
         "artifacts": artifacts,
     }
@@ -60,7 +60,7 @@ def build_manifest(artifact_dir: Path) -> dict[str, object]:
 
 def validate(artifact_dir: Path) -> None:
     manifest = json.loads((artifact_dir / "RELEASE-MANIFEST.json").read_text())
-    if manifest["schema"] != "xma-release-manifest-v1" or manifest["version"] != "0.1.0":
+    if manifest["schema"] != "xma-release-manifest-v1" or manifest["version"] != "0.1.1":
         raise SystemExit("release manifest schema/version mismatch")
     expected_sha = os.environ.get("GITHUB_SHA") or git("rev-parse", "HEAD")
     if manifest["source_sha"] != expected_sha:

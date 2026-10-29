@@ -85,6 +85,19 @@ class FixtureMedia:
         )
 
 
+class FailOnceMedia(FixtureMedia):
+    def __init__(self) -> None:
+        super().__init__()
+        self.calls = 0
+
+    def download(self, source_url: str, part_path: str) -> DownloadedArtifact:
+        self.calls += 1
+        if self.calls == 1:
+            Path(part_path).write_bytes(b"failed-first-attempt")
+            raise DownloadError("media download failed")
+        return super().download(source_url, part_path)
+
+
 def _service(repository: Path, media: FixtureMedia) -> DownloadService:
     database = repository / "catalog.sqlite3"
     return DownloadService(
@@ -132,7 +145,7 @@ class IncrementalFixture:
     def __init__(self, indices_by_attempt: list[list[int]], *, timeout: bool = False) -> None:
         self.indices_by_attempt = indices_by_attempt
         self.timeout = timeout
-        self.calls: list[tuple[int, frozenset[str], int]] = []
+        self.calls: list[tuple[int, frozenset[str], int, int]] = []
 
     def candidates(
         self,
@@ -140,9 +153,10 @@ class IncrementalFixture:
         remaining: int,
         existing_identities: frozenset[str],
         timeout_seconds: int,
+        max_scan: int = 100,
     ) -> Iterator[DiscoveryBatch]:
         call = len(self.calls)
-        self.calls.append((remaining, existing_identities, timeout_seconds))
+        self.calls.append((remaining, existing_identities, timeout_seconds, max_scan))
         for index in self.indices_by_attempt[call]:
             yield _candidate_batch(target, index)
         if self.timeout:
@@ -202,6 +216,32 @@ def test_incremental_complete_repository_performs_zero_discovery(tmp_path: Path)
     assert result.downloaded_count == 0
     assert result.total_after == 5
     assert provider.calls == []
+
+
+def test_incremental_lower_limit_is_offline_noop(tmp_path: Path) -> None:
+    repository = tmp_path / "lower-limit"
+    _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", 10))
+    provider = IncrementalFixture([])
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 1), provider, 30, 2, lambda message: None
+    )
+    assert result.downloaded_count == 0
+    assert result.total_after == 10
+    assert result.complete is True
+    assert provider.calls == []
+
+
+def test_incremental_max_scan_is_forwarded_and_exhaustion_is_recorded(tmp_path: Path) -> None:
+    repository = tmp_path / "max-scan"
+    provider = IncrementalFixture([[], []])
+    with pytest.raises(DiscoveryTransientError, match="PROVIDER_EXHAUSTED"):
+        _incremental_service(repository, FixtureMedia()).execute_incremental(
+            DownloadRequest("Reuters", 1), provider, 30, 2, lambda message: None, 7
+        )
+    assert provider.calls == [(1, frozenset(), 30, 7), (1, frozenset(), 30, 7)]
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["exhausted"] is True
+    assert manifest["quality_policy"] == "provider-best"
 
 
 def test_single_post_incremental_repeat_is_offline_idempotent(tmp_path: Path) -> None:
@@ -325,6 +365,67 @@ def test_failure_removes_part_and_creates_no_artifact(tmp_path: Path) -> None:
         assert connection.execute("SELECT status FROM download_jobs").fetchone() == (
             "FAILED_FINAL",
         )
+
+
+def test_failed_final_without_artifact_retries_and_increments_attempts(tmp_path: Path) -> None:
+    repository = tmp_path / "retry"
+    with pytest.raises(DownloadError):
+        _service(repository, FixtureMedia(fail=True)).execute(DownloadRequest("Reuters", 1))
+    provider = IncrementalFixture([[0], [0]])
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 1), provider, 30, 2, lambda message: None
+    )
+    assert result.total_after == 1
+    with sqlite3.connect(repository / "catalog.sqlite3") as connection:
+        assert connection.execute("SELECT status, attempts FROM download_jobs").fetchone() == (
+            "COMPLETED",
+            2,
+        )
+        assert connection.execute("SELECT COUNT(*) FROM artifacts").fetchone() == (1,)
+    assert not list(repository.rglob("*.part"))
+    assert not list(repository.rglob("*.tmp"))
+
+
+def test_one_bounded_rediscovery_recovers_transient_media_failure(tmp_path: Path) -> None:
+    repository = tmp_path / "fresh-url-recovery"
+    media = FailOnceMedia()
+    provider = IncrementalFixture([[0], [0]])
+    result = _incremental_service(repository, media).execute_incremental(
+        DownloadRequest("Reuters", 1), provider, 30, 2, lambda message: None
+    )
+    assert result.total_after == 1
+    assert media.calls == 2
+    assert len(provider.calls) == 2
+    with sqlite3.connect(repository / "catalog.sqlite3") as connection:
+        assert connection.execute("SELECT status, attempts FROM download_jobs").fetchone() == (
+            "COMPLETED",
+            2,
+        )
+
+
+def test_failed_final_with_unexpected_file_remains_conflict(tmp_path: Path) -> None:
+    repository = tmp_path / "failed-conflict"
+    with pytest.raises(DownloadError):
+        _service(repository, FixtureMedia(fail=True)).execute(DownloadRequest("Reuters", 1))
+    unexpected = repository / "profiles/Reuters/posts/9000/0/video.mp4"
+    unexpected.parent.mkdir(parents=True, exist_ok=True)
+    unexpected.write_bytes(b"unexpected")
+    with pytest.raises(DownloadConflictError, match="catalog and filesystem"):
+        _incremental_service(repository, FixtureMedia()).verified_total("Reuters")
+
+
+def test_quality_policy_and_safe_observed_fields_are_persisted(tmp_path: Path) -> None:
+    repository = tmp_path / "quality"
+    _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", 1))
+    sidecar = json.loads(next(repository.rglob("metadata.json")).read_text())
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert sidecar["quality_policy"] == "provider-best"
+    assert sidecar["extension"] == ".mp4"
+    assert sidecar["width"] == 1280
+    assert sidecar["height"] == 720
+    assert manifest["quality_policy"] == "provider-best"
+    assert manifest["artifacts"][0]["quality_policy"] == "provider-best"
+    assert "signature=private" not in json.dumps(sidecar) + json.dumps(manifest)
 
 
 def test_catalog_filesystem_conflict_fails_closed(tmp_path: Path) -> None:

@@ -21,6 +21,7 @@ class IncrementalDiscoveryProvider(Protocol):
         remaining: int,
         existing_identities: frozenset[str],
         timeout_seconds: int,
+        max_scan: int = 100,
     ) -> Iterator[DiscoveryBatch]: ...
 
 

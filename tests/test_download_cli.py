@@ -10,6 +10,7 @@ import pytest
 from typer.testing import CliRunner
 
 import xma.cli as cli
+from xma.application.download import DownloadService
 from xma.cli import app
 from xma.domain.discovery import (
     DiscoveredAsset,
@@ -18,7 +19,7 @@ from xma.domain.discovery import (
     DiscoveryBatch,
     DiscoveryTarget,
 )
-from xma.domain.download import DownloadedArtifact
+from xma.domain.download import DownloadedArtifact, DownloadSummary
 from xma.domain.enums import MediaType, PostType
 from xma.domain.errors import DiscoveryTransientError
 
@@ -75,8 +76,9 @@ class Incremental:
         remaining: int,
         existing_identities: frozenset[str],
         timeout_seconds: int,
+        max_scan: int = 100,
     ) -> Iterator[DiscoveryBatch]:
-        del existing_identities, timeout_seconds
+        del existing_identities, timeout_seconds, max_scan
         yield Discovery().discover(target, remaining)
 
 
@@ -110,10 +112,134 @@ def test_download_json_is_stable_and_omits_ephemeral_url(
     assert (repository / "catalog.sqlite3").is_file()
 
 
-@pytest.mark.parametrize("limit", ["0", "6"])
-def test_download_cli_rejects_limit_outside_one_to_five(limit: str) -> None:
+@pytest.mark.parametrize("limit", ["0", "11", "1000"])
+def test_download_cli_rejects_limit_outside_one_to_ten(limit: str) -> None:
     result = runner.invoke(app, ["download", "Reuters", "--limit", limit])
     assert result.exit_code == cli.EXIT_INVALID_INPUT
+    assert "durable 'xma archive' workflow" in result.stderr
+
+
+@pytest.mark.parametrize("limit", range(1, 11))
+def test_download_cli_accepts_every_limit_one_to_ten(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, limit: int
+) -> None:
+    monkeypatch.setattr(DownloadService, "verified_total", lambda self, handle: 10)
+    monkeypatch.setattr(
+        DownloadService,
+        "execute_incremental",
+        lambda self, request, *args: DownloadSummary(
+            request.target, request.limit, 0, 10, 0, "run", (), 10, 10, True
+        ),
+    )
+    result = runner.invoke(
+        app,
+        ["download", "Reuters", "--limit", str(limit), "--repository", str(tmp_path / "repo")],
+    )
+    assert result.exit_code == 0
+
+
+@pytest.mark.parametrize("additional", range(1, 11))
+def test_download_cli_accepts_every_add_value(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, additional: int
+) -> None:
+    captured: list[int] = []
+    monkeypatch.setattr(DownloadService, "verified_total", lambda self, handle: 0)
+
+    def execute(self: DownloadService, request: object, *args: object) -> DownloadSummary:
+        captured.append(request.limit)  # type: ignore[attr-defined]
+        return DownloadSummary("https://x.com/Reuters", additional, 0, 0, 0, "run", (), 0, 0, True)
+
+    monkeypatch.setattr(DownloadService, "execute_incremental", execute)
+    monkeypatch.setattr(cli, "_download_discovery_provider", lambda *args: Discovery())
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
+    result = runner.invoke(
+        app,
+        ["download", "Reuters", "--add", str(additional), "--repository", str(tmp_path / "repo")],
+    )
+    assert result.exit_code == 0
+    assert captured == [additional]
+
+
+@pytest.mark.parametrize(("existing", "additional"), [(5, 5), (0, 10)])
+def test_download_cli_additive_total_is_absolute_target(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, existing: int, additional: int
+) -> None:
+    captured: list[int] = []
+    monkeypatch.setattr(DownloadService, "verified_total", lambda self, handle: existing)
+    monkeypatch.setattr(cli, "_download_discovery_provider", lambda *args: Discovery())
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
+
+    def execute(self: DownloadService, request: object, *args: object) -> DownloadSummary:
+        captured.append(request.limit)  # type: ignore[attr-defined]
+        return DownloadSummary(
+            "https://x.com/Reuters", 10, 0, existing, 0, "run", (), existing, existing, True
+        )
+
+    monkeypatch.setattr(DownloadService, "execute_incremental", execute)
+    result = runner.invoke(
+        app,
+        ["download", "Reuters", "--add", str(additional), "--repository", str(tmp_path / "repo")],
+    )
+    assert result.exit_code == 0
+    assert captured == [10]
+
+
+@pytest.mark.parametrize(("existing", "additional"), [(5, 6), (10, 1)])
+def test_download_cli_rejects_additive_total_above_ten_before_provider_or_state(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    existing: int,
+    additional: int,
+) -> None:
+    repository = tmp_path / "must-not-exist"
+    monkeypatch.setattr(DownloadService, "verified_total", lambda self, handle: existing)
+    monkeypatch.setattr(
+        cli,
+        "_download_discovery_provider",
+        lambda *args: pytest.fail("provider must not be constructed"),
+    )
+    result = runner.invoke(
+        app,
+        ["download", "Reuters", "--add", str(additional), "--repository", str(repository)],
+    )
+    assert result.exit_code == cli.EXIT_INVALID_INPUT
+    assert "durable 'xma archive' workflow" in result.stderr
+    assert not repository.exists()
+
+
+def test_download_cli_rejects_limit_and_add_together(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["download", "Reuters", "--limit", "1", "--add", "1", "--repository", str(tmp_path)],
+    )
+    assert result.exit_code == cli.EXIT_INVALID_INPUT
+
+
+def test_download_cli_default_remains_limit_one(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    captured: list[int] = []
+    monkeypatch.setattr(DownloadService, "verified_total", lambda self, handle: 0)
+    monkeypatch.setattr(cli, "_download_discovery_provider", lambda *args: Discovery())
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
+
+    def execute(self: DownloadService, request: object, *args: object) -> DownloadSummary:
+        captured.append(request.limit)  # type: ignore[attr-defined]
+        return DownloadSummary("https://x.com/Reuters", 1, 0, 0, 0, "run", (), 0, 0, True)
+
+    monkeypatch.setattr(DownloadService, "execute_incremental", execute)
+    result = runner.invoke(app, ["download", "Reuters", "--repository", str(tmp_path / "repo")])
+    assert result.exit_code == 0
+    assert captured == [1]
+
+
+def test_download_cli_rejects_invalid_quality_before_provider(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["download", "Reuters", "--quality", "low", "--repository", str(tmp_path / "repo")],
+    )
+    assert result.exit_code == cli.EXIT_INVALID_INPUT
+    assert not (tmp_path / "repo").exists()
 
 
 @pytest.mark.parametrize("timeout", ["4", "61"])
@@ -134,8 +260,9 @@ def test_download_timeout_is_sanitized_and_creates_no_state(
             remaining: int,
             existing_identities: frozenset[str],
             timeout_seconds: int,
+            max_scan: int = 100,
         ) -> Iterator[DiscoveryBatch]:
-            del target, remaining, existing_identities, timeout_seconds
+            del target, remaining, existing_identities, timeout_seconds, max_scan
             raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
             yield
 

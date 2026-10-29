@@ -25,7 +25,7 @@ from xma.application.archive import ArchiveService
 from xma.application.discovery import DiscoveryService, SyncResult
 from xma.application.download import DownloadService
 from xma.domain.archive import ArchiveRequest, ArchiveRun
-from xma.domain.discovery import DiscoveryBatch
+from xma.domain.discovery import DiscoveryBatch, normalize_discovery_target
 from xma.domain.download import DownloadRequest, DownloadSummary
 from xma.domain.errors import (
     CatalogError,
@@ -167,9 +167,16 @@ def sync_profile(
 def download_profile(
     target: Annotated[str, typer.Argument(help="Public @handle or X profile URL.")],
     limit: Annotated[
-        int,
-        typer.Option("--limit", min=1, max=5, help="Video assets to download (maximum 5)."),
-    ] = 1,
+        int | None,
+        typer.Option("--limit", help="Desired verified total, from 1 to 10."),
+    ] = None,
+    add: Annotated[
+        int | None,
+        typer.Option(
+            "--add",
+            help="New videos to add, from 1 to 10; repository total cannot exceed 10.",
+        ),
+    ] = None,
     repository: Annotated[
         Path,
         typer.Option("--repository", help="Local XMA repository directory."),
@@ -204,36 +211,73 @@ def download_profile(
             help="Bounded discovery worker attempts.",
         ),
     ] = 2,
+    max_scan: Annotated[
+        int,
+        typer.Option("--max-scan", min=1, max=500, help="Maximum observed candidates per worker."),
+    ] = 100,
+    quality: Annotated[
+        str,
+        typer.Option("--quality", help="Provider quality policy (best only)."),
+    ] = "best",
     json_output: Annotated[
         bool,
         typer.Option("--json", help="Emit stable JSON without credentials or media URLs."),
     ] = False,
 ) -> None:
-    """Download a bounded vertical slice of public video assets."""
+    """Interactively download a bounded total of at most ten public videos."""
     database = repository / "catalog.sqlite3"
     try:
-        provider = _download_discovery_provider(
-            auth_browser, auth_profile, cookies_file, discovery_timeout
-        )
-        incremental_provider = _download_incremental_provider(
-            auth_browser,
-            auth_profile,
-            cookies_file,
-            lambda message: error_console.print(message, markup=False),
-        )
-        request = DownloadRequest(target, limit)
-        service = DownloadService(
-            provider,
-            _media_provider_factory(),
+        if limit is not None and add is not None:
+            raise DomainError("--limit and --add are mutually exclusive")
+        for value in (limit, add):
+            if value is not None and not 1 <= value <= 10:
+                raise DomainError(
+                    "download supports totals from 1 to 10; larger operations require "
+                    "the durable 'xma archive' workflow. v0.1.1 does not execute totals above 10"
+                )
+        if quality != "best":
+            raise DomainError("download quality must be 'best'")
+        normalized = normalize_discovery_target(target)
+        preflight = DownloadService(
+            None,
+            None,
             lambda: _catalog_unit(database),
             repository,
         )
+        existing = preflight.verified_total(normalized.handle)
+        requested_limit = (existing + add) if add is not None else (limit or 1)
+        if requested_limit > 10:
+            raise DomainError(
+                "download supports totals from 1 to 10; larger operations require "
+                "the durable 'xma archive' workflow. v0.1.1 does not execute totals above 10"
+            )
+        request = DownloadRequest(target, requested_limit)
+        if existing >= requested_limit:
+            service = preflight
+            incremental_provider = None
+        else:
+            provider = _download_discovery_provider(
+                auth_browser, auth_profile, cookies_file, discovery_timeout
+            )
+            incremental_provider = _download_incremental_provider(
+                auth_browser,
+                auth_profile,
+                cookies_file,
+                lambda message: error_console.print(message, markup=False),
+            )
+            service = DownloadService(
+                provider,
+                _media_provider_factory(),
+                lambda: _catalog_unit(database),
+                repository,
+            )
         result = service.execute_incremental(
             request,
             incremental_provider,
             discovery_timeout,
             discovery_attempts,
             lambda message: error_console.print(message, markup=False),
+            max_scan,
         )
     except (InvalidIdentityError, DomainError) as error:
         error_console.print(f"invalid input: {error}", markup=False, style="red")
@@ -263,7 +307,7 @@ def archive_profile(
     discovery_timeout: Annotated[int, typer.Option("--discovery-timeout", min=5, max=60)] = 30,
     json_output: Annotated[bool, typer.Option("--json")] = False,
 ) -> None:
-    """Durably archive a public profile in confirmed pages."""
+    """Durably archive a public profile with checkpoints, currently up to ten."""
     database = repository / "catalog.sqlite3"
     try:
         request = ArchiveRequest.create(target, limit, batch_size, request_interval)
@@ -373,6 +417,15 @@ def _download_incremental_provider(
     cookies_file: Path | None,
     telemetry: Callable[[str], None] | None = None,
 ) -> IncrementalGalleryDlDiscoveryProvider:
+    authentication = _validate_download_authentication(browser, profile, cookies_file)
+    return IncrementalGalleryDlDiscoveryProvider(authentication, telemetry)
+
+
+def _validate_download_authentication(
+    browser: str | None,
+    profile: str | None,
+    cookies_file: Path | None,
+) -> BrowserAuthentication | CookieFileAuthentication | None:
     if cookies_file is not None and (browser is not None or profile is not None):
         raise InvalidIdentityError("download authentication options are mutually exclusive")
     if cookies_file is not None:
@@ -391,7 +444,7 @@ def _download_incremental_provider(
             authentication = BrowserAuthentication(browser, profile)
         except ValueError as error:
             raise InvalidIdentityError("browser authentication configuration is invalid") from error
-    return IncrementalGalleryDlDiscoveryProvider(authentication, telemetry)
+    return authentication
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:

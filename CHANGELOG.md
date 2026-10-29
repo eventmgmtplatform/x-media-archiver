@@ -5,25 +5,33 @@ Versioning.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.1.1] - 2026-10-29
+
 ### Added
 
-- No unreleased product changes.
+- Additive interactive download through `--add 1..10`, bounded scanning and explicit
+  provider-best quality metadata.
 
 ### Changed
 
-- Release-candidate stabilization remains subject to human validation.
+- Interactive `download --limit` accepts every desired total from 1 through 10. Durable `archive`
+  remains the checkpointed route and the global v0.1.1 maximum remains ten.
 
 ### Fixed
 
-- No unreleased fixes.
+- Recover `FAILED_FINAL` jobs without artifacts or residue through an explicit audited retry.
+- Treat lower absolute limits as successful offline no-ops without deleting completed artifacts.
+- Remove failed staging residue and empty media-index directories.
 
 ### Security
 
-- No unreleased security changes.
+- Reject invalid or additive totals above ten before provider/authentication/network construction.
 
 ### Known Limitations
 
-- Operation remains capped at ten videos.
+- Interactive download and durable archive remain capped at ten; no mass-download certification.
 
 ## [0.1.0] - 2026-10-29
 
@@ -68,5 +76,6 @@ Versioning.
 - Linux x86_64 only; Windows and macOS are not certified.
 - Provider availability remains external to XMA.
 
-[Unreleased]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.0

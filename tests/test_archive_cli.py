@@ -32,8 +32,9 @@ class Incremental:
         remaining: int,
         existing_identities: frozenset[str],
         timeout_seconds: int,
+        max_scan: int = 100,
     ) -> Iterator[DiscoveryBatch]:
-        del timeout_seconds
+        del timeout_seconds, max_scan
         start = len(existing_identities)
         for index in range(start, start + remaining):
             post_id = str(9000 + index)

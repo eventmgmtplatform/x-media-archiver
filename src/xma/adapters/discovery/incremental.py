@@ -116,10 +116,20 @@ def _target_dto(target: DiscoveryTarget) -> dict[str, str | None]:
 
 class _StreamingDataJob(job.DataJob):  # type: ignore[misc]
     def __init__(
-        self, url: str, remaining: int, existing: frozenset[str], output: Connection
+        self,
+        url: str,
+        remaining: int,
+        existing: frozenset[str],
+        max_scan: int,
+        output: Connection,
     ) -> None:
         super().__init__(url, file=None)
-        self.remaining, self.existing, self.output = remaining, existing, output
+        self.remaining, self.existing, self.max_scan, self.output = (
+            remaining,
+            existing,
+            max_scan,
+            output,
+        )
         self.profile_record: dict[str, Any] | None = None
         self.videos_seen = self.duplicates_skipped = self.emitted = 0
 
@@ -140,6 +150,8 @@ class _StreamingDataJob(job.DataJob):  # type: ignore[misc]
         if identity and identity in self.existing:
             self.duplicates_skipped += 1
             _telemetry(self.output, "DUPLICATE_SKIPPED", duplicates_skipped=self.duplicates_skipped)
+            if self.videos_seen >= getattr(self, "max_scan", 100):
+                raise exception.StopExtraction
             return
         profile = self.profile_record or _profile_dto(kwdict)
         candidate = _candidate_dto(url, kwdict)
@@ -150,6 +162,8 @@ class _StreamingDataJob(job.DataJob):  # type: ignore[misc]
         self.emitted += 1
         _telemetry(self.output, "CANDIDATE_SENT", candidates_sent=self.emitted)
         if self.emitted >= self.remaining:
+            raise exception.StopExtraction
+        if self.videos_seen >= getattr(self, "max_scan", 100):
             raise exception.StopExtraction
 
 
@@ -187,6 +201,7 @@ def _worker_main(
     existing: frozenset[str],
     authentication: BrowserAuthentication | CookieFileAuthentication | None,
     timeout_seconds: int,
+    max_scan: int,
     output: Connection,
 ) -> None:
     terminal = "WORKER_FAILED"
@@ -201,7 +216,7 @@ def _worker_main(
                 str(target["post_id"]) if target["post_id"] is not None else None,
             )
         )
-        data_job = _StreamingDataJob(job_url, remaining, existing, output)
+        data_job = _StreamingDataJob(job_url, remaining, existing, max_scan, output)
         _telemetry(output, "EXTRACTOR_STARTED")
         data_job.run()
         terminal = "COMPLETED" if data_job.emitted else "PROVIDER_EXHAUSTED"
@@ -242,6 +257,7 @@ class IncrementalGalleryDlDiscoveryProvider:
         remaining: int,
         existing_identities: frozenset[str],
         timeout_seconds: int,
+        max_scan: int = 100,
     ) -> Iterator[DiscoveryBatch]:
         if sys.platform != "linux":
             raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
@@ -255,6 +271,7 @@ class IncrementalGalleryDlDiscoveryProvider:
                 existing_identities,
                 self._authentication,
                 timeout_seconds,
+                max_scan,
                 sender,
             ),
         )
