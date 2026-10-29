@@ -1,4 +1,4 @@
-# XMA-CLI-001 — Runbook local de la CLI v0.1.0
+# XMA-CLI-001 — Runbook local de la CLI v0.1.1
 
 ## Alcance y requisitos
 
@@ -12,19 +12,20 @@ desatendida, `yt-dlp`, FFmpeg, miniaturas ni `ficha.md`.
 
 ## Método A — ejecución desde source
 
-Clone la revisión publicada y fije el tag inmutable `v0.1.0`. No opere desde una rama móvil.
+Tras la publicación autorizada, clone y fije el tag inmutable `v0.1.1`. No opere desde una rama
+móvil.
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach v0.1.0
+git checkout --detach v0.1.1
 git rev-parse HEAD
 uv sync --locked --all-groups
 uv run xma --help
 uv run xma version
 ```
 
-Confirme que `git describe --exact-match --tags HEAD` devuelve `v0.1.0` y compare el HEAD con el
+Confirme que `git describe --exact-match --tags HEAD` devuelve `v0.1.1` y compare el HEAD con el
 manifest de distribución.
 
 ## Método B — wheel local en un entorno virtual
@@ -34,7 +35,7 @@ El wheel puede construirse desde el tag gobernado:
 ```bash
 uv build
 uv venv .venv-xma --python 3.12
-uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.0-py3-none-any.whl
+uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.1-py3-none-any.whl
 .venv-xma/bin/xma --help
 .venv-xma/bin/xma version
 ```
@@ -47,7 +48,7 @@ Use un repositorio distinto por perfil. No mezcle handles en la misma ruta.
 
 ## Operaciones acotadas
 
-Descargar un total de 1, 2 o 5 videos de un perfil:
+Descargar un total absoluto entre 1 y 10 o agregar una cantidad acotada:
 
 ```bash
 uv run xma download @HANDLE --limit 1 --repository ./repository-HANDLE \
@@ -56,6 +57,12 @@ uv run xma download @HANDLE --limit 2 --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile <LOCAL_PROFILE>
 uv run xma download @HANDLE --limit 5 --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile <LOCAL_PROFILE>
+uv run xma download @HANDLE --limit 10 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile <LOCAL_PROFILE>
+uv run xma download @HANDLE --add 1 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile <LOCAL_PROFILE>
+uv run xma download @HANDLE --add 5 --repository ./repository-HANDLE \
+  --quality best --max-scan 100 --auth-browser firefox --auth-profile <LOCAL_PROFILE>
 ```
 
 Archivar durablemente hasta diez sobre el mismo repositorio:
@@ -88,7 +95,9 @@ uv run xma status --repository ./repository-HANDLE
 uv run xma status --repository ./repository-HANDLE --json
 ```
 
-`COMPLETED` confirma el total solicitado. `PAUSED` conserva progreso recuperable; revise
+`--limit N` es el total deseado y un total existente mayor es un no-op offline. `--add N` suma al
+total verificado; si excedería diez falla antes de autenticación o red. `COMPLETED` confirma el total
+solicitado. `PAUSED` conserva progreso recuperable; revise
 `last_error_code` antes de reanudar. `FAILED` indica inconsistencia o fallo no recuperable sin
 diagnóstico. `PROVIDER_TIMEOUT` es un fallo transitorio del proveedor, no permiso para retries
 descontrolados.

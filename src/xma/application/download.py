@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
@@ -28,19 +29,21 @@ from xma.domain.ports import (
 
 
 class DownloadService:
-    """Discover, download, checksum, persist, and manifest at most five assets."""
+    """Discover, download, checksum, persist, and manifest at most ten assets."""
 
     def __init__(
         self,
-        discovery_provider: DiscoveryProvider,
-        media_provider: MediaDownloadProvider,
+        discovery_provider: DiscoveryProvider | None,
+        media_provider: MediaDownloadProvider | None,
         unit_of_work_factory: Callable[[], UnitOfWork],
         repository: Path,
         *,
         clock: Callable[[], datetime] | None = None,
         run_id_factory: Callable[[], str] | None = None,
     ) -> None:
-        self._discovery = DiscoveryService(discovery_provider)
+        self._discovery = (
+            DiscoveryService(discovery_provider) if discovery_provider is not None else None
+        )
         self._media = media_provider
         self._unit_of_work_factory = unit_of_work_factory
         self._repository = repository
@@ -48,6 +51,8 @@ class DownloadService:
         self._run_id_factory = run_id_factory or (lambda: str(uuid4()))
 
     def execute(self, request: DownloadRequest) -> DownloadSummary:
+        if self._discovery is None:
+            raise DownloadError("discovery provider is unavailable")
         started_at = self._clock()
         batch = self._discovery.inspect(request.target, request.limit)
         run_id = self._run_id_factory()
@@ -112,21 +117,22 @@ class DownloadService:
     def execute_incremental(
         self,
         request: DownloadRequest,
-        provider: IncrementalDiscoveryProvider,
+        provider: IncrementalDiscoveryProvider | None,
         timeout_seconds: int,
         attempts: int,
         progress: Callable[[str], None],
+        max_scan: int = 100,
     ) -> DownloadSummary:
         if attempts < 1 or attempts > 2:
             raise DownloadError("discovery attempts must be between 1 and 2")
+        if not 1 <= max_scan <= 500:
+            raise DownloadError("max scan must be between 1 and 500")
         from xma.domain.discovery import normalize_discovery_target
 
         normalized = normalize_discovery_target(request.target)
         manifest_request = DownloadRequest(normalized.canonical_url, request.limit)
         identities, manifest_artifacts = self._load_existing(normalized.handle)
         existing_before = len(identities)
-        if existing_before > request.limit:
-            raise DownloadConflictError("catalog and filesystem do not agree")
         run_id = self._run_id_factory()
         started_at = self._clock()
         downloaded = 0
@@ -156,7 +162,9 @@ class DownloadService:
                 True,
             )
 
-        last_error: DiscoveryError | None = None
+        last_error: DiscoveryError | DownloadError | None = None
+        if provider is None:
+            raise DownloadError("discovery provider is unavailable")
         for attempt in range(1, attempts + 1):
             progress(f"discovery attempt {attempt}/{attempts}")
             stream = provider.candidates(
@@ -164,6 +172,7 @@ class DownloadService:
                 request.limit - len(identities),
                 frozenset(identities),
                 timeout_seconds,
+                max_scan,
             )
             try:
                 for batch in stream:
@@ -175,13 +184,17 @@ class DownloadService:
                             self._repository.mkdir(parents=True, exist_ok=True)
                             candidate_run = self._run_id_factory()
                             self._persist_discovery(batch, candidate_run, self._clock())
-                            result, _ = self._download_asset(
-                                batch.profile.handle,
-                                batch.provider,
-                                post,
-                                asset,
-                                candidate_run,
-                            )
+                            try:
+                                result, _ = self._download_asset(
+                                    batch.profile.handle,
+                                    batch.provider,
+                                    post,
+                                    asset,
+                                    candidate_run,
+                                )
+                            except DownloadError as error:
+                                last_error = error
+                                break
                             identities.add(identity)
                             manifest_artifacts.append(result)
                             downloaded += 1
@@ -202,7 +215,11 @@ class DownloadService:
                                 break
                         if len(identities) >= request.limit:
                             break
+                        if isinstance(last_error, DownloadError):
+                            break
                     if len(identities) >= request.limit:
+                        break
+                    if isinstance(last_error, DownloadError):
                         break
             except DiscoveryError as error:
                 last_error = error
@@ -225,11 +242,12 @@ class DownloadService:
             0,
             existing_before=existing_before,
             complete=complete,
+            exhausted=not complete and not isinstance(last_error, DownloadError),
         )
         if not complete:
-            raise last_error or DiscoveryTransientError(
-                "temporary provider failure [PROVIDER_EXHAUSTED]"
-            )
+            if last_error is not None:
+                raise last_error
+            raise DiscoveryTransientError("temporary provider failure [PROVIDER_EXHAUSTED]")
         return DownloadSummary(
             normalized.canonical_url,
             request.limit,
@@ -261,13 +279,27 @@ class DownloadService:
         with self._unit_of_work_factory() as unit:
             jobs = {job.job_id: job for job in unit.catalog.list_download_jobs()}
             artifacts = unit.catalog.list_artifacts()
-            if len(jobs) != len(artifacts):
+            artifact_jobs = {artifact.job_id for artifact in artifacts}
+            completed_jobs = {
+                job.job_id for job in jobs.values() if job.status is DownloadStatus.COMPLETED
+            }
+            if artifact_jobs != completed_jobs:
                 raise DownloadConflictError("catalog and filesystem do not agree")
-            for artifact in artifacts:
-                job = jobs.get(artifact.job_id)
-                if job is None or job.status is not DownloadStatus.COMPLETED:
+            for job in jobs.values():
+                if job.status is DownloadStatus.FAILED_FINAL and job.job_id not in artifact_jobs:
+                    post_id, media_index = job.asset_id.split(":", 1)
+                    failed_directory = (
+                        self._repository / "profiles" / handle / "posts" / post_id / media_index
+                    )
+                    if failed_directory.exists() and any(failed_directory.iterdir()):
+                        raise DownloadConflictError("catalog and filesystem do not agree")
+                elif job.status is not DownloadStatus.COMPLETED:
                     raise DownloadConflictError("catalog and filesystem do not agree")
-                media = unit.catalog.get_media_asset(job.asset_id)
+            for artifact in artifacts:
+                artifact_job = jobs.get(artifact.job_id)
+                if artifact_job is None or artifact_job.status is not DownloadStatus.COMPLETED:
+                    raise DownloadConflictError("catalog and filesystem do not agree")
+                media = unit.catalog.get_media_asset(artifact_job.asset_id)
                 if media is None:
                     raise DownloadConflictError("catalog and filesystem do not agree")
                 absolute = self._repository / artifact.relative_path
@@ -288,14 +320,18 @@ class DownloadService:
                     raise DownloadConflictError("catalog and filesystem do not agree")
                 if profile_handle.casefold() != handle.casefold():
                     continue
-                identities.add(job.asset_id)
+                identities.add(artifact_job.asset_id)
                 manifest_artifacts.append(
                     _manifest_artifact(
-                        job.asset_id,
+                        artifact_job.asset_id,
                         artifact.relative_path,
                         artifact.size_bytes,
                         artifact.sha256,
                         sidecar.relative_to(self._repository).as_posix(),
+                        str(sidecar_data.get("mime_type", artifact.mime_type)),
+                        str(sidecar_data.get("extension", absolute.suffix)),
+                        sidecar_data.get("width"),
+                        sidecar_data.get("height"),
                     )
                 )
         return identities, manifest_artifacts
@@ -376,44 +412,64 @@ class DownloadService:
 
         if existing_job is not None or existing_artifact is not None:
             if (
+                existing_job is not None
+                and existing_job.status is DownloadStatus.FAILED_FINAL
+                and existing_artifact is None
+            ):
+                job = existing_job.retry(self._clock())
+            else:
+                job = None
+            if job is None and (
                 existing_job is None
                 or existing_artifact is None
                 or existing_job.status is not DownloadStatus.COMPLETED
             ):
                 raise DownloadConflictError("catalog and filesystem do not agree")
-            absolute = self._repository / existing_artifact.relative_path
-            if (
-                not absolute.is_file()
-                or absolute.stat().st_size != existing_artifact.size_bytes
-                or _sha256(absolute) != existing_artifact.sha256
-            ):
-                raise DownloadConflictError("catalog and filesystem do not agree")
-            sidecar_relative = str(Path(existing_artifact.relative_path).parent / "metadata.json")
-            if not (self._repository / sidecar_relative).is_file():
-                raise DownloadConflictError("catalog and filesystem do not agree")
-            return (
-                _manifest_artifact(
-                    asset_id,
-                    existing_artifact.relative_path,
-                    existing_artifact.size_bytes,
-                    existing_artifact.sha256,
-                    sidecar_relative,
-                ),
-                True,
+            if job is not None:
+                pass
+            else:
+                assert existing_artifact is not None
+                absolute = self._repository / existing_artifact.relative_path
+                if (
+                    not absolute.is_file()
+                    or absolute.stat().st_size != existing_artifact.size_bytes
+                    or _sha256(absolute) != existing_artifact.sha256
+                ):
+                    raise DownloadConflictError("catalog and filesystem do not agree")
+                sidecar_relative = str(
+                    Path(existing_artifact.relative_path).parent / "metadata.json"
+                )
+                sidecar_path = self._repository / sidecar_relative
+                if not sidecar_path.is_file():
+                    raise DownloadConflictError("catalog and filesystem do not agree")
+                sidecar_data = json.loads(sidecar_path.read_text(encoding="utf-8"))
+                return (
+                    _manifest_artifact(
+                        asset_id,
+                        existing_artifact.relative_path,
+                        existing_artifact.size_bytes,
+                        existing_artifact.sha256,
+                        sidecar_relative,
+                        str(sidecar_data.get("mime_type", existing_artifact.mime_type)),
+                        str(sidecar_data.get("extension", absolute.suffix)),
+                        sidecar_data.get("width"),
+                        sidecar_data.get("height"),
+                    ),
+                    True,
+                )
+        else:
+            created_at = self._clock()
+            job = DownloadJob(
+                job_id,
+                asset_id,
+                run_id,
+                DownloadStatus.DISCOVERED,
+                0,
+                created_at,
+                created_at,
             )
-
-        created_at = self._clock()
-        job = DownloadJob(
-            job_id,
-            asset_id,
-            run_id,
-            DownloadStatus.DISCOVERED,
-            0,
-            created_at,
-            created_at,
-        )
-        self._put_job(job)
-        job = job.transition(DownloadStatus.QUEUED, self._clock())
+            self._put_job(job)
+            job = job.transition(DownloadStatus.QUEUED, self._clock())
         self._put_job(job)
         job = job.transition(DownloadStatus.DOWNLOADING, self._clock())
         self._put_job(job)
@@ -435,6 +491,8 @@ class DownloadService:
             self._fail_job(job)
             raise DownloadConflictError("catalog and filesystem do not agree")
         try:
+            if self._media is None:
+                raise DownloadError("media download failed")
             downloaded = self._media.download(asset.variants[0], str(part))
             if (
                 not part.is_file()
@@ -466,6 +524,8 @@ class DownloadService:
                 "downloaded_at": downloaded_at.isoformat(),
                 "relative_path": relative_path,
                 "mime_type": downloaded.mime_type,
+                "extension": downloaded.extension,
+                "quality_policy": "provider-best",
                 "size_bytes": downloaded.size_bytes,
                 "sha256": downloaded.sha256,
             }
@@ -495,15 +555,19 @@ class DownloadService:
                     downloaded.size_bytes,
                     downloaded.sha256,
                     sidecar_relative,
+                    downloaded.mime_type,
+                    downloaded.extension,
+                    asset.width,
+                    asset.height,
                 ),
                 False,
             )
         except DownloadError:
-            self._cleanup(part, sidecar_tmp, sidecar, final)
+            self._cleanup(directory, part, sidecar_tmp, sidecar, final)
             self._fail_job(job)
             raise
         except (OSError, ValueError) as error:
-            self._cleanup(part, sidecar_tmp, sidecar, final)
+            self._cleanup(directory, part, sidecar_tmp, sidecar, final)
             self._fail_job(job)
             raise DownloadError("media download failed") from error
 
@@ -521,10 +585,12 @@ class DownloadService:
         self._put_job(failed)
 
     @staticmethod
-    def _cleanup(*paths: Path | None) -> None:
+    def _cleanup(directory: Path, *paths: Path | None) -> None:
         for path in paths:
             if path is not None:
                 path.unlink(missing_ok=True)
+        with suppress(OSError):
+            directory.rmdir()
 
     def _write_manifest(
         self,
@@ -539,6 +605,7 @@ class DownloadService:
         *,
         existing_before: int = 0,
         complete: bool = True,
+        exhausted: bool = False,
     ) -> None:
         directory = self._repository / "manifests"
         directory.mkdir(parents=True, exist_ok=True)
@@ -560,6 +627,8 @@ class DownloadService:
             "downloaded_this_run": downloaded,
             "total_after": existing_before + downloaded,
             "complete": complete,
+            "exhausted": exhausted,
+            "quality_policy": "provider-best",
         }
         temporary.write_text(
             json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n",
@@ -582,6 +651,10 @@ def _manifest_artifact(
     size_bytes: int,
     sha256: str,
     sidecar_path: str,
+    mime_type: str,
+    extension: str,
+    width: object,
+    height: object,
 ) -> dict[str, object]:
     return {
         "asset_id": asset_id,
@@ -589,4 +662,9 @@ def _manifest_artifact(
         "size_bytes": size_bytes,
         "sha256": sha256,
         "sidecar_path": sidecar_path,
+        "mime_type": mime_type,
+        "extension": extension,
+        "width": width,
+        "height": height,
+        "quality_policy": "provider-best",
     }

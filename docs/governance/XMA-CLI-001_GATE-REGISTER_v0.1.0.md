@@ -93,6 +93,7 @@
 | GOV-VAL-0037 | B05 | PRM-0031 autorizó una instalación aislada y red limitada a Python/PyPI oficiales. | `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; wheel, dependencias bloqueadas, entry point y status sintético verificados. | El wheel sigue local y no publicado; máximo 10, sin X, merge, tag o release. |
 | GOV-RC-0038 | Release | PRM-0032 autoriza preparar v0.1.0 desde main sin publicar. | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; controles de rama, artifacts, SBOM, portabilidad y documentación preparados. | Requiere decisión humana; no autoriza merge, tag, Release o PyPI. |
 | GOV-RC-0039 | Release | PRM-0033 limita el rework a cumplimiento y operabilidad del RC. | GPL-2.0-only completo, source gallery-dl verificado, bundle autocontenido y manifest/checksums validados. | Espera validación humana; sin merge, tag, Release, PyPI o acceso a X. |
+| GOV-RWK-0042 | v0.1.1 | PRM-0032 y Addendum 001 autorizan recovery, modo aditivo, scan acotado y quality provider-best. | Implementación/offline validation en rama hotfix; download absoluto/aditivo 1–10, global máximo 10. | Requiere CI y aceptación pública 0→1→2→5; sin dot, merge, tag, Release, PyPI o operación masiva. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

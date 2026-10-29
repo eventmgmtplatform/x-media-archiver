@@ -235,3 +235,11 @@ help/version sin Python o uv.
 Estado final: `V0.1.0_RELEASED / POSTRELEASE_VERIFIED`. GitHub Pages y su despliegue permanecen
 pendientes; PyPI no fue autorizado ni publicado. La siguiente evolución funcional pertenece al
 backlog v2 y requiere nuevo gate humano.
+
+## Hotfix v0.1.1
+
+PRM-0032 con Addendum 001 autoriza una rama desde main para recuperar jobs `FAILED_FINAL` sin
+artifact/residuo, convertir límites absolutos inferiores en no-op, añadir `--add`, acotar scan y
+persistir la política `provider-best`. Download acepta 1–10 y archive conserva su máximo 10; ningún
+flujo permite más de diez, operación masiva o scheduler. La promoción requiere suite/CI verdes y la
+única aceptación 0→1→2→5 seguida por un no-op absoluto, sin retry manual.
