@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 AUTHENTICATED DISCOVERY — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03 AUTH BOUNDARY REWORK COMPLETED — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -96,9 +96,10 @@ La salida JSON omite las URLs de variantes multimedia. `inspect` no abre el cat�
 | `7` | perfil no encontrado |
 | `8` | fallo transitorio de transporte/proveedor |
 
-En octubre de 2026, la prueba controlada de Reuters, AP y BBCWorld recibió `AuthRequired` de X.
-El smoke público B03 permanece bloqueado por `AuthRequired`. AUD-0003 exige además el rework
-interno R-01 a R-07 antes de reclasificar el gate; no se agregan cookies ni autenticación.
+En octubre de 2026, la prueba anónima histórica de Reuters, AP y BBCWorld recibió `AuthRequired`
+de X. Posteriormente, ADR-0003 autorizó una sola aceptación controlada con sesión Firefox local.
+El modo autenticado vigente es explícito, solo lectura y acotado; el modo anónimo sigue siendo el
+predeterminado. Ninguna cookie se exporta, persiste, imprime ni cruza la frontera de infraestructura.
 
 ### Rework histórico B03-REWORK-001
 
@@ -161,10 +162,14 @@ SQLite y el mensaje sanitizado permanecen intactos; el smoke público no se repi
 
 PRM-0009 añade una selección explícita de sesión Firefox a `inspect` y `sync`; el modo anónimo
 sigue siendo el predeterminado. Navegador y perfil deben proporcionarse juntos, solo se admite
-Firefox y no se aceptan rutas de cookies. La aplicación solicita a `gallery-dl` lectura directa de
-la sesión local, mantiene caché en memoria y descarga deshabilitada, y no imprime, exporta ni
-persiste cookies o el identificador local.
+Firefox y no se aceptan rutas de cookies. La aplicación resuelve el nombre exacto desde el
+inventario Firefox autorizado y lee `cookies.sqlite` en modo inmutable y solo lectura. Solo carga
+en memoria cookies de los dominios necesarios para X; mantiene caché en memoria y descarga
+deshabilitada, y no copia, imprime, exporta ni persiste cookies o el identificador local.
 
 La aceptación gobernada Reuters → AP → BBCWorld, siempre con `--limit 2`, obtuvo códigos 3, 3 y 0.
 BBCWorld catalogó exactamente dos activos públicos distintos; el repositorio temporal contenía
-solo `.sqlite3`, sin medios, miniaturas ni sidecars. Q3-Público permanece pendiente de auditoría.
+solo `.sqlite3`, sin medios, miniaturas ni sidecars. AUD-0005 clasificó esa entrega como
+`REWORK_REQUIRED`. PRM-0010 cerró A-01–A-06 en el árbol de implementación, pero la evidencia
+SQLite original ya no estaba disponible de forma inequívoca y no se reconstruyó. Q3-Público
+permanece `BLOCKED` y pendiente de auditoría independiente.

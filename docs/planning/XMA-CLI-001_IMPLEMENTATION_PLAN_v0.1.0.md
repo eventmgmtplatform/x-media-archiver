@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / Q3-TÉCNICO VALIDATED WITH OBSERVATIONS / Q3-PÚBLICO WAITING VALIDATION
+**Estado:** ACTIVE / Q2 CLOSED / B03-AUTH-BOUNDARY REWORK_COMPLETED / WAITING_VALIDATION
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -56,16 +56,16 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso autorizado
 
-Ejecutar exclusivamente DOT-PRM-0011 después de HND-0003 v0.2.0 y CI verde. PRM-0009 se consumió
-una vez: la secuencia Reuters → AP → BBCWorld con `--limit 2` se detuvo en BBCWorld al catalogar
-exactamente dos activos distintos. Los identificadores locales permanecen fuera de Git.
+B03-AUTH-BOUNDARY-REWORK-001 queda `REWORK_COMPLETED / WAITING_VALIDATION` bajo PRM-0010 y
+HND-0003 v0.2.1. PRM-0009 se consumió una vez y no se repitió el smoke ni se accedió a X. La
+evidencia SQLite original no estaba disponible de forma inequívoca; no se reconstruyó.
 
-El modo anónimo continúa por defecto. La app puede solicitar a `gallery-dl` lectura directa del
-perfil local, pero no almacenar, exportar, imprimir ni versionar cookies o credenciales. CI sigue
-offline.
+El modo anónimo continúa por defecto. La lectura autenticada es infraestructura local, contenida,
+solo lectura y limitada a X; no almacena, exporta, copia, imprime ni versiona cookies o
+credenciales. CI continúa completamente offline.
 
-Q3-Público queda `WAITING_VALIDATION`; B03 no se considera cerrado hasta auditoría y decisión
-humana. Siguen prohibidos merge, B04, descargas, otros extractores, API X, tags, releases y
-certificación.
+Q3-Público permanece `BLOCKED` hasta auditoría y decisión humana. La siguiente acción es que dot
+ejecute DOT-PRM-0012 sobre el HEAD final. Siguen prohibidos merge, B04, descargas, otros
+extractores, API X, tags, releases y certificación.
 
 El rework B02 permanece separado y no integrado.

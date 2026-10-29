@@ -19,6 +19,7 @@
 | 2026-10-28 | Q3 documental / B03 | AUD-0004 v0.1.1, DOC-01 y CI #28 | `VALIDATED_WITH_OBSERVATIONS`; DOC-01 cerrado documentalmente | Leonel autorizó versionado y reconciliación; Q3-Público/B03 continúan `BLOCKED` |
 | 2026-10-28 | Q3-Público / B03 Auth | ADR-0003, PRM-0009 y DOT-PRM-0011 | `AUTHORIZED_FOR_ONE_EXECUTION`; gate aún `BLOCKED` hasta evidencia y auditoría | Leonel autorizó sesión local Firefox y smoke `--limit 2`; identificadores locales no se publican; sin B04 ni merge |
 | 2026-10-28 | Q3-Público / B03 Auth | HND-0003 v0.2.0 y aceptación Reuters → AP → BBCWorld | `WAITING_VALIDATION`; BBCWorld acreditó exactamente 2 activos distintos | PRM-0009 consumido una vez; DOT-PRM-0011 debe auditar; sin merge ni B04 |
+| 2026-10-28 | Q3-Público / B03 Auth boundary | AUD-0005 v0.1.0, PRM-0010 y HND-0003 v0.2.1 | `REWORK_COMPLETED / WAITING_VALIDATION`; A-01–A-06 implementados, evidencia original no disponible | Leonel autorizó una ejecución acotada; DOT-PRM-0012 debe auditar; Q3-Público sigue `BLOCKED` |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -35,6 +36,7 @@
 | GOV-RWK-0009 | B03 / Q3 | AUD-0004 v0.1.0 detectó que «hasta dos» expresaba solo el máximo y no el mínimo de aceptación. | `CLOSED — VALIDATED_WITH_OBSERVATIONS`; DOC-01 fija conteo requerido exactamente 2 y `--limit 2` como máximo operativo. | AUD-0004 v0.1.1 valida el cierre; Q3-Público/B03 siguen `BLOCKED` y no se autorizan smoke, merge o B04. |
 | GOV-DEC-0010 | B03 / Q3-Público | El modo anónimo terminó en `AuthRequired`; el humano confirmó una cuenta dedicada y visibilidad pública. | ADR-0003 autoriza una prueba local autenticada, sin descarga y con parámetros redactados. | Una ejecución PRM-0009 y auditoría DOT-PRM-0011; secretos/identificadores locales fuera de Git; B04/merge prohibidos. |
 | GOV-EVD-0011 | B03 / Q3-Público | Reuters y AP terminaron con código 3; BBCWorld terminó con código 0 y exactamente 2 activos distintos. | `WAITING_VALIDATION`; evidencia sanitizada, solo `.sqlite3`, sin medios. | DOT-PRM-0011 debe auditar HND/CI; no autoriza transición, merge ni B04. |
+| GOV-RWK-0012 | B03 / Auth boundary | AUD-0005 detectó copia temporal alcanzable, filtrado insuficiente, selector no contenido, política pública abierta y deuda documental/evidencial. | `REWORK_COMPLETED / WAITING_VALIDATION`; A-01–A-06 cerrados bajo PRM-0010. | La evidencia SQLite original resultó `EVIDENCE_NOT_AVAILABLE`; no se reconstruyó ni se repitió el smoke. DOT-PRM-0012 debe auditar. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin
