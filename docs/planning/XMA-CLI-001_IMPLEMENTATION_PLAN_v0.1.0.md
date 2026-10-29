@@ -158,6 +158,11 @@ download 1/2/5, archive 10, SINGLE_POST y status offline. Wheel y sdist se const
 La instalación aislada exigida no pudo completarse porque Python 3.12 y `gallery-dl` no estaban
 disponibles en la caché local; no se habilitó red. El máximo de producto permanece en diez.
 
+PRM-0031 corrigió la clonación para seleccionar explícitamente la rama apilada y consumió una sola
+instalación aislada autorizada. CPython 3.12.13, las dependencias Linux de producción exportadas
+desde `uv.lock`, el wheel local, todos los comandos help/version y `status` sintético offline
+pasaron. Estado `B05_LOCAL_OPERABILITY_READY / WAITING_CHAT_VALIDATION`; máximo diez, sin release.
+
 
 ## Reauditoría A-06
 

@@ -133,13 +133,14 @@ PRM-0025 corrigió la paridad del adaptador principal: `PROFILE` conserva `/time
 `SINGLE_POST` entrega al job la URL canónica directa. Un `inspect` read-only encontró el video
 exacto y la única descarga posterior produjo un MP4 íntegro, sidecar, manifest y catálogo con un
 job `COMPLETED`. HND-0004 v0.9.0 registra `SINGLE_POST_DOWNLOAD_VALIDATED /
-WAITING_CHAT_VALIDATION`; esto no autoriza descarga masiva, merge o B05.
+WAITING_CHAT_VALIDATION`; en ese momento no autorizaba descarga masiva, merge o B05. Este es un
+estado histórico posteriormente superado por el cierre gobernado de B04/B05.
 
 PRM-0026 reprodujo y corrigió una clasificación falsa: EOF o terminal tardío después del último
 candidato entregado podía convertirse en `WORKER_FAILED`. La reanudación única BBCWorld preservó
 los cuatro hashes originales y completó `4 → 5` descargando exactamente un activo nuevo. HND-0004
 v1.0.0 registra `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; no habilita descarga masiva,
-merge o B05.
+merge o B05 en ese momento. Este estado histórico fue posteriormente superado.
 
 Leonel cerró posteriormente B04 como `VALIDATED_WITH_OBSERVATIONS`: quedan demostrados los cortes
 1/2/5, SINGLE_POST, integridad, deduplicación y reanudación. Operación masiva, paginación eficiente,
@@ -170,6 +171,7 @@ La aceptación PRM-0027 no descargó ni alteró medios: con cinco activos B04, e
 run con conteo cero y pidió un total absoluto de dos; el downloader rechazó correctamente que ya
 existieran cinco. Terminó código 9 y el run quedó incorrectamente `RUNNING` en página cero. B05
 queda `REWORK_REQUIRED`; no debe repetirse hasta reconciliar conteo y transición terminal.
+Este fue el estado histórico en ese momento y quedó superado por PRM-0028/0029.
 
 PRM-0028 reconcilió el run desde los cinco artifacts verificados, corrigió los targets absolutos
 `5 → 7 → 9 → 10` y garantizó estados terminales en la aplicación. La única reanudación descargó
@@ -304,3 +306,5 @@ La evidencia SQLite original permanece `EVIDENCE_NOT_AVAILABLE`. Leonel liberó 
 una única ejecución controlada de recuperación A-06; DOT-PRM-0014 continúa inactivo hasta que
 existan HND-0003 v0.3.0, CI verde y el paquete local verificable. Q3-Público y la transición
 general B03 permanecen `BLOCKED`; merge y B04 continúan sin autorización.
+Esta última restricción sobre B04 describe el estado histórico en ese momento; B04 y B05 fueron
+posteriormente autorizados y cerrados como `VALIDATED_WITH_OBSERVATIONS`.

@@ -50,3 +50,9 @@ mass operation and scale optimization are deferred.
 Leonel closes B05 as `VALIDATED_WITH_OBSERVATIONS`. The supported product boundary is local,
 bounded operation up to ten videos. This is not a mass-archive certification, release decision or
 authorization for a scheduler, remote cursor, unattended execution or scale optimization.
+
+PRM-0031 closed the remaining packaging-operability observation with one isolated installation.
+The locally built wheel installed under uv-managed CPython 3.12.13 with the exact Linux production
+dependencies exported from `uv.lock`; all installed entry-point help/version commands and a
+synthetic offline `status` check passed. This does not publish a release or expand the maximum of
+ten.

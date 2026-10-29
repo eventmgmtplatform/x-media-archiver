@@ -41,6 +41,9 @@
 - Cierra B05 como `VALIDATED_WITH_OBSERVATIONS` y publica el runbook local reproducible. Wheel y
   sdist se construyen offline; la instalación aislada Python 3.12 queda bloqueada por caché local
   incompleta, sin habilitar red ni modificar dependencias.
+- Corrige la clonación del runbook para apuntar explícitamente a la rama B05 y valida una única
+  instalación aislada del wheel con Python 3.12.13 y las dependencias de producción exactas de
+  `uv.lock`. Entry point, ayudas y `status` sintético offline pasan; no hubo acceso a X.
 
 ## [Unreleased]
 

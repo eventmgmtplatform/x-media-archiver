@@ -10,15 +10,43 @@ perfil como `<LOCAL_PROFILE>`. No exporte cookies ni publique rutas, sesiones o 
 No se certifican cientos/miles de videos, scheduler, cursor remoto durable, automatización
 desatendida, `yt-dlp`, FFmpeg, miniaturas ni `ficha.md`.
 
-## Preparación y comprobación
+## Método A — ejecución desde source
+
+Mientras PR #5 no esté integrado, `main` no contiene esta versión. No omita `--branch`, no presente
+esta rama como release y verifique branch/HEAD antes de operar. Tras una integración gobernada este
+procedimiento podrá cambiar.
 
 ```bash
-git clone https://github.com/eventmgmtplatform/x-media-archiver.git
+git clone \
+  --branch feature/xma-b05-durable-archive \
+  --single-branch \
+  https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
+git branch --show-current
+git rev-parse HEAD
 uv sync --locked --all-groups
 uv run xma --help
 uv run xma version
 ```
+
+El branch esperado es `feature/xma-b05-durable-archive`. Compare el HEAD con la revisión gobernada
+del handoff vigente.
+
+## Método B — wheel local en un entorno virtual
+
+El wheel no es una release ni está publicado. Debe construirse desde el source gobernado:
+
+```bash
+uv build
+uv venv .venv-xma --python 3.12
+uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.0.dev0-py3-none-any.whl
+.venv-xma/bin/xma --help
+.venv-xma/bin/xma version
+```
+
+Para una instalación reproducible aislada, prepare primero Python 3.12 y las dependencias exactas
+de `uv.lock`; no instale XMA desde PyPI o desde una rama distinta. El máximo sigue siendo diez y
+este wheel no certifica operación masiva.
 
 Use un repositorio distinto por perfil. No mezcle handles en la misma ruta.
 
