@@ -89,6 +89,11 @@ un video en el límite 1; el límite 2 terminó con código 8 y `PROVIDER_TIMEOU
 contrato no hubo retry, fallback de cookies ni ejecución del límite 5. HND-0004 v0.2.0 conserva la
 matriz sanitizada; el gate permanece bloqueado.
 
+PRM-0018 añadió `--discovery-timeout`: 30 s por defecto, rango 5–180 s en Linux, watchdog total y
+timeout HTTP subordinado. Las ejecuciones autorizadas de límite 2 terminaron sin activos; la final
+de 180 s devolvió código 8 / `PROVIDER_TIMEOUT` y cero residuos. Límite 1 no se repitió y límite 5
+no se ejecutó. HND-0004 v0.3.0 mantiene B04 `BLOCKED_PUBLIC_DOWNLOAD`.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.

@@ -10,6 +10,8 @@
   ejecución de los límites 2/5.
 - Clasifica fallos públicos como timeout, conexión, HTTP 502/503, rate limit, restricción o contrato
   sin exponer datos crudos; PRM-0017 recuperó límite 1 y se bloqueó en límite 2 por timeout.
+- Añade watchdog Linux de discovery completo, `--discovery-timeout` 5–180 s y timeout HTTP alineado;
+  PRM-0018 siguió bloqueado en Reuters límite 2 sin residuos ni ejecución de límite 5.
 
 ## [Unreleased]
 

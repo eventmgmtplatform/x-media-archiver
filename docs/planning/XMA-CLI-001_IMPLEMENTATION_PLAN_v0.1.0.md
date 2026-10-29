@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 PARTIAL_PUBLIC_DOWNLOAD / BLOCKED
+**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 BLOCKED_PUBLIC_DOWNLOAD
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -91,6 +91,11 @@ decisión humana.
 PRM-0017 incorporó diagnóstico sanitizado y consumió una recuperación pública: Reuters límite 1
 pasó con Firefox; límite 2 terminó `PROVIDER_TIMEOUT` antes de descargar y sin residuos. La política
 detuvo límite 5 y no habilitó fallback. Q4 continúa bloqueado y no autoriza B05.
+
+PRM-0018 añadió un watchdog Linux con deadline total, 30 s por defecto y rango ampliado por decisión
+humana a 5–180 s. El límite 2 no produjo activos con Firefox ni COOKIE_FILE; la ejecución final de
+180 s terminó `PROVIDER_TIMEOUT` sin residuos. Límite 1 no se repitió y límite 5 no se ejecutó. El
+total exitoso gobernado permanece en uno y Q4 continúa bloqueado.
 
 
 ## Reauditoría A-06

@@ -52,3 +52,18 @@ Firefox obtuvo exactamente un video en Reuters límite 1. Reuters límite 2 term
 con `PROVIDER_TIMEOUT`; no dejó residuos. La política fail-closed detuvo límite 5 y no autorizó
 fallback, porque Firefox ya había funcionado en límite 1. El resultado es
 `PARTIAL_PUBLIC_DOWNLOAD / BLOCKED`, no una validación de B04.
+
+## Recovery acotado PRM-0018
+
+`xma download` incorpora un watchdog Linux sobre la fase completa de discovery, 30 segundos por
+defecto. PRM-0018 fijó inicialmente máximo 60 segundos. Leonel amplió expresamente durante la
+ejecución una prueba adicional a 120 y después a 180 segundos; el rango implementado quedó 5–180
+segundos y el timeout HTTP se subordinó al mismo límite total. Plataformas no Linux fallan cerradas.
+
+La señal privada no puede ser absorbida por capturas ordinarias de `Exception`; handler y timer se
+restauran siempre. Si gallery-dl devuelve un contrato vacío al alcanzar el deadline, se normaliza
+como `PROVIDER_TIMEOUT`. Ningún timeout inicia persistencia o descarga.
+
+Reuters límite 2 no produjo activos en Firefox 60 s ni en las ejecuciones COOKIE_FILE autorizadas.
+La ejecución final de 180 s terminó código 8 / `PROVIDER_TIMEOUT` sin residuos. El límite 1 previo
+no se repitió y límite 5 no se ejecutó. B04 permanece `BLOCKED_PUBLIC_DOWNLOAD`.
