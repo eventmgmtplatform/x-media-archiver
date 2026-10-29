@@ -10,8 +10,8 @@ from typer.testing import CliRunner
 
 import xma.cli as cli
 from xma import __version__
+from xma.adapters.discovery.firefox_auth import BrowserAuthentication
 from xma.adapters.discovery.gallery_dl import (
-    BrowserAuthentication,
     GalleryDlDiscoveryProvider,
     GalleryDlExtraction,
 )
@@ -197,6 +197,80 @@ def test_cli_rejects_invalid_browser_authentication_without_disclosure(
     assert not repository.exists()
 
 
+@pytest.mark.parametrize("command", ["inspect", "sync"])
+def test_authenticated_reader_failure_is_sanitized_without_anonymous_fallback(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, command: str
+) -> None:
+    marker = "SYNTHETIC-LOCAL-PROFILE"
+
+    def fail(authentication: BrowserAuthentication) -> dict[str, str]:
+        raise DiscoveryRestrictedError("authenticated Firefox session is unavailable")
+
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl.load_firefox_x_cookies", fail)
+    repository = tmp_path / "must-not-exist"
+    arguments = [
+        command,
+        "Reuters",
+        "--auth-browser",
+        "firefox",
+        "--auth-profile",
+        marker,
+    ]
+    if command == "sync":
+        arguments.extend(["--repository", str(repository)])
+
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code == cli.EXIT_RESTRICTED
+    assert "authenticated Firefox session is unavailable" in result.stderr
+    assert marker not in result.stdout + result.stderr
+    assert "Traceback" not in result.stderr
+    assert not repository.exists()
+
+
+@pytest.mark.parametrize(
+    "profile_user",
+    [
+        {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": True},
+        {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": None},
+        {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": "false"},
+        {"id": 123, "name": "Reuters", "nick": "Reuters"},
+    ],
+    ids=["protected", "null", "non-boolean", "missing"],
+)
+def test_sync_fails_closed_when_profile_is_not_confirmed_public(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, profile_user: dict[str, object]
+) -> None:
+    record = {
+        "type": "video",
+        "tweet_id": 9001,
+        "author": {"id": 123},
+        "num": 1,
+        "width": 1280,
+        "height": 720,
+        "duration": 1,
+        "date": "2026-10-28T12:00:00Z",
+        "_source_url": "https://media.invalid/offline-fixture",
+    }
+    extraction = GalleryDlExtraction({"user": profile_user}, (record,))
+    monkeypatch.setattr(
+        cli,
+        "_provider_factory",
+        lambda: GalleryDlDiscoveryProvider(lambda url, limit: extraction, lambda: NOW),
+    )
+    repository = tmp_path / "must-not-exist"
+
+    result = runner.invoke(
+        app,
+        ["sync", "Reuters", "--limit", "1", "--repository", str(repository)],
+    )
+
+    assert result.exit_code == cli.EXIT_PROVIDER_FAILED
+    assert "gallery-dl profile is not confirmed public" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert not repository.exists()
+
+
 def test_cli_exit_codes_for_invalid_and_restricted_input(monkeypatch: pytest.MonkeyPatch) -> None:
     invalid = runner.invoke(app, ["inspect", "https://example.com/nope"])
     assert invalid.exit_code == cli.EXIT_INVALID_INPUT
@@ -323,7 +397,7 @@ def test_cli_sanitizes_real_mapper_numeric_contract_failure(
         "_source_url": f"https://media.invalid/video?signature={marker}",
     }
     extraction = GalleryDlExtraction(
-        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": False}},
         (record,),
     )
     monkeypatch.setattr(
@@ -366,7 +440,7 @@ def test_cli_accepts_extreme_exponent_compatible_zero(
         "_source_url": "https://media.invalid/offline-fixture",
     }
     extraction = GalleryDlExtraction(
-        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": False}},
         (record,),
     )
     monkeypatch.setattr(
@@ -407,7 +481,7 @@ def test_cli_sanitizes_nonfinite_width_without_catalog(
         "_source_url": f"https://media.invalid/video?signature={marker}",
     }
     extraction = GalleryDlExtraction(
-        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": False}},
         (record,),
     )
     monkeypatch.setattr(

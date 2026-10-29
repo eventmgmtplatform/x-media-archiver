@@ -6,8 +6,8 @@ from typing import Any
 import pytest
 from gallery_dl import config, exception  # type: ignore[import-untyped]
 
+from xma.adapters.discovery.firefox_auth import BrowserAuthentication
 from xma.adapters.discovery.gallery_dl import (
-    BrowserAuthentication,
     GalleryDlDiscoveryProvider,
     GalleryDlExtraction,
     _classified_error,
@@ -184,10 +184,14 @@ def test_live_runner_configures_firefox_session_without_export(
 
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", SuccessfulJob)
     authentication = BrowserAuthentication("firefox", "synthetic-profile")
+    monkeypatch.setattr(
+        "xma.adapters.discovery.gallery_dl.load_firefox_x_cookies",
+        lambda value: {"auth_token": "synthetic-cookie-value"},
+    )
 
     _run_gallery_dl("https://x.com/Reuters", 1, authentication)
 
-    expected = ["firefox", "synthetic-profile", None, None, None]
+    expected = {"auth_token": "synthetic-cookie-value"}
     assert config.get(("extractor", "twitter"), "cookies") == expected
     assert config.get(("extractor", "twitter"), "cookies-update") is False
     assert config.get(("cache",), "file") == ":memory:"
@@ -197,7 +201,14 @@ def test_live_runner_configures_firefox_session_without_export(
 
 @pytest.mark.parametrize(
     ("browser", "profile"),
-    [("chromium", "profile"), ("firefox", ""), ("firefox", "../profile")],
+    [
+        ("chromium", "profile"),
+        ("firefox", ""),
+        ("firefox", "."),
+        ("firefox", ".."),
+        ("firefox", "../profile"),
+        ("firefox", "a" * 129),
+    ],
 )
 def test_browser_authentication_rejects_unsupported_or_path_values(
     browser: str, profile: str
@@ -231,6 +242,65 @@ def test_live_runner_rejects_missing_profile_and_constructor_error(
     monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", BrokenJob)
     with pytest.raises(DiscoveryError, match="discovery contract"):
         _run_gallery_dl("https://x.com/Reuters", 1)
+
+
+def test_authenticated_reader_failure_does_not_continue_anonymously(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    marker = "SYNTHETIC-READER-ERROR-MARKER"
+
+    def fail(authentication: BrowserAuthentication) -> dict[str, str]:
+        raise DiscoveryRestrictedError("authenticated Firefox session is unavailable")
+
+    class UnexpectedJob:
+        def __init__(self, url: str, limit: int) -> None:
+            raise AssertionError("authenticated failure must not construct an anonymous job")
+
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl.load_firefox_x_cookies", fail)
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", UnexpectedJob)
+
+    with pytest.raises(DiscoveryRestrictedError) as captured:
+        _run_gallery_dl(
+            "https://x.com/Reuters",
+            1,
+            BrowserAuthentication("firefox", "synthetic-profile"),
+        )
+
+    assert str(captured.value) == "authenticated Firefox session is unavailable"
+    assert marker not in str(captured.value)
+
+
+@pytest.mark.parametrize("protected", [True, None, "false", 0, object()])
+def test_mapper_rejects_profile_not_explicitly_public(protected: object) -> None:
+    data = extraction()
+    profile_record = dict(data.profile_record)
+    profile_record["user"] = dict(profile_record["user"], protected=protected)
+
+    with pytest.raises(DiscoveryContractError, match="profile is not confirmed public"):
+        map_gallery_dl_extraction(
+            GalleryDlExtraction(profile_record, data.media_records),
+            normalize_discovery_target("Reuters"),
+            1,
+            NOW,
+            "gallery-dl:test",
+        )
+
+
+def test_mapper_rejects_missing_profile_protection_state() -> None:
+    data = extraction()
+    profile_record = dict(data.profile_record)
+    user = dict(profile_record["user"])
+    user.pop("protected")
+    profile_record["user"] = user
+
+    with pytest.raises(DiscoveryContractError, match="profile is not confirmed public"):
+        map_gallery_dl_extraction(
+            GalleryDlExtraction(profile_record, data.media_records),
+            normalize_discovery_target("Reuters"),
+            1,
+            NOW,
+            "gallery-dl:test",
+        )
 
 
 def test_mapper_rejects_unsupported_media_and_nonnumeric_fields() -> None:

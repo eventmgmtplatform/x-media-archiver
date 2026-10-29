@@ -1,6 +1,6 @@
 {
   "profile_record": {
-    "user": {"id": 123, "name": "Reuters", "nick": "Reuters"},
+    "user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": false},
     "author": {"id": 123, "name": "Reuters", "nick": "Reuters"},
     "tweet_id": 9001,
     "num": 1,
@@ -10,7 +10,7 @@
   },
   "media_records": [
     {
-      "user": {"id": 123, "name": "Reuters", "nick": "Reuters"},
+      "user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": false},
       "author": {"id": 123, "name": "Reuters", "nick": "Reuters"},
       "tweet_id": 9001,
       "num": 1,
@@ -24,7 +24,7 @@
       "unknown_future_key": "ignored"
     },
     {
-      "user": {"id": 123, "name": "Reuters", "nick": "Reuters"},
+      "user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": false},
       "author": {"id": 123, "name": "Reuters", "nick": "Reuters"},
       "tweet_id": 9001,
       "num": 2,
@@ -37,7 +37,7 @@
       "_source_url": "https://video.twimg.com/tweet_video/two.mp4"
     },
     {
-      "user": {"id": 123, "name": "Reuters", "nick": "Reuters"},
+      "user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": false},
       "author": {"id": 123, "name": "Reuters", "nick": "Reuters"},
       "tweet_id": 9002,
       "num": 1,

@@ -192,7 +192,7 @@ def test_sync_persists_baseline_compatible_duration_rounding(
         "_source_url": "https://media.invalid/offline-fixture",
     }
     extraction = GalleryDlExtraction(
-        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": False}},
         (record,),
     )
     provider = GalleryDlDiscoveryProvider(lambda url, limit: extraction, lambda: NOW)
@@ -224,7 +224,7 @@ def test_sync_persists_extreme_exponent_compatible_zero(tmp_path: Path, duration
         "_source_url": "https://media.invalid/offline-fixture",
     }
     extraction = GalleryDlExtraction(
-        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters"}},
+        {"user": {"id": 123, "name": "Reuters", "nick": "Reuters", "protected": False}},
         (record,),
     )
     provider = GalleryDlDiscoveryProvider(lambda url, limit: extraction, lambda: NOW)

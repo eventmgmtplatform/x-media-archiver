@@ -10,6 +10,7 @@ from unicodedata import digit
 import gallery_dl  # type: ignore[import-untyped]
 from gallery_dl import config, exception, job
 
+from xma.adapters.discovery.firefox_auth import BrowserAuthentication, load_firefox_x_cookies
 from xma.domain.discovery import (
     DiscoveredAsset,
     DiscoveredPost,
@@ -30,27 +31,6 @@ from xma.domain.errors import (
 _VIDEO_TYPES = {"video", "animated_gif"}
 _SQLITE_INTEGER_MAX = 2**63 - 1
 _NUMERIC_CONTRACT_ERROR = "gallery-dl numeric metadata violates the B03 contract"
-_AUTH_CONFIGURATION_ERROR = "browser authentication configuration is invalid"
-
-
-@dataclass(frozen=True, slots=True)
-class BrowserAuthentication:
-    """Local browser-session selector; cookie values never cross this boundary."""
-
-    browser: str
-    profile: str
-
-    def __post_init__(self) -> None:
-        if self.browser.casefold() != "firefox":
-            raise ValueError(_AUTH_CONFIGURATION_ERROR)
-        if (
-            not self.profile
-            or "/" in self.profile
-            or "\\" in self.profile
-            or any(character.isspace() for character in self.profile)
-        ):
-            raise ValueError(_AUTH_CONFIGURATION_ERROR)
-        object.__setattr__(self, "browser", "firefox")
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,11 +73,7 @@ def _run_gallery_dl(
 ) -> GalleryDlExtraction:
     """Run gallery-dl as a library without loading user config or credentials."""
     config.clear()
-    cookie_source = (
-        None
-        if authentication is None
-        else [authentication.browser, authentication.profile, None, None, None]
-    )
+    cookie_source = None if authentication is None else load_firefox_x_cookies(authentication)
     config.set(("extractor",), "cookies", cookie_source)
     config.set(("extractor",), "cookies-update", False)
     config.set(("extractor",), "username", "")
@@ -184,6 +160,8 @@ def map_gallery_dl_extraction(
     """Pure contract mapper used by offline fixtures and the live adapter."""
     try:
         target_user = _mapping(extraction.profile_record.get("user"), "user")
+        if target_user.get("protected") is not False:
+            raise DiscoveryContractError("gallery-dl profile is not confirmed public")
         profile = DiscoveredProfile(
             str(_required(target_user, "id")),
             str(_required(target_user, "name")),
