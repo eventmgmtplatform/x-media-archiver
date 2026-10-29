@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 AUTH BOUNDARY REWORK-002 IMPLEMENTED — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03 R-01–R-03 VALIDATED_WITH_OBSERVATIONS / A-06 BLOCKED`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -29,6 +29,9 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - [Prompt inicial de Codex](docs/prompts/XMA-CLI-001_PRM-0001_FOUNDATION-BOOTSTRAP_v0.1.0.md)
 - [Catálogo SQLite v1](docs/architecture/XMA-CLI-001_CATALOG-SCHEMA_v0.1.0.md)
 - [Gate register](docs/governance/XMA-CLI-001_GATE-REGISTER_v0.1.0.md)
+- [AUD-0005 v0.1.2](docs/audits/XMA-CLI-001_AUD-0005_B03-AUTH-BOUNDARY-REWORK-002_v0.1.2.md)
+- [PRM-0012 — recuperación de evidencia A-06](docs/prompts/XMA-CLI-001_PRM-0012_A06-PUBLIC-EVIDENCE-RECOVERY_v0.1.0.md)
+- [DOT-PRM-0014 — auditoría de evidencia A-06](docs/prompts/XMA-CLI-001_DOT-PRM-0014_A06-PUBLIC-EVIDENCE-AUDIT_v0.1.0.md)
 - [Prompt B03 para Codex](docs/prompts/XMA-CLI-001_PRM-0003_B03-DISCOVERY_v0.1.0.md)
 - [Prompt B03 para dot](docs/prompts/XMA-CLI-001_DOT-PRM-0003_B03-GOVERNANCE-AUDIT_v0.1.0.md)
 
@@ -171,7 +174,11 @@ La aceptación gobernada Reuters → AP → BBCWorld, siempre con `--limit 2`, o
 BBCWorld catalogó exactamente dos activos públicos distintos; el repositorio temporal contenía
 solo `.sqlite3`, sin medios, miniaturas ni sidecars. AUD-0005 v0.1.1 clasificó el primer rework
 como `REWORK_REQUIRED`: una sesión incompleta podía continuar como guest y un symlink circular
-podía propagar un error de resolución. PRM-0011 implementa el fail-closed de `auth_token` y
-`ct0`, y normaliza específicamente ese error; ambos controles quedan `WAITING_VALIDATION`.
-La evidencia SQLite original permanece `EVIDENCE_NOT_AVAILABLE` y no se reconstruyó.
-Q3-Público y la transición general B03 permanecen `BLOCKED`.
+podía propagar un error de resolución. PRM-0011 implementó el fail-closed de `auth_token` y
+`ct0`, y normalizó específicamente ese error. AUD-0005 v0.1.2 validó R-01–R-03 con
+observaciones sobre los límites de la reproducción sintética y de CI.
+
+La evidencia SQLite original permanece `EVIDENCE_NOT_AVAILABLE`. PRM-0012 y DOT-PRM-0014
+quedan preparados para una recuperación controlada de A-06, pero no autorizan por sí mismos su
+ejecución. Q3-Público y la transición general B03 permanecen `BLOCKED`; merge y B04 continúan
+sin autorización.

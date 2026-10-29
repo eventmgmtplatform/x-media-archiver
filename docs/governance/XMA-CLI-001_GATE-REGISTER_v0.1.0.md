@@ -21,6 +21,8 @@
 | 2026-10-28 | Q3-Público / B03 Auth | HND-0003 v0.2.0 y aceptación Reuters → AP → BBCWorld | `WAITING_VALIDATION`; BBCWorld acreditó exactamente 2 activos distintos | PRM-0009 consumido una vez; DOT-PRM-0011 debe auditar; sin merge ni B04 |
 | 2026-10-28 | Q3-Público / B03 Auth boundary | AUD-0005 v0.1.0, PRM-0010 y HND-0003 v0.2.1 | Entrega `IMPLEMENTED / WAITING_VALIDATION`; auditoría posterior requerida, A-06 no disponible | Leonel autorizó una ejecución acotada; DOT-PRM-0012 auditó; Q3-Público siguió `BLOCKED` |
 | 2026-10-28 | Q3-Público / B03 Auth boundary | AUD-0005 v0.1.1, PRM-0011 y HND-0003 v0.2.2 | `IMPLEMENTED / WAITING_VALIDATION`; R-01/R-02 entregados, validación independiente pendiente | Leonel autorizó una ejecución acotada; DOT-PRM-0013 debe auditar; A-06 `EVIDENCE_NOT_AVAILABLE`, Q3-Público/B03 `BLOCKED` |
+| 2026-10-28 | Q3-Técnico / B03 Auth boundary | HND-0003 v0.2.2, CI #35 y AUD-0005 v0.1.2 | `VALIDATED_WITH_OBSERVATIONS`; R-01–R-03 cerrados dentro del alcance técnico auditado | Leonel autorizó versionado y reconciliación; no autoriza smoke, merge ni B04 |
+| 2026-10-28 | A-06 / Q3-Público | PRM-0012 y DOT-PRM-0014 preparados | `PREPARED / NOT EXECUTED`; A-06 `EVIDENCE_NOT_AVAILABLE`, Q3-Público/B03 `BLOCKED` | Leonel autorizó preparar el mandato; la ejecución requiere liberación humana explícita separada |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -39,6 +41,8 @@
 | GOV-EVD-0011 | B03 / Q3-Público | Reuters y AP terminaron con código 3; BBCWorld terminó con código 0 y exactamente 2 activos distintos. | `WAITING_VALIDATION`; evidencia sanitizada, solo `.sqlite3`, sin medios. | DOT-PRM-0011 debe auditar HND/CI; no autoriza transición, merge ni B04. |
 | GOV-RWK-0012 | B03 / Auth boundary | AUD-0005 detectó copia temporal alcanzable, filtrado insuficiente, selector no contenido, política pública abierta y deuda documental/evidencial. | Entrega `IMPLEMENTED / WAITING_VALIDATION`; no equivale a cierre ni validación de A-01–A-06. | AUD-0005 v0.1.1 requirió nuevo rework; A-06 siguió `EVIDENCE_NOT_AVAILABLE`. |
 | GOV-RWK-0013 | B03 / Auth boundary | AUD-0005 v0.1.1 reprodujo degradación guest con sesión incompleta y `RuntimeError` ante symlink circular. | `IMPLEMENTED / WAITING_VALIDATION` tras PRM-0011; R-01/R-02 pendientes de auditoría independiente. | HND-0003 v0.2.2 y CI deben ser auditados por DOT-PRM-0013; Q3-Público/B03 permanecen `BLOCKED`. |
+| GOV-VAL-0014 | B03 / Auth boundary | AUD-0005 v0.1.2 verificó R-01–R-03 con pruebas sintéticas y CI #35 sobre el mismo tree. | `VALIDATED_WITH_OBSERVATIONS` limitado al rework técnico. | Cerrar R-01–R-03; no promover A-06, Q3-Público ni B03 general. |
+| GOV-DEC-0015 | B03 / A-06 | La evidencia original no está disponible y la declaración histórica no basta para Q3-Público. | Mandato de recuperación A-06 preparado, no ejecutado. | PRM-0012 exige autorización humana explícita, una única prueba controlada y paquete local verificable; DOT-PRM-0014 audita read-only. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03-AUTH-BOUNDARY-REWORK-002 IMPLEMENTED / WAITING_VALIDATION
+**Estado:** ACTIVE / Q2 CLOSED / B03 R-01–R-03 VALIDATED_WITH_OBSERVATIONS / A-06 BLOCKED
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -54,20 +54,20 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 7. Rollback o reversión definida.
 8. ChatGPT valida; Leonel autoriza transición.
 
-## Siguiente paso autorizado
+## Siguiente paso gobernado
 
-B03-AUTH-BOUNDARY-REWORK-002 queda `IMPLEMENTED / WAITING_VALIDATION` bajo PRM-0011 y HND-0003
-v0.2.2. R-01 exige `auth_token` y `ct0` no vacíos; R-02 normaliza el bucle de symlink. La
-validación independiente permanece pendiente. PRM-0009 se consumió una vez y no se repitió el
-smoke ni se accedió a X. A-06 sigue `EVIDENCE_NOT_AVAILABLE`; no se reconstruyó.
+AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
+auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
+acredita la aceptación pública histórica.
 
-El modo anónimo continúa por defecto. La lectura autenticada es infraestructura local, contenida,
-solo lectura y limitada a X; no almacena, exporta, copia, imprime ni versiona cookies o
-credenciales. CI continúa completamente offline.
+A-06 permanece `EVIDENCE_NOT_AVAILABLE`; por ello Q3-Público y la transición general B03 siguen
+`BLOCKED`. PRM-0012 y DOT-PRM-0014 quedan preparados para recuperar y auditar evidencia mediante
+una única prueba pública controlada. Su publicación no consume ni libera la ejecución: Codex no
+debe ejecutar PRM-0012 hasta recibir una autorización humana explícita posterior.
 
-Q3-Público y la transición general B03 permanecen `BLOCKED` hasta auditoría y decisión humana.
-La siguiente acción es que dot ejecute DOT-PRM-0013 sobre el HEAD final. Siguen prohibidos merge,
-B04, descargas, otros
-extractores, API X, tags, releases y certificación.
+La prueba, si se libera, conservará temporalmente fuera de Git el catálogo y un paquete sanitizado
+con hash, integridad, conteo e identidades de activos. El paquete deberá entregarse a dot para
+auditoría independiente; si falta o no coincide su hash, A-06 continúa bloqueado.
 
-El rework B02 permanece separado y no integrado.
+Siguen prohibidos merge, B04/B05, descargas, medios, otros extractores, API X, cookies exportadas,
+tags, releases y certificación. El rework B02 permanece separado y no integrado.
