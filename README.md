@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 DOWNLOAD SLICE IMPLEMENTED`
+- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 BLOCKED_PUBLIC_DOWNLOAD`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -79,6 +79,10 @@ Firefox y archivo de cookies son alternativas mutuamente excluyentes. La aplicac
 exporta, imprime ni persiste cookies o URLs multimedia. Cada activo produce video, `metadata.json`,
 registro SQLite y SHA-256; `manifests/latest.json` resume el lote. El corte no implementa retry,
 paginación durable, paralelismo ni descarga masiva.
+
+La implementación y sus pruebas offline están completas, pero la única prueba pública de límite 1
+terminó con código 8 antes de crear el repositorio. PRM-0016 prohíbe reintentar y exige detener los
+límites 2 y 5; HND-0004 registra el bloqueo sanitizado.
 
 ## Discovery B03
 

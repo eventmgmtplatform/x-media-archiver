@@ -6,6 +6,8 @@
 - Incorpora staging `.part`, movimiento atómico, SHA-256, sidecars, manifest e idempotencia.
 - Permite autenticación Firefox o archivo Netscape local mutuamente excluyentes.
 - Registra GOV-DEC-0020 y la deuda técnica de operación masiva para v2.
+- Registra HND-0004 y el bloqueo público: Reuters límite 1 terminó con código 8, sin retry ni
+  ejecución de los límites 2/5.
 
 ## [Unreleased]
 

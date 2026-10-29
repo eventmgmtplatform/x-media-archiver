@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 DOWNLOAD SLICE IMPLEMENTED
+**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 BLOCKED_PUBLIC_DOWNLOAD
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -82,6 +82,11 @@ movimiento atómico. No cambia el esquema ni `uv.lock`.
 Después de pruebas offline verdes, Codex ejecuta Reuters 1/2/5, publica HND-0004, espera CI del PR
 draft apilado y se detiene. No se autoriza merge, descarga masiva, B05, tag, release o
 certificación.
+
+La ejecución pública consumida se detuvo en el primer comando: Reuters límite 1 terminó con código
+8 y cero archivos creados. No hubo retry y los límites 2/5 no se ejecutaron. La implementación
+offline permanece entregada, pero el gate público queda `BLOCKED_PUBLIC_DOWNLOAD` hasta una nueva
+decisión humana.
 
 
 ## Reauditoría A-06
