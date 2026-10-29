@@ -3,12 +3,11 @@
 Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
 a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
-## Version status
+## Release-candidate status
 
-Version 0.1.0 is the bounded Linux distribution prepared for the `v0.1.0` tag. The repository may
-also expose an unmerged release candidate before publication; consult the tagged revision and
-distributed checksums rather than assuming a branch is a release. The supported maximum is ten
-videos and the product is not certified for bulk operation.
+Version 0.1.0 is a release candidate on `release/v0.1.0`. It is not merged, tagged, published or
+certified for bulk operation. B02 is validated; B03 evidence is governed; B04 and B05 are
+`VALIDATED_WITH_OBSERVATIONS`. The supported maximum is ten videos.
 
 ## Supported platforms
 
@@ -17,7 +16,7 @@ macOS are not certified. A local filesystem with `flock` is required for durable
 
 ## Installation
 
-Recommended release bundle:
+Recommended candidate bundle (after downloading it from CI artifacts):
 
 ```bash
 tar -xzf xma-v0.1.0-linux-x86_64.tar.gz
@@ -26,14 +25,14 @@ cd xma-v0.1.0-linux-x86_64
 ./xma version
 ```
 
-The bundle does not require a system Python or uv.
+The bundle does not require a system Python or uv. It is not a published release.
 
 Advanced source installation:
 
 ```bash
-git clone https://github.com/eventmgmtplatform/x-media-archiver.git
+git clone --branch release/v0.1.0 --single-branch \
+  https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach v0.1.0
 uv sync --locked --all-groups
 uv run xma version
 ```
@@ -96,11 +95,10 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 - `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
 - Provider availability and authenticated X behavior can change independently of XMA.
-- Verify the `v0.1.0` tag and `SHA256SUMS`; do not install an arbitrary moving branch.
+- The release candidate is not yet a tag, GitHub Release or PyPI publication.
 
 ## Documentation
 
-- [Product wiki](docs/wiki/index.md)
 - [System requirements](docs/requirements/XMA-CLI-001_SYSTEM-REQUIREMENTS_v1.0.0.md)
 - [BAU operations](docs/operations/XMA-CLI-001_BAU-OPERATIONS_v1.0.0.md)
 - [Local CLI runbook](docs/operations/XMA-CLI-001_LOCAL-CLI-RUNBOOK_v0.1.0.md)

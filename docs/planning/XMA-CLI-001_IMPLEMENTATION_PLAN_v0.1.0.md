@@ -202,3 +202,20 @@ acceso o DRM.
 La fuente ejecutiva de seguimiento será `docs/wiki/roadmap.md`, reconciliada con este plan,
 CHANGELOG, ADR, Gate Register y notas de cada release.
 
+## Estado de Product Wiki y GitHub Pages
+
+La wiki de producto quedó integrada en `release/v0.1.0` mediante PR #7 y documenta producto,
+arquitectura, releases, gobierno y roadmap X → Telegram → WhatsApp → otras plataformas. Los
+documentos operativos y de gobierno del repositorio continúan siendo la fuente canónica.
+
+El workflow `.github/workflows/pages.yml` ya construye `docs/wiki` y queda preparado para
+republicar automáticamente cuando cambie `docs/wiki/**` o el propio workflow en `main`,
+`release/v0.1.0` o la rama documental autorizada.
+
+Estado: `WIKI_INTEGRATED / PAGES_ACTIVATION_PENDING`. La activación administrativa
+**Settings → Pages → GitHub Actions**, la ejecución del workflow Pages y la verificación de
+`https://eventmgmtplatform.github.io/x-media-archiver/` quedan pendientes hasta disponer de una
+sesión GitHub autorizada. La URL no se declara publicada ni verificada.
+
+Este pendiente no modifica funcionalidad, dependencias, esquema, `uv.lock` ni artifacts del
+candidato. Tampoco autoriza merge a `main`, tag, GitHub Release o publicación PyPI.

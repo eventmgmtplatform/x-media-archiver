@@ -44,6 +44,8 @@
 | 2026-10-29 | v0.1.0 release candidate | PRM-0032, release/v0.1.0 y HND-0006 | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; snapshot B05 consolidado, B02 reconciliado, bundle/CI preparados | PR draft; sin merge, tag, GitHub Release o PyPI |
 | 2026-10-29 | v0.1.0 RC compliance | PRM-0033 y HND-0006 v0.1.1 | `V0.1.0_RC_READY / WAITING_CHAT_VALIDATION`; licencia completa, corresponding source, documentación autocontenida y manifest trazable | PR #6 draft; publicación y merge siguen sin autorización |
 
+| 2026-10-29 | v0.1.0 product wiki | PR #7, HND-0007 v0.1.1 y workflow `pages.yml` integrados en `release/v0.1.0` | `WIKI_INTEGRATED / PAGES_ACTIVATION_PENDING`; fuente y despliegue automático preparados, URL aún no verificada | Leonel autorizó la configuración; activación administrativa de Pages y ejecución de Pages Actions quedan pendientes por falta de acceso web; sin merge a main, tag o release |
+
 ## Registro de desviaciones, alertas y rework
 
 | ID | Bloque | Evento | Clasificación | Resolución |

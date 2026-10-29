@@ -1,9 +1,0 @@
-title: X Media Archiver
-description: Wiki de producto, arquitectura, releases y roadmap de XMA
-theme: jekyll-theme-minimal
-markdown: kramdown
-lang: es-MX
-repository: eventmgmtplatform/x-media-archiver
-url: https://eventmgmtplatform.github.io
-baseurl: /x-media-archiver
-show_downloads: false
