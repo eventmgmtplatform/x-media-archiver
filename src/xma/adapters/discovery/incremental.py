@@ -261,20 +261,27 @@ class IncrementalGalleryDlDiscoveryProvider:
         process.start()
         sender.close()
         deadline, terminal = time.monotonic() + timeout_seconds, None
+        delivered = 0
         try:
             while terminal is None:
                 available = deadline - time.monotonic()
                 if available <= 0:
-                    terminal = "PROVIDER_TIMEOUT" if process.is_alive() else "WORKER_FAILED"
+                    terminal = (
+                        "COMPLETED"
+                        if delivered >= remaining
+                        else "PROVIDER_TIMEOUT"
+                        if process.is_alive()
+                        else "WORKER_FAILED"
+                    )
                     break
                 try:
                     if not receiver.poll(min(available, 0.25)):
                         if not process.is_alive():
-                            terminal = "WORKER_FAILED"
+                            terminal = "COMPLETED" if delivered >= remaining else "WORKER_FAILED"
                         continue
                     message = receiver.recv()
                 except (EOFError, OSError):
-                    terminal = "WORKER_FAILED"
+                    terminal = "COMPLETED" if delivered >= remaining else "WORKER_FAILED"
                     break
                 if not isinstance(message, dict) or not _is_ipc_primitive(message):
                     terminal = "IPC_SERIALIZATION_FAILED"
@@ -300,13 +307,14 @@ class IncrementalGalleryDlDiscoveryProvider:
                         f"gallery-dl:{gallery_dl.__version__}",
                     )
                     _validate_target_batch(target, batch)
+                    delivered += batch.asset_count
                     yield batch
                 elif kind == "terminal" and message.get("status") in {
                     "COMPLETED",
                     *_TRANSIENT_TERMINALS,
                     *_FAILURE_TERMINALS,
                 }:
-                    terminal = message["status"]
+                    terminal = "COMPLETED" if delivered >= remaining else str(message["status"])
                 else:
                     terminal = "WORKER_FAILED"
             if terminal == "COMPLETED":

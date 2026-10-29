@@ -163,7 +163,7 @@ def _incremental_service(repository: Path, media: FixtureMedia) -> DownloadServi
 
 @pytest.mark.parametrize(
     ("existing", "requested", "new_indices"),
-    [(0, 1, [0]), (1, 2, [1]), (2, 5, [2, 3, 4])],
+    [(0, 1, [0]), (1, 2, [1]), (2, 5, [2, 3, 4]), (4, 5, [4])],
 )
 def test_incremental_total_limit_downloads_only_remaining(
     tmp_path: Path, existing: int, requested: int, new_indices: list[int]

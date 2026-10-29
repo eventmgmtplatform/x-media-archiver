@@ -382,6 +382,51 @@ def test_eof_without_terminal_is_worker_failed(monkeypatch: pytest.MonkeyPatch) 
         list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
 
 
+def test_eof_after_last_valid_candidate_is_completed(monkeypatch: pytest.MonkeyPatch) -> None:
+    payload = json.loads(FIXTURE.read_text())
+    messages = [
+        {
+            "version": 1,
+            "kind": "candidate",
+            "profile": incremental._profile_dto(payload["profile_record"]),
+            "post": incremental._candidate_dto(
+                payload["media_records"][0]["_source_url"], payload["media_records"][0]
+            ),
+        }
+    ]
+    provider, context = _provider(monkeypatch, messages)
+
+    batches = list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
+
+    assert len(batches) == 1
+    assert context.receiver.closed and context.sender.closed
+    assert context.process is not None and context.process.joined == 1
+
+
+def test_failure_terminal_after_last_valid_candidate_is_completed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.loads(FIXTURE.read_text())
+    messages = [
+        {
+            "version": 1,
+            "kind": "candidate",
+            "profile": incremental._profile_dto(payload["profile_record"]),
+            "post": incremental._candidate_dto(
+                payload["media_records"][0]["_source_url"], payload["media_records"][0]
+            ),
+        },
+        {"version": 1, "kind": "terminal", "status": "WORKER_FAILED"},
+    ]
+    provider, context = _provider(monkeypatch, messages)
+
+    batches = list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
+
+    assert len(batches) == 1
+    assert context.receiver.closed and context.sender.closed
+    assert context.process is not None and context.process.joined == 1
+
+
 def test_timeout_with_live_worker_terminates_and_joins(monkeypatch: pytest.MonkeyPatch) -> None:
     provider, context = _provider(monkeypatch, [], alive=True)
     ticks = iter((0.0, 31.0))
