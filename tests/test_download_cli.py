@@ -19,6 +19,7 @@ from xma.domain.discovery import (
 )
 from xma.domain.download import DownloadedArtifact
 from xma.domain.enums import MediaType, PostType
+from xma.domain.errors import DiscoveryTransientError
 
 runner = CliRunner()
 NOW = datetime(2026, 10, 28, 12, tzinfo=UTC)
@@ -99,6 +100,49 @@ def test_download_json_is_stable_and_omits_ephemeral_url(
 def test_download_cli_rejects_limit_outside_one_to_five(limit: str) -> None:
     result = runner.invoke(app, ["download", "Reuters", "--limit", limit])
     assert result.exit_code == cli.EXIT_INVALID_INPUT
+
+
+@pytest.mark.parametrize("timeout", ["4", "61"])
+def test_download_cli_rejects_timeout_outside_five_to_sixty(timeout: str) -> None:
+    result = runner.invoke(app, ["download", "Reuters", "--discovery-timeout", timeout])
+    assert result.exit_code == cli.EXIT_INVALID_INPUT
+
+
+def test_download_timeout_is_sanitized_and_creates_no_state(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    marker = "SYNTHETIC-COOKIE-URL-PATH-MARKER"
+
+    class TimeoutDiscovery:
+        def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
+            raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
+
+    class UnexpectedMedia:
+        def download(self, source_url: str, part_path: str) -> DownloadedArtifact:
+            raise AssertionError("media provider must not run after discovery timeout")
+
+    monkeypatch.setattr(cli, "_provider_factory", TimeoutDiscovery)
+    monkeypatch.setattr(cli, "_media_provider_factory", UnexpectedMedia)
+    repository = tmp_path / marker
+    result = runner.invoke(
+        app,
+        [
+            "download",
+            "Reuters",
+            "--limit",
+            "2",
+            "--discovery-timeout",
+            "5",
+            "--repository",
+            str(repository),
+        ],
+    )
+
+    assert result.exit_code == cli.EXIT_TRANSIENT
+    assert "PROVIDER_TIMEOUT" in result.stderr
+    assert marker not in result.stdout + result.stderr
+    assert "Traceback" not in result.stderr
+    assert not repository.exists()
 
 
 def test_download_cli_rejects_mutually_exclusive_auth_without_disclosure(

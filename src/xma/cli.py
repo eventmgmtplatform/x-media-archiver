@@ -13,6 +13,7 @@ from rich.table import Table
 from xma import __version__
 from xma.adapters.catalog.sqlite import SQLiteUnitOfWork
 from xma.adapters.discovery import (
+    BoundedDiscoveryProvider,
     BrowserAuthentication,
     CookieFileAuthentication,
     GalleryDlDiscoveryProvider,
@@ -181,6 +182,15 @@ def download_profile(
         Path | None,
         typer.Option("--cookies-file", help="Caller-owned Netscape cookie file."),
     ] = None,
+    discovery_timeout: Annotated[
+        int,
+        typer.Option(
+            "--discovery-timeout",
+            min=5,
+            max=60,
+            help="Total discovery deadline in seconds (Linux only).",
+        ),
+    ] = 30,
     json_output: Annotated[
         bool,
         typer.Option("--json", help="Emit stable JSON without credentials or media URLs."),
@@ -189,7 +199,9 @@ def download_profile(
     """Download a bounded vertical slice of public video assets."""
     database = repository / "catalog.sqlite3"
     try:
-        provider = _download_discovery_provider(auth_browser, auth_profile, cookies_file)
+        provider = _download_discovery_provider(
+            auth_browser, auth_profile, cookies_file, discovery_timeout
+        )
         request = DownloadRequest(target, limit)
         result = DownloadService(
             provider,
@@ -229,6 +241,7 @@ def _download_discovery_provider(
     browser: str | None,
     profile: str | None,
     cookies_file: Path | None,
+    discovery_timeout: int,
 ) -> DiscoveryProvider:
     if cookies_file is not None and (browser is not None or profile is not None):
         raise InvalidIdentityError("download authentication options are mutually exclusive")
@@ -237,8 +250,13 @@ def _download_discovery_provider(
             authentication = CookieFileAuthentication(cookies_file)
         except ValueError as error:
             raise InvalidIdentityError("cookie file configuration is invalid") from error
-        return GalleryDlDiscoveryProvider(authentication=authentication)
-    return _discovery_provider(browser, profile)
+        provider: DiscoveryProvider = GalleryDlDiscoveryProvider(authentication=authentication)
+    else:
+        provider = _discovery_provider(browser, profile)
+    try:
+        return BoundedDiscoveryProvider(provider, discovery_timeout)
+    except ValueError as error:
+        raise InvalidIdentityError("discovery timeout must be between 5 and 60 seconds") from error
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:
