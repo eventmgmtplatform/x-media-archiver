@@ -14,8 +14,8 @@ class DownloadRequest:
     def __post_init__(self) -> None:
         if not self.target.strip():
             raise DomainError("download target must not be blank")
-        if not 1 <= self.limit <= 5:
-            raise DomainError("download limit must be between 1 and 5")
+        if not 1 <= self.limit <= 10:
+            raise DomainError("download limit must be between 1 and 10")
 
 
 @dataclass(frozen=True, slots=True)

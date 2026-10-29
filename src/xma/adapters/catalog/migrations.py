@@ -3,13 +3,13 @@
 import sqlite3
 from importlib.resources import files
 
-LATEST_SCHEMA_VERSION = 1
+LATEST_SCHEMA_VERSION = 2
 
 
 def _migration_sql(version: int) -> str:
     return (
         files("xma.adapters.catalog.schema")
-        .joinpath(f"{version:03d}_initial.sql")
+        .joinpath("001_initial.sql" if version == 1 else "002_durable_archive.sql")
         .read_text(encoding="utf-8")
     )
 

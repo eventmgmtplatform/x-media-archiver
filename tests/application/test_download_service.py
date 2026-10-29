@@ -338,7 +338,7 @@ def test_catalog_filesystem_conflict_fails_closed(tmp_path: Path) -> None:
         service.execute(DownloadRequest("Reuters", 1))
 
 
-@pytest.mark.parametrize("limit", [0, 6])
+@pytest.mark.parametrize("limit", [0, 11])
 def test_download_request_rejects_limit_outside_vertical_slice(limit: int) -> None:
-    with pytest.raises(DomainError, match="between 1 and 5"):
+    with pytest.raises(DomainError, match="between 1 and 10"):
         DownloadRequest("Reuters", limit)

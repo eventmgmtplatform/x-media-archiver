@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.table import Table
 
 from xma import __version__
+from xma.adapters.archive import RepositoryArchiveLock, SQLiteArchiveStore
 from xma.adapters.catalog.sqlite import SQLiteUnitOfWork
 from xma.adapters.discovery import (
     BoundedDiscoveryProvider,
@@ -20,8 +21,10 @@ from xma.adapters.discovery import (
     IncrementalGalleryDlDiscoveryProvider,
 )
 from xma.adapters.download import HttpMediaDownloadProvider
+from xma.application.archive import ArchiveService
 from xma.application.discovery import DiscoveryService, SyncResult
 from xma.application.download import DownloadService
+from xma.domain.archive import ArchiveRequest, ArchiveRun
 from xma.domain.discovery import DiscoveryBatch
 from xma.domain.download import DownloadRequest, DownloadSummary
 from xma.domain.errors import (
@@ -248,6 +251,71 @@ def download_profile(
     _render_download(result, json_output)
 
 
+@app.command("archive")
+def archive_profile(
+    target: Annotated[str, typer.Argument(help="Public X profile target.")],
+    limit: Annotated[int, typer.Option("--limit", min=1, max=10)] = 10,
+    batch_size: Annotated[int, typer.Option("--batch-size", min=1, max=5)] = 2,
+    repository: Annotated[Path, typer.Option("--repository")] = Path("repository"),
+    auth_browser: Annotated[str | None, typer.Option("--auth-browser")] = None,
+    auth_profile: Annotated[str | None, typer.Option("--auth-profile")] = None,
+    request_interval: Annotated[int, typer.Option("--request-interval", min=1, max=60)] = 2,
+    discovery_timeout: Annotated[int, typer.Option("--discovery-timeout", min=5, max=60)] = 30,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Durably archive a public profile in confirmed pages."""
+    database = repository / "catalog.sqlite3"
+    try:
+        request = ArchiveRequest.create(target, limit, batch_size, request_interval)
+        provider = _download_incremental_provider(
+            auth_browser,
+            auth_profile,
+            None,
+            lambda message: error_console.print(message, markup=False),
+        )
+        download = DownloadService(
+            _provider_factory(),
+            _media_provider_factory(),
+            lambda: _catalog_unit(database),
+            repository,
+        )
+        result = ArchiveService(
+            download,
+            provider,
+            SQLiteArchiveStore(database),
+            RepositoryArchiveLock(repository),
+        ).execute(
+            request,
+            discovery_timeout,
+            lambda message: error_console.print(message, markup=False),
+        )
+    except (InvalidIdentityError, DomainError) as error:
+        error_console.print(f"invalid input: {error}", markup=False, style="red")
+        raise typer.Exit(EXIT_INVALID_INPUT) from error
+    except DiscoveryError as error:
+        _exit_for_discovery_error(error)
+    except DownloadError as error:
+        error_console.print(f"archive failed: {error}", markup=False, style="red")
+        raise typer.Exit(EXIT_DOWNLOAD_FAILED) from error
+    except (CatalogError, IdentityConflictError, sqlite3.Error, OSError) as error:
+        error_console.print("archive failed: local repository unavailable", markup=False)
+        raise typer.Exit(EXIT_CATALOG_FAILED) from error
+    _render_archive(result, json_output)
+
+
+@app.command("status")
+def archive_status(
+    repository: Annotated[Path, typer.Option("--repository")] = Path("repository"),
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Read the latest durable archive checkpoint without network access."""
+    result = SQLiteArchiveStore(repository / "catalog.sqlite3").latest()
+    if result is None:
+        error_console.print("archive status unavailable: no durable run", markup=False)
+        raise typer.Exit(EXIT_NOT_FOUND)
+    _render_archive(result, json_output)
+
+
 def _discovery_provider(browser: str | None, profile: str | None) -> DiscoveryProvider:
     if browser is None and profile is None:
         return _provider_factory()
@@ -393,3 +461,28 @@ def _render_download(result: DownloadSummary, json_output: bool) -> None:
         f"failed {result.failed_count}.",
         markup=False,
     )
+
+
+def _render_archive(result: ArchiveRun, json_output: bool) -> None:
+    if json_output:
+        typer.echo(json.dumps(result.public_dict(), ensure_ascii=False, sort_keys=True))
+        return
+    values = result.public_dict()
+    for key in (
+        "run_id",
+        "target",
+        "status",
+        "requested_total",
+        "existing_before",
+        "downloaded_total",
+        "remaining",
+        "page_number",
+        "checkpoint_strategy",
+        "last_error_code",
+        "updated_at",
+        "complete",
+    ):
+        value = values[key]
+        if key == "run_id":
+            value = str(value)[:8]
+        console.print(f"{key}: {value}", markup=False)
