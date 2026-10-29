@@ -41,7 +41,7 @@ def test_migration_from_empty_database_is_idempotent() -> None:
     connection.execute("PRAGMA foreign_keys = ON")
     assert migrate(connection) == LATEST_SCHEMA_VERSION
     assert migrate(connection) == LATEST_SCHEMA_VERSION
-    assert connection.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (1,)
+    assert connection.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (2,)
     assert connection.execute("PRAGMA foreign_keys").fetchone() == (1,)
     connection.close()
 

@@ -1,10 +1,31 @@
 """Typed ports implemented by catalog adapters."""
 
+from collections.abc import Iterator
 from datetime import datetime
 from types import TracebackType
 from typing import Protocol, Self
 
+from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget
+from xma.domain.download import DownloadedArtifact
 from xma.domain.models import Artifact, DiscoveryRun, DownloadJob, MediaAsset, Post, Profile
+
+
+class DiscoveryProvider(Protocol):
+    def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch: ...
+
+
+class IncrementalDiscoveryProvider(Protocol):
+    def candidates(
+        self,
+        target: DiscoveryTarget,
+        remaining: int,
+        existing_identities: frozenset[str],
+        timeout_seconds: int,
+    ) -> Iterator[DiscoveryBatch]: ...
+
+
+class MediaDownloadProvider(Protocol):
+    def download(self, source_url: str, part_path: str) -> DownloadedArtifact: ...
 
 
 class CatalogRepository(Protocol):
@@ -18,12 +39,15 @@ class CatalogRepository(Protocol):
     def get_discovery_run(self, run_id: str) -> DiscoveryRun | None: ...
     def put_download_job(self, job: DownloadJob) -> None: ...
     def get_download_job(self, job_id: str) -> DownloadJob | None: ...
+    def list_download_jobs(self) -> tuple[DownloadJob, ...]: ...
     def put_artifact(self, artifact: Artifact) -> None: ...
     def get_artifact(self, artifact_id: str) -> Artifact | None: ...
+    def list_artifacts(self) -> tuple[Artifact, ...]: ...
 
 
 class UnitOfWork(Protocol):
-    catalog: CatalogRepository
+    @property
+    def catalog(self) -> CatalogRepository: ...
 
     def __enter__(self) -> Self: ...
     def __exit__(

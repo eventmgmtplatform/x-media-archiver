@@ -293,6 +293,14 @@ class SQLiteCatalog:
             )
         )
 
+    def list_download_jobs(self) -> tuple[DownloadJob, ...]:
+        rows = self._connection.execute(
+            "SELECT job_id FROM download_jobs ORDER BY job_id"
+        ).fetchall()
+        return tuple(
+            job for row in rows if (job := self.get_download_job(row["job_id"])) is not None
+        )
+
     def put_artifact(self, artifact: Artifact) -> None:
         self._put_immutable(
             "artifacts",
@@ -334,6 +342,16 @@ class SQLiteCatalog:
                 row["sha256"],
                 _datetime(row["created_at"]),
             )
+        )
+
+    def list_artifacts(self) -> tuple[Artifact, ...]:
+        rows = self._connection.execute(
+            "SELECT artifact_id FROM artifacts ORDER BY artifact_id"
+        ).fetchall()
+        return tuple(
+            artifact
+            for row in rows
+            if (artifact := self.get_artifact(row["artifact_id"])) is not None
         )
 
     def _one(self, table: str, key: str, value: str) -> sqlite3.Row | None:
