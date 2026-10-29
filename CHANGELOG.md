@@ -58,6 +58,7 @@ Versioning.
 ### Distribution
 
 - Added a self-contained quick start, README and operating runbooks to the standalone bundle.
+- Added a versioned product wiki and GitHub Pages workflow for release and roadmap control.
 - Added a sanitized `RELEASE-MANIFEST.json` and complete checksums for distributed assets without
   self-referential hashes.
 
