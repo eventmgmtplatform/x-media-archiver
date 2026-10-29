@@ -12,8 +12,8 @@ from xma.domain.errors import DiscoveryTransientError
 from xma.domain.ports import DiscoveryProvider
 
 
-class _DiscoveryDeadlineExceeded(TimeoutError):
-    """Private signal used only inside the bounded discovery boundary."""
+class _DiscoveryDeadlineExceeded(BaseException):
+    """Private signal that provider ``except Exception`` blocks cannot swallow."""
 
 
 @contextmanager

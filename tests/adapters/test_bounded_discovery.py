@@ -25,7 +25,10 @@ def test_watchdog_times_out_and_leaves_no_alarm() -> None:
     previous_timer = signal.getitimer(signal.ITIMER_REAL)
 
     def expire() -> DiscoveryBatch:
-        signal.raise_signal(signal.SIGALRM)
+        try:
+            signal.raise_signal(signal.SIGALRM)
+        except Exception as error:
+            raise AssertionError("provider Exception handler swallowed deadline") from error
         raise AssertionError("deadline must interrupt discovery")
 
     provider = BoundedDiscoveryProvider(Provider(expire), 5)
