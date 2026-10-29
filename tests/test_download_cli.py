@@ -102,8 +102,8 @@ def test_download_cli_rejects_limit_outside_one_to_five(limit: str) -> None:
     assert result.exit_code == cli.EXIT_INVALID_INPUT
 
 
-@pytest.mark.parametrize("timeout", ["4", "121"])
-def test_download_cli_rejects_timeout_outside_five_to_one_twenty(timeout: str) -> None:
+@pytest.mark.parametrize("timeout", ["4", "181"])
+def test_download_cli_rejects_timeout_outside_five_to_one_eighty(timeout: str) -> None:
     result = runner.invoke(app, ["download", "Reuters", "--discovery-timeout", timeout])
     assert result.exit_code == cli.EXIT_INVALID_INPUT
 

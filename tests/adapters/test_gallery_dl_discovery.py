@@ -280,10 +280,12 @@ def test_live_runner_configures_cookie_file_session_in_memory_without_export(
         "https://x.com/Reuters",
         1,
         CookieFileAuthentication(cookie_file),
+        180,
     )
 
     assert config.get(("extractor", "twitter"), "cookies") == expected
     assert config.get(("extractor", "twitter"), "cookies-update") is False
+    assert config.get(("extractor",), "timeout") == 180
 
 
 @pytest.mark.parametrize(

@@ -75,6 +75,7 @@ def _run_gallery_dl(
     url: str,
     limit: int,
     authentication: BrowserAuthentication | CookieFileAuthentication | None = None,
+    request_timeout: int | None = None,
 ) -> GalleryDlExtraction:
     """Run gallery-dl as a library without loading user config or credentials."""
     config.clear()
@@ -104,6 +105,8 @@ def _run_gallery_dl(
     # otherwise creates ~/.cache/gallery-dl/cache.sqlite3 for guest tokens.
     config.set(("cache",), "file", ":memory:")
     config.set(("output",), "private", False)
+    if request_timeout is not None:
+        config.set(("extractor",), "timeout", request_timeout)
 
     try:
         # Target the concrete child extractor. DataJob intentionally does not
@@ -156,8 +159,11 @@ class GalleryDlDiscoveryProvider:
         runner: GalleryDlRunner | None = None,
         clock: Callable[[], datetime] | None = None,
         authentication: BrowserAuthentication | CookieFileAuthentication | None = None,
+        request_timeout: int | None = None,
     ) -> None:
-        self._runner = runner or (lambda url, limit: _run_gallery_dl(url, limit, authentication))
+        self._runner = runner or (
+            lambda url, limit: _run_gallery_dl(url, limit, authentication, request_timeout)
+        )
         self._clock = clock or (lambda: datetime.now(UTC))
 
     def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:

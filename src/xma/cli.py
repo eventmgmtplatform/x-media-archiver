@@ -187,7 +187,7 @@ def download_profile(
         typer.Option(
             "--discovery-timeout",
             min=5,
-            max=120,
+            max=180,
             help="Total discovery deadline in seconds (Linux only).",
         ),
     ] = 30,
@@ -247,16 +247,33 @@ def _download_discovery_provider(
         raise InvalidIdentityError("download authentication options are mutually exclusive")
     if cookies_file is not None:
         try:
-            authentication = CookieFileAuthentication(cookies_file)
+            cookie_authentication = CookieFileAuthentication(cookies_file)
         except ValueError as error:
             raise InvalidIdentityError("cookie file configuration is invalid") from error
-        provider: DiscoveryProvider = GalleryDlDiscoveryProvider(authentication=authentication)
+        provider: DiscoveryProvider = GalleryDlDiscoveryProvider(
+            authentication=cookie_authentication,
+            request_timeout=discovery_timeout,
+        )
     else:
-        provider = _discovery_provider(browser, profile)
+        if browser is None and profile is None:
+            provider = _provider_factory()
+        elif browser is None or profile is None:
+            raise InvalidIdentityError("browser authentication requires both options")
+        else:
+            try:
+                browser_authentication = BrowserAuthentication(browser, profile)
+            except ValueError as error:
+                raise InvalidIdentityError(
+                    "browser authentication configuration is invalid"
+                ) from error
+            provider = GalleryDlDiscoveryProvider(
+                authentication=browser_authentication,
+                request_timeout=discovery_timeout,
+            )
     try:
         return BoundedDiscoveryProvider(provider, discovery_timeout)
     except ValueError as error:
-        raise InvalidIdentityError("discovery timeout must be between 5 and 120 seconds") from error
+        raise InvalidIdentityError("discovery timeout must be between 5 and 180 seconds") from error
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:

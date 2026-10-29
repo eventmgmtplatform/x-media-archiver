@@ -8,7 +8,7 @@ import pytest
 
 from xma.adapters.discovery.bounded import BoundedDiscoveryProvider
 from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget, normalize_discovery_target
-from xma.domain.errors import DiscoveryTransientError
+from xma.domain.errors import DiscoveryContractError, DiscoveryTransientError
 
 
 class Provider:
@@ -75,10 +75,10 @@ def test_watchdog_restores_prior_handler_and_timer(monkeypatch: pytest.MonkeyPat
     assert timers == [(30, 0.0), (0, 0.0), (7.0, 2.0)]
 
 
-@pytest.mark.parametrize("seconds", [4, 121])
+@pytest.mark.parametrize("seconds", [4, 181])
 def test_watchdog_rejects_out_of_range_timeout(seconds: int) -> None:
     marker = cast(DiscoveryBatch, object())
-    with pytest.raises(ValueError, match="between 5 and 120"):
+    with pytest.raises(ValueError, match="between 5 and 180"):
         BoundedDiscoveryProvider(Provider(lambda: marker), seconds)
 
 
@@ -86,5 +86,16 @@ def test_watchdog_fails_closed_off_linux(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr("xma.adapters.discovery.bounded.sys.platform", "darwin")
     marker = cast(DiscoveryBatch, object())
     provider = BoundedDiscoveryProvider(Provider(lambda: marker), 30)
+    with pytest.raises(DiscoveryTransientError, match="PROVIDER_TIMEOUT"):
+        provider.discover(normalize_discovery_target("Reuters"), 2)
+
+
+def test_watchdog_normalizes_contract_returned_at_deadline() -> None:
+    ticks = iter((0.0, 120.0))
+
+    def contract_failure() -> DiscoveryBatch:
+        raise DiscoveryContractError("provider returned no profile")
+
+    provider = BoundedDiscoveryProvider(Provider(contract_failure), 120, lambda: next(ticks))
     with pytest.raises(DiscoveryTransientError, match="PROVIDER_TIMEOUT"):
         provider.discover(normalize_discovery_target("Reuters"), 2)

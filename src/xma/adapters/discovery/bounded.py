@@ -3,12 +3,13 @@
 import signal
 import sys
 import threading
-from collections.abc import Iterator
+import time
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from types import FrameType
 
 from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget
-from xma.domain.errors import DiscoveryTransientError
+from xma.domain.errors import DiscoveryError, DiscoveryTransientError
 from xma.domain.ports import DiscoveryProvider
 
 
@@ -50,12 +51,29 @@ def _linux_discovery_watchdog(seconds: int) -> Iterator[None]:
 class BoundedDiscoveryProvider:
     """Apply one Linux wall-clock deadline to an entire provider call."""
 
-    def __init__(self, provider: DiscoveryProvider, timeout_seconds: int) -> None:
-        if timeout_seconds < 5 or timeout_seconds > 120:
-            raise ValueError("discovery timeout must be between 5 and 120 seconds")
+    def __init__(
+        self,
+        provider: DiscoveryProvider,
+        timeout_seconds: int,
+        clock: Callable[[], float] | None = None,
+    ) -> None:
+        if timeout_seconds < 5 or timeout_seconds > 180:
+            raise ValueError("discovery timeout must be between 5 and 180 seconds")
         self._provider = provider
         self._timeout_seconds = timeout_seconds
+        self._clock = clock or time.monotonic
 
     def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch:
-        with _linux_discovery_watchdog(self._timeout_seconds):
-            return self._provider.discover(target, limit)
+        started = self._clock()
+        try:
+            with _linux_discovery_watchdog(self._timeout_seconds):
+                result = self._provider.discover(target, limit)
+        except DiscoveryError as error:
+            if self._clock() - started >= self._timeout_seconds:
+                raise DiscoveryTransientError(
+                    "temporary provider failure [PROVIDER_TIMEOUT]"
+                ) from error
+            raise
+        if self._clock() - started >= self._timeout_seconds:
+            raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
+        return result
