@@ -94,6 +94,11 @@ timeout HTTP subordinado. Las ejecuciones autorizadas de límite 2 terminaron si
 de 180 s devolvió código 8 / `PROVIDER_TIMEOUT` y cero residuos. Límite 1 no se repitió y límite 5
 no se ejecutó. HND-0004 v0.3.0 mantiene B04 `BLOCKED_PUBLIC_DOWNLOAD`.
 
+PRM-0019 cambió `--limit` a total deseado y añadió discovery incremental mediante worker Linux
+terminable, hasta dos peticiones de 30 s, persistencia parcial y reanudación. La prueba reutilizó una
+copia íntegra del lote límite 1; ambos workers expiraron sin candidato nuevo. El activo inicial se
+conservó y HND-0004 v0.4.0 registra `PARTIAL_PROGRESS_PRESERVED / BLOCKED`.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.

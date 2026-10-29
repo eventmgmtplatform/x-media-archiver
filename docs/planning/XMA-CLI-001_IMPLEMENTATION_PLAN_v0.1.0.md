@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 BLOCKED_PUBLIC_DOWNLOAD
+**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 PARTIAL_PROGRESS_PRESERVED / BLOCKED
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -96,6 +96,11 @@ PRM-0018 añadió un watchdog Linux con deadline total, 30 s por defecto y rango
 humana a 5–180 s. El límite 2 no produjo activos con Firefox ni COOKIE_FILE; la ejecución final de
 180 s terminó `PROVIDER_TIMEOUT` sin residuos. Límite 1 no se repitió y límite 5 no se ejecutó. El
 total exitoso gobernado permanece en uno y Q4 continúa bloqueado.
+
+PRM-0019 sustituyó la garantía SIGALRM principal por un worker Linux terminable y cambió download a
+semántica acumulada. El padre persiste cada candidato inmediatamente y permite hasta dos peticiones
+de 30 s. La ejecución límite 2 conservó el activo inicial pero no encontró otro; límite 5 no se
+ejecutó. Q4 permanece bloqueado y la paginación durable/operación masiva siguen reservadas a B05.
 
 
 ## Reauditoría A-06

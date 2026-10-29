@@ -67,3 +67,19 @@ como `PROVIDER_TIMEOUT`. Ningún timeout inicia persistencia o descarga.
 Reuters límite 2 no produjo activos en Firefox 60 s ni en las ejecuciones COOKIE_FILE autorizadas.
 La ejecución final de 180 s terminó código 8 / `PROVIDER_TIMEOUT` sin residuos. El límite 1 previo
 no se repitió y límite 5 no se ejecutó. B04 permanece `BLOCKED_PUBLIC_DOWNLOAD`.
+
+## Modelo incremental PRM-0019
+
+`--limit` expresa ahora el total deseado en el repositorio. El padre verifica catálogo, archivos,
+hashes y sidecars antes de red; un repositorio completo termina sin discovery. Un worker Linux hijo
+ejecuta gallery-dl y lectura de autenticación, emite candidatos serializables por IPC y nunca envía
+cookies al padre. La URL efímera existe solo en memoria. El padre descarga y persiste cada candidato
+antes de solicitar el siguiente.
+
+Cada comando permite uno o dos workers de máximo 30 s, 60 s acumulados. Al vencer, el padre termina,
+espera, mata si fuese necesario y siempre hace join. El rango público vuelve a 5–60 s. El progreso
+válido no se revierte y un manifest incompleto permite reanudación.
+
+La prueba PRM-0019 partió de una copia del lote límite 1. Dos workers expiraron sin candidato nuevo;
+se conservó exactamente un activo íntegro, límite 5 no se ejecutó y el estado quedó
+`PARTIAL_PROGRESS_PRESERVED / BLOCKED`.

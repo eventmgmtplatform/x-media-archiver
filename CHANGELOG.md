@@ -12,6 +12,8 @@
   sin exponer datos crudos; PRM-0017 recuperó límite 1 y se bloqueó en límite 2 por timeout.
 - Añade watchdog Linux de discovery completo, `--discovery-timeout` 5–180 s y timeout HTTP alineado;
   PRM-0018 siguió bloqueado en Reuters límite 2 sin residuos ni ejecución de límite 5.
+- Cambia download a semántica acumulada e incremental, worker terminable, dos peticiones acotadas y
+  reanudación; PRM-0019 preservó el lote inicial pero no descubrió un segundo activo.
 
 ## [Unreleased]
 
