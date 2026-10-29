@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from xma.adapters.discovery.firefox_auth import BrowserAuthentication, load_firefox_x_cookies
+from xma.adapters.discovery.firefox_auth import (
+    BrowserAuthentication,
+    CookieFileAuthentication,
+    load_cookie_file_x_cookies,
+    load_firefox_x_cookies,
+)
 from xma.domain.errors import DiscoveryRestrictedError
 
 SENSITIVE_MARKER = "SYNTHETIC-LOCAL-SESSION-MARKER"
@@ -189,4 +194,54 @@ def test_circular_symlink_is_rejected_with_sanitized_contract(
 
     assert str(captured.value) == "authenticated Firefox session is unavailable"
     assert captured.value.__cause__ is None
+    assert marker not in str(captured.value) + caplog.text
+
+
+def test_netscape_cookie_file_loads_x_session_without_exposure(tmp_path: Path) -> None:
+    marker = "SYNTHETIC-COOKIE-VALUE-MARKER"
+    cookie_file = tmp_path / "local.cookies"
+    cookie_file.write_text(
+        "# Netscape HTTP Cookie File\n"
+        f".x.com\tTRUE\t/\tTRUE\t0\tauth_token\t{marker}-auth\n"
+        f"x.com\tFALSE\t/\tTRUE\t0\tct0\t{marker}-ct0\n"
+        f".example.com\tTRUE\t/\tTRUE\t0\tunrelated\t{marker}-other\n",
+        encoding="utf-8",
+    )
+
+    cookies = load_cookie_file_x_cookies(CookieFileAuthentication(cookie_file))
+
+    assert cookies == {
+        "auth_token": f"{marker}-auth",
+        "ct0": f"{marker}-ct0",
+    }
+
+
+@pytest.mark.parametrize("kind", ["missing", "directory", "symlink"])
+def test_cookie_file_rejects_nonlocal_file(tmp_path: Path, kind: str) -> None:
+    path = tmp_path / "cookies.txt"
+    if kind == "directory":
+        path.mkdir()
+    elif kind == "symlink":
+        target = tmp_path / "target.txt"
+        target.write_text("not used", encoding="utf-8")
+        path.symlink_to(target)
+
+    with pytest.raises(ValueError, match="browser authentication configuration is invalid"):
+        CookieFileAuthentication(path)
+
+
+def test_incomplete_cookie_file_error_is_sanitized(
+    caplog: pytest.LogCaptureFixture, tmp_path: Path
+) -> None:
+    marker = "SYNTHETIC-COOKIE-VALUE-MARKER"
+    cookie_file = tmp_path / "local.cookies"
+    cookie_file.write_text(
+        f"# Netscape HTTP Cookie File\nx.com\tFALSE\t/\tTRUE\t0\tct0\t{marker}\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(DiscoveryRestrictedError) as captured:
+        load_cookie_file_x_cookies(CookieFileAuthentication(cookie_file))
+
+    assert str(captured.value) == "authenticated Firefox session is unavailable"
     assert marker not in str(captured.value) + caplog.text

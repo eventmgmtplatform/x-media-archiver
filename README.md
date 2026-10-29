@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 R-01–R-03 VALIDATED_WITH_OBSERVATIONS / A-06 WAITING_VALIDATION`
+- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 DOWNLOAD SLICE IMPLEMENTED`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -62,6 +62,23 @@ monotónica, claves foráneas activas y límites transaccionales explícitos.
 
 Los comandos de discovery no forman parte de B02 y se documentan abajo como B03. La descarga de
 medios permanece reservada para bloques posteriores.
+
+## Download B04 — corte vertical
+
+`xma download` descarga entre uno y cinco activos a un repositorio local normalizado:
+
+```bash
+uv run xma download @Reuters --limit 1 --repository ./downloads
+uv run xma download @Reuters --limit 2 --repository ./downloads \
+  --auth-browser firefox --auth-profile <LOCAL_PROFILE>
+uv run xma download @Reuters --limit 5 --repository ./downloads \
+  --cookies-file <LOCAL_COOKIE_FILE> --json
+```
+
+Firefox y archivo de cookies son alternativas mutuamente excluyentes. La aplicación no copia,
+exporta, imprime ni persiste cookies o URLs multimedia. Cada activo produce video, `metadata.json`,
+registro SQLite y SHA-256; `manifests/latest.json` resume el lote. El corte no implementa retry,
+paginación durable, paralelismo ni descarga masiva.
 
 ## Discovery B03
 

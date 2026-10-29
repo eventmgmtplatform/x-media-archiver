@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from gallery_dl import config, exception  # type: ignore[import-untyped]
 
-from xma.adapters.discovery.firefox_auth import BrowserAuthentication
+from xma.adapters.discovery.firefox_auth import BrowserAuthentication, CookieFileAuthentication
 from xma.adapters.discovery.gallery_dl import (
     GalleryDlDiscoveryProvider,
     GalleryDlExtraction,
@@ -203,6 +203,41 @@ def test_live_runner_configures_firefox_session_without_export(
     assert config.get(("cache",), "file") == ":memory:"
     assert config.get(("extractor",), "download") is False
     assert config.get(("downloader",), "enabled") is False
+
+
+def test_live_runner_configures_cookie_file_session_in_memory_without_export(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    data = extraction()
+    cookie_file = tmp_path / "local.cookies"
+    cookie_file.write_text("# Netscape HTTP Cookie File\n", encoding="utf-8")
+
+    class SuccessfulJob:
+        exception: BaseException | None = None
+        profile_record = data.profile_record
+        media_records = list(data.media_records[:1])
+
+        def __init__(self, url: str, limit: int) -> None:
+            pass
+
+        def run(self) -> None:
+            return None
+
+    expected = {"auth_token": "synthetic-auth", "ct0": "synthetic-ct0"}
+    monkeypatch.setattr("xma.adapters.discovery.gallery_dl._LimitedDataJob", SuccessfulJob)
+    monkeypatch.setattr(
+        "xma.adapters.discovery.gallery_dl.load_cookie_file_x_cookies",
+        lambda value: expected,
+    )
+
+    _run_gallery_dl(
+        "https://x.com/Reuters",
+        1,
+        CookieFileAuthentication(cookie_file),
+    )
+
+    assert config.get(("extractor", "twitter"), "cookies") == expected
+    assert config.get(("extractor", "twitter"), "cookies-update") is False
 
 
 @pytest.mark.parametrize(

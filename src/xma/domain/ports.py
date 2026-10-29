@@ -5,11 +5,16 @@ from types import TracebackType
 from typing import Protocol, Self
 
 from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget
+from xma.domain.download import DownloadedArtifact
 from xma.domain.models import Artifact, DiscoveryRun, DownloadJob, MediaAsset, Post, Profile
 
 
 class DiscoveryProvider(Protocol):
     def discover(self, target: DiscoveryTarget, limit: int) -> DiscoveryBatch: ...
+
+
+class MediaDownloadProvider(Protocol):
+    def download(self, source_url: str, part_path: str) -> DownloadedArtifact: ...
 
 
 class CatalogRepository(Protocol):

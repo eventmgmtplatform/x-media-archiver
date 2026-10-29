@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03 R-01–R-03 VALIDATED_WITH_OBSERVATIONS / A-06 WAITING_VALIDATION
+**Estado:** ACTIVE / Q2 CLOSED / B03 GOVERNED / B04 DOWNLOAD SLICE IMPLEMENTED
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -69,8 +69,19 @@ El catálogo y manifest permanecen temporalmente fuera de Git para entrega local
 DOT-PRM-0014 puede activarse únicamente después de HND v0.3.0, CI verde y recepción del paquete
 exacto. Si falta o no coincide su hash, A-06 vuelve a quedar bloqueado.
 
-Siguen prohibidos merge, B04/B05, descargas, medios, otros extractores, API X, cookies exportadas,
+Siguen prohibidos merge, B05, descarga masiva, otros extractores, API X, cookies exportadas,
 tags, releases y certificación. El rework B02 permanece separado y no integrado.
+
+## Corte vertical B04 autorizado
+
+GOV-DEC-0020 y ADR-0004 autorizan exclusivamente `xma download` con límite 1–5, tres pruebas
+independientes 1/2/5 y máximo acumulado de ocho archivos. La implementación usa los contratos
+SQLite existentes, gallery-dl para discovery y un adaptador HTTPS tipado para staging, hash y
+movimiento atómico. No cambia el esquema ni `uv.lock`.
+
+Después de pruebas offline verdes, Codex ejecuta Reuters 1/2/5, publica HND-0004, espera CI del PR
+draft apilado y se detiene. No se autoriza merge, descarga masiva, B05, tag, release o
+certificación.
 
 
 ## Reauditoría A-06
@@ -82,4 +93,5 @@ se invalidó la ejecución PRM-0012.
 Leonel autorizó DOT-PRM-0015 para una única ejecución read-only que produzca AUD-0006 v0.1.1.
 La ejecución solo puede comenzar cuando dot reciba directamente exactamente un `.sqlite3` y un
 `.json` cuyos hashes coincidan con HND-0003 v0.3.0. Hasta el dictamen y decisión humana,
-A-06, Q3-Público y B03 continúan `BLOCKED`; merge y B04/B05 siguen sin autorización.
+A-06, Q3-Público y B03 continúan `BLOCKED`; merge y B05 siguen sin autorización. La única
+autorización B04 vigente es el corte vertical acotado por GOV-DEC-0020 y ADR-0004.

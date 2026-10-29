@@ -12,9 +12,16 @@ from rich.table import Table
 
 from xma import __version__
 from xma.adapters.catalog.sqlite import SQLiteUnitOfWork
-from xma.adapters.discovery import BrowserAuthentication, GalleryDlDiscoveryProvider
+from xma.adapters.discovery import (
+    BrowserAuthentication,
+    CookieFileAuthentication,
+    GalleryDlDiscoveryProvider,
+)
+from xma.adapters.download import HttpMediaDownloadProvider
 from xma.application.discovery import DiscoveryService, SyncResult
+from xma.application.download import DownloadService
 from xma.domain.discovery import DiscoveryBatch
+from xma.domain.download import DownloadRequest, DownloadSummary
 from xma.domain.errors import (
     CatalogError,
     DiscoveryError,
@@ -22,10 +29,12 @@ from xma.domain.errors import (
     DiscoveryRateLimitError,
     DiscoveryRestrictedError,
     DiscoveryTransientError,
+    DomainError,
+    DownloadError,
     IdentityConflictError,
     InvalidIdentityError,
 )
-from xma.domain.ports import DiscoveryProvider
+from xma.domain.ports import DiscoveryProvider, MediaDownloadProvider
 
 app = typer.Typer(
     name="xma",
@@ -37,6 +46,7 @@ app = typer.Typer(
 console = Console()
 error_console = Console(stderr=True)
 _provider_factory: Callable[[], DiscoveryProvider] = GalleryDlDiscoveryProvider
+_media_provider_factory: Callable[[], MediaDownloadProvider] = HttpMediaDownloadProvider
 
 
 def _authenticated_provider_factory(authentication: BrowserAuthentication) -> DiscoveryProvider:
@@ -50,6 +60,7 @@ EXIT_PROVIDER_FAILED = 5
 EXIT_CATALOG_FAILED = 6
 EXIT_NOT_FOUND = 7
 EXIT_TRANSIENT = 8
+EXIT_DOWNLOAD_FAILED = 9
 
 
 @app.callback()
@@ -147,6 +158,61 @@ def sync_profile(
     _render_sync(result, json_output, database)
 
 
+@app.command("download")
+def download_profile(
+    target: Annotated[str, typer.Argument(help="Public @handle or X profile URL.")],
+    limit: Annotated[
+        int,
+        typer.Option("--limit", min=1, max=5, help="Video assets to download (maximum 5)."),
+    ] = 1,
+    repository: Annotated[
+        Path,
+        typer.Option("--repository", help="Local XMA repository directory."),
+    ] = Path("repository"),
+    auth_browser: Annotated[
+        str | None,
+        typer.Option("--auth-browser", help="Local browser session source (Firefox only)."),
+    ] = None,
+    auth_profile: Annotated[
+        str | None,
+        typer.Option("--auth-profile", help="Local Firefox profile name."),
+    ] = None,
+    cookies_file: Annotated[
+        Path | None,
+        typer.Option("--cookies-file", help="Caller-owned Netscape cookie file."),
+    ] = None,
+    json_output: Annotated[
+        bool,
+        typer.Option("--json", help="Emit stable JSON without credentials or media URLs."),
+    ] = False,
+) -> None:
+    """Download a bounded vertical slice of public video assets."""
+    database = repository / "catalog.sqlite3"
+    try:
+        provider = _download_discovery_provider(auth_browser, auth_profile, cookies_file)
+        request = DownloadRequest(target, limit)
+        result = DownloadService(
+            provider,
+            _media_provider_factory(),
+            lambda: _catalog_unit(database),
+            repository,
+        ).execute(request)
+    except (InvalidIdentityError, DomainError) as error:
+        error_console.print(f"invalid input: {error}", markup=False, style="red")
+        raise typer.Exit(EXIT_INVALID_INPUT) from error
+    except DiscoveryError as error:
+        _exit_for_discovery_error(error)
+    except DownloadError as error:
+        error_console.print(f"download failed: {error}", markup=False, style="red")
+        raise typer.Exit(EXIT_DOWNLOAD_FAILED) from error
+    except (CatalogError, IdentityConflictError, sqlite3.Error, OSError) as error:
+        error_console.print(
+            "download failed: local persistence unavailable or conflicting", markup=False
+        )
+        raise typer.Exit(EXIT_CATALOG_FAILED) from error
+    _render_download(result, json_output)
+
+
 def _discovery_provider(browser: str | None, profile: str | None) -> DiscoveryProvider:
     if browser is None and profile is None:
         return _provider_factory()
@@ -157,6 +223,22 @@ def _discovery_provider(browser: str | None, profile: str | None) -> DiscoveryPr
     except ValueError as error:
         raise InvalidIdentityError("browser authentication configuration is invalid") from error
     return _authenticated_provider_factory(authentication)
+
+
+def _download_discovery_provider(
+    browser: str | None,
+    profile: str | None,
+    cookies_file: Path | None,
+) -> DiscoveryProvider:
+    if cookies_file is not None and (browser is not None or profile is not None):
+        raise InvalidIdentityError("download authentication options are mutually exclusive")
+    if cookies_file is not None:
+        try:
+            authentication = CookieFileAuthentication(cookies_file)
+        except ValueError as error:
+            raise InvalidIdentityError("cookie file configuration is invalid") from error
+        return GalleryDlDiscoveryProvider(authentication=authentication)
+    return _discovery_provider(browser, profile)
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:
@@ -215,3 +297,14 @@ def _render_sync(result: SyncResult, json_output: bool, database: Path) -> None:
     else:
         console.print(f"Catalog: {database}", markup=False)
         console.print(f"Discovery run: {result.run_id}", markup=False)
+
+
+def _render_download(result: DownloadSummary, json_output: bool) -> None:
+    if json_output:
+        typer.echo(json.dumps(result.public_dict(), ensure_ascii=False, sort_keys=True))
+        return
+    console.print(
+        f"Downloaded {result.downloaded_count}; skipped {result.skipped_count}; "
+        f"failed {result.failed_count}.",
+        markup=False,
+    )

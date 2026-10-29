@@ -10,7 +10,12 @@ from unicodedata import digit
 import gallery_dl  # type: ignore[import-untyped]
 from gallery_dl import config, exception, job
 
-from xma.adapters.discovery.firefox_auth import BrowserAuthentication, load_firefox_x_cookies
+from xma.adapters.discovery.firefox_auth import (
+    BrowserAuthentication,
+    CookieFileAuthentication,
+    load_cookie_file_x_cookies,
+    load_firefox_x_cookies,
+)
 from xma.domain.discovery import (
     DiscoveredAsset,
     DiscoveredPost,
@@ -69,11 +74,16 @@ class _LimitedDataJob(job.DataJob):  # type: ignore[misc]
 def _run_gallery_dl(
     url: str,
     limit: int,
-    authentication: BrowserAuthentication | None = None,
+    authentication: BrowserAuthentication | CookieFileAuthentication | None = None,
 ) -> GalleryDlExtraction:
     """Run gallery-dl as a library without loading user config or credentials."""
     config.clear()
-    cookie_source = None if authentication is None else load_firefox_x_cookies(authentication)
+    if authentication is None:
+        cookie_source = None
+    elif isinstance(authentication, BrowserAuthentication):
+        cookie_source = load_firefox_x_cookies(authentication)
+    else:
+        cookie_source = load_cookie_file_x_cookies(authentication)
     config.set(("extractor",), "cookies", cookie_source)
     config.set(("extractor",), "cookies-update", False)
     config.set(("extractor",), "username", "")
@@ -132,7 +142,7 @@ class GalleryDlDiscoveryProvider:
         self,
         runner: GalleryDlRunner | None = None,
         clock: Callable[[], datetime] | None = None,
-        authentication: BrowserAuthentication | None = None,
+        authentication: BrowserAuthentication | CookieFileAuthentication | None = None,
     ) -> None:
         self._runner = runner or (lambda url, limit: _run_gallery_dl(url, limit, authentication))
         self._clock = clock or (lambda: datetime.now(UTC))

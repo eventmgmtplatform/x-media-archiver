@@ -43,3 +43,11 @@ class DiscoveryNotFoundError(DiscoveryError):
 
 class DiscoveryTransientError(DiscoveryError):
     """A temporary provider or transport failure occurred."""
+
+
+class DownloadError(RuntimeError):
+    """A media download could not complete safely."""
+
+
+class DownloadConflictError(DownloadError):
+    """Catalog and filesystem state disagree for an existing download."""

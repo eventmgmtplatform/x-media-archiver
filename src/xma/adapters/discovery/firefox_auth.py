@@ -6,8 +6,11 @@ import re
 import sqlite3
 from contextlib import closing
 from dataclasses import dataclass
+from http.cookiejar import Cookie
 from pathlib import Path
 from urllib.parse import quote
+
+from gallery_dl import util  # type: ignore[import-untyped]
 
 from xma.domain.errors import DiscoveryRestrictedError
 
@@ -37,6 +40,25 @@ class BrowserAuthentication:
         object.__setattr__(self, "browser", "firefox")
 
 
+@dataclass(frozen=True, slots=True)
+class CookieFileAuthentication:
+    """Caller-owned Netscape cookie file; never copied or persisted."""
+
+    path: Path
+
+    def __post_init__(self) -> None:
+        try:
+            if self.path.is_symlink():
+                raise ValueError(_AUTH_CONFIGURATION_ERROR)
+            resolved = self.path.resolve(strict=True)
+            stat = resolved.stat()
+            if not resolved.is_file() or stat.st_uid != os.getuid():
+                raise ValueError(_AUTH_CONFIGURATION_ERROR)
+        except (OSError, RuntimeError) as error:
+            raise ValueError(_AUTH_CONFIGURATION_ERROR) from error
+        object.__setattr__(self, "path", resolved)
+
+
 def load_firefox_x_cookies(
     authentication: BrowserAuthentication,
     *,
@@ -57,6 +79,23 @@ def load_firefox_x_cookies(
             raise ValueError(_AUTH_SESSION_ERROR)
         return cookies
     except (configparser.Error, OSError, sqlite3.Error, ValueError):
+        raise DiscoveryRestrictedError(_AUTH_SESSION_ERROR) from None
+
+
+def load_cookie_file_x_cookies(authentication: CookieFileAuthentication) -> dict[str, str]:
+    """Read a caller-owned Netscape file into an in-memory X-only dictionary."""
+    try:
+        with authentication.path.open(encoding="utf-8") as stream:
+            loaded: list[Cookie] = util.cookiestxt_load(stream)
+        cookies = {
+            cookie.name: cookie.value
+            for cookie in loaded
+            if cookie.domain in _X_COOKIE_HOSTS and isinstance(cookie.value, str)
+        }
+        if any(not cookies.get(name) for name in _REQUIRED_SESSION_COOKIES):
+            raise ValueError(_AUTH_SESSION_ERROR)
+        return cookies
+    except (OSError, TypeError, ValueError):
         raise DiscoveryRestrictedError(_AUTH_SESSION_ERROR) from None
 
 
