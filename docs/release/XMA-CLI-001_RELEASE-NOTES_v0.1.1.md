@@ -11,3 +11,7 @@ also capped at ten in v0.1.1.
 
 There is no mass-download, scheduler, unattended-operation, transcoding, yt-dlp or FFmpeg support.
 Publication still requires a separate human merge/tag/release decision.
+
+Governed validation completed 391 offline tests at 90.63% coverage and the single authorized public
+acceptance sequence 0→1→2→5. A subsequent absolute limit 1 was an offline no-op that preserved all
+five verified artifacts. This evidence does not authorize publication or operation above ten.

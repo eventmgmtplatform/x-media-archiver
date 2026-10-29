@@ -243,3 +243,7 @@ artifact/residuo, convertir límites absolutos inferiores en no-op, añadir `--a
 persistir la política `provider-best`. Download acepta 1–10 y archive conserva su máximo 10; ningún
 flujo permite más de diez, operación masiva o scheduler. La promoción requiere suite/CI verdes y la
 única aceptación 0→1→2→5 seguida por un no-op absoluto, sin retry manual.
+
+La implementación completó 391 pruebas con cobertura 90.63%, CI verde y la secuencia pública única
+0→1→2→5. El `--limit 1` posterior fue un no-op offline que conservó cinco artifacts. Estado:
+`V0.1.1_HOTFIX_VALIDATED / WAITING_CHAT_RELEASE_DECISION`; publicación sigue sin autorización.
