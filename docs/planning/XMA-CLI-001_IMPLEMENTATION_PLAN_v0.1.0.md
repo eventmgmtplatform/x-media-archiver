@@ -71,3 +71,15 @@ exacto. Si falta o no coincide su hash, A-06 vuelve a quedar bloqueado.
 
 Siguen prohibidos merge, B04/B05, descargas, medios, otros extractores, API X, cookies exportadas,
 tags, releases y certificación. El rework B02 permanece separado y no integrado.
+
+
+## Reauditoría A-06
+
+AUD-0006 v0.1.0 registró `BLOCKED / EVIDENCE_NOT_AVAILABLE` porque el catálogo y manifest no
+estaban adjuntos en la conversación de dot. No se inspeccionó GitHub, no se repitió el smoke y no
+se invalidó la ejecución PRM-0012.
+
+Leonel autorizó DOT-PRM-0015 para una única ejecución read-only que produzca AUD-0006 v0.1.1.
+La ejecución solo puede comenzar cuando dot reciba directamente exactamente un `.sqlite3` y un
+`.json` cuyos hashes coincidan con HND-0003 v0.3.0. Hasta el dictamen y decisión humana,
+A-06, Q3-Público y B03 continúan `BLOCKED`; merge y B04/B05 siguen sin autorización.
