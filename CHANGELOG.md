@@ -26,6 +26,8 @@
   `PROVIDER_EXHAUSTED` sin video, persistencia o residuos (`SINGLE_POST_NO_VIDEO`).
 - Corrige la paridad SINGLE_POST del adaptador principal y valida un `inspect` seguido de una
   descarga exacta con integridad completa (`SINGLE_POST_DOWNLOAD_VALIDATED`).
+- Evita clasificar como `WORKER_FAILED` el EOF/terminal posterior al último candidato válido y
+  valida la reanudación BBCWorld `4 → 5` sin sobrescribir progreso.
 
 ## [Unreleased]
 

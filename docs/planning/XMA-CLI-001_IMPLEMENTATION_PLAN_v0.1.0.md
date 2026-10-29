@@ -128,6 +128,12 @@ video exacto y habilitó una única descarga, que completó `0 → 1` con catál
 hashes e integridad coherentes. Estado `SINGLE_POST_DOWNLOAD_VALIDATED /
 WAITING_CHAT_VALIDATION`; descarga masiva, merge y B05 permanecen fuera de alcance.
 
+PRM-0026 reprodujo un falso `WORKER_FAILED` cuando EOF/terminal llegaba después del último
+candidato válido. El rework mínimo conserva fail-closed antes de completar `remaining`. La única
+reanudación BBCWorld completó `4 → 5`, preservó los cuatro hashes iniciales y añadió exactamente un
+artifact/job. Estado `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; el gate humano sigue
+pendiente y no se autoriza descarga masiva, merge o B05.
+
 
 ## Reauditoría A-06
 

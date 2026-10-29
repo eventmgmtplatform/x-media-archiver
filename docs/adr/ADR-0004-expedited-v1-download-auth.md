@@ -146,3 +146,14 @@ Un único `inspect` del nuevo post terminó código 0 con un activo VIDEO y cero
 descarga única condicionada terminó código 0 y produjo un MP4, sidecar, manifest, artifact y job
 `COMPLETED`, con integridad y hashes coincidentes. Estado: `SINGLE_POST_DOWNLOAD_VALIDATED /
 WAITING_CHAT_VALIDATION`; no equivale a aprobar B04 masivo ni habilita B05.
+
+## Recuperación del quinto activo PRM-0026
+
+La frontera incremental confundía EOF o terminal tardío posterior al último candidato entregado
+con `WORKER_FAILED`. Una regresión sintética reprodujo el fallo antes del arreglo. La corrección
+cuenta batches mapeados/validados y solo considera completo el stream al alcanzar `remaining`;
+fallos previos permanecen fail-closed.
+
+La única reanudación BBCWorld preservó cuatro activos y descargó exactamente el quinto: `4 → 5`,
+código 0, cinco jobs `COMPLETED`, integridad plena y cero residuos. Estado:
+`B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; no autoriza masivo, merge o B05.
