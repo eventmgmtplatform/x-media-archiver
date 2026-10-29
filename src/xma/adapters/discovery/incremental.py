@@ -214,7 +214,7 @@ class IncrementalGalleryDlDiscoveryProvider:
     ) -> Iterator[DiscoveryBatch]:
         if sys.platform != "linux":
             raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
-        context = multiprocessing.get_context("fork")
+        context = multiprocessing.get_context("spawn")
         receiver, sender = context.Pipe(duplex=False)
         process = context.Process(
             target=_worker_main,

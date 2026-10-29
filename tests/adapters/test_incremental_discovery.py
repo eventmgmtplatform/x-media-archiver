@@ -1,6 +1,7 @@
 """Offline Pipe/DTO tests for incremental gallery-dl discovery."""
 
 import json
+import pickle
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -221,12 +222,25 @@ def _provider(
     receiver, sender = Connection(messages), Connection()
     context = Context(receiver, sender, alive)
     monkeypatch.setattr(incremental, "_worker_main", lambda *args: None)
+
+    def get_context(method: str) -> Context:
+        assert method == "spawn"
+        return context
+
     monkeypatch.setattr(
-        "xma.adapters.discovery.incremental.multiprocessing.get_context",
-        lambda method: context,
+        "xma.adapters.discovery.incremental.multiprocessing.get_context", get_context
     )
     sink = telemetry if telemetry is not None else []
     return incremental.IncrementalGalleryDlDiscoveryProvider(telemetry=sink.append), context
+
+
+def test_spawn_target_and_authentication_are_importable_and_serializable() -> None:
+    assert incremental._worker_main.__module__ == "xma.adapters.discovery.incremental"
+    authentication = BrowserAuthentication("firefox", "synthetic")
+    restored = pickle.loads(pickle.dumps(authentication))
+    assert restored == authentication
+    assert not hasattr(restored, "auth_token")
+    assert not hasattr(restored, "ct0")
 
 
 def test_provider_maps_candidate_then_completed_and_closes_pipe(
