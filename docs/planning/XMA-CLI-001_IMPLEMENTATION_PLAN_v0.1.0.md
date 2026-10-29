@@ -148,6 +148,11 @@ PRM-0028 corrigió la reconciliación verificada, targets absolutos y transicion
 resultado reportó `existing_before=5`, pero `status` leyó el cero histórico porque el UPSERT no
 actualizó ese campo. B05 sigue `REWORK_REQUIRED`; la ejecución pública fue consumida sin retry.
 
+PRM-0029 corrigió únicamente el UPSERT y reparó offline el run completado. `status` confirma ahora
+`existing_before=5`, total 10, página 3 y checkpoint 10; integridad y hashes permanecen válidos.
+Estado `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`. Esta versión queda limitada a diez;
+cientos/miles, cursor remoto, scheduler y optimización de escala permanecen en backlog posterior.
+
 
 ## Reauditoría A-06
 

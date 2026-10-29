@@ -36,6 +36,8 @@
 - Reconcilia el conteo B05 desde artifacts verificados, corrige páginas absolutas y terminales. La
   reanudación única completó diez assets íntegros, pero `status` conservó `existing_before=0` por
   una omisión del UPSERT; no hubo retry y el gate sigue `REWORK_REQUIRED`.
+- Corrige el UPSERT de `existing_before` y repara offline el run completado. `status` confirma 5 →
+  10, checkpoint 10/3 e integridad sin cambios; B05 queda `WAITING_CHAT_VALIDATION`, con máximo 10.
 
 ## [Unreleased]
 

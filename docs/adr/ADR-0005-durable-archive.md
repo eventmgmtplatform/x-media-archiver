@@ -41,3 +41,8 @@ Its single resume completed `5 → 7 → 9 → 10` with ten intact assets. A rem
 was observed: the in-memory result reported `existing_before=5`, while the run UPSERT retained the
 historical zero. The checkpoint count and page are correct, but B05 remains `REWORK_REQUIRED` until
 that field is durably reconciled without repeating the consumed public operation.
+
+PRM-0029 added `existing_before=excluded.existing_before` to the run UPSERT and repaired the single
+completed run transactionally, without network access. Status now reports five initial and ten
+total assets. B05 v0.1 remains deliberately capped at ten; remote cursors, scheduling, unattended
+mass operation and scale optimization are deferred.

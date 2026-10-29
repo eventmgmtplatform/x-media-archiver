@@ -176,6 +176,14 @@ cinco videos nuevos y dejó diez íntegros, checkpoint 10/página 3 y estado `CO
 el UPSERT durable no actualizó `existing_before`: el resultado del comando informó 5 pero `status`
 leyó 0. La aceptación no se repitió y B05 continúa `REWORK_REQUIRED` por esa divergencia.
 
+PRM-0029 corrigió offline el UPSERT y reparó transaccionalmente el mismo run: `status` reproduce
+ahora `existing_before=5`, total 10, página 3, checkpoint 10 y `COMPLETED`. Los diez hashes e
+integridad permanecen válidos. El corte B05 queda `B05_LIMIT_10_VALIDATED /
+WAITING_CHAT_VALIDATION`, limitado expresamente a diez videos.
+
+No se afirma soporte para cientos o miles: cursor remoto, scheduler, automatización masiva y
+optimización de `RESCAN_DEDUP_V1` quedan diferidos a una versión posterior.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.
