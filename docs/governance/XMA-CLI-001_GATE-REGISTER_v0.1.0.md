@@ -37,6 +37,7 @@
 | 2026-10-29 | B04 fifth-asset recovery | PRM-0026 y HND-0004 v1.0.0 | `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; reanudación BBCWorld preservó 4 y descargó 1 | Una ejecución consumida; gate humano pendiente, sin retry, masivo, merge ni B05 |
 | 2026-10-29 | B04 gate closure | PRM-0027 y HND-0004 v1.0.1 | `VALIDATED_WITH_OBSERVATIONS` | Leonel cierra B04; no autoriza merge, release, operación masiva ni dot |
 | 2026-10-29 | B05 durable archive | PRM-0027, PR #5 y HND-0005 v0.1.0 | `REWORK_REQUIRED`; implementación/CI verdes, aceptación código 9 antes de discovery | Cinco assets B04 preservados; ejecución consumida sin retry, dot, merge, tag o release |
+| 2026-10-29 | B05 existing-state reconciliation | PRM-0028, PR #5 y HND-0005 v0.1.1 | `REWORK_REQUIRED`; descarga `5 → 10` íntegra, pero status persistió `existing_before=0` | Una reanudación consumida; diez assets preservados, sin retry, dot, merge, tag o release |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -73,6 +74,7 @@
 | GOV-EVD-0031 | B04 | PRM-0026 reprodujo el falso `WORKER_FAILED` posterior al candidato final y corrigió la clasificación. | `B04_LIMIT_5_VALIDATED / WAITING_CHAT_VALIDATION`; BBCWorld completó `4 → 5` con integridad. | Gate humano pendiente; no autoriza retry, merge, descarga masiva o B05. |
 | GOV-DEC-0032 | B04/B05 | Leonel acepta la evidencia acumulada B04 y sus observaciones. | B04 `VALIDATED_WITH_OBSERVATIONS`; B05 autorizado en rama/PR apilados con máximo público 10. | Sin merge, tag, release, dot o miles de descargas. |
 | GOV-RWK-0033 | B05 | El run inició `downloaded_total=0` y solicitó límite absoluto 2 pese a cinco assets existentes. | `REWORK_REQUIRED`; además quedó `RUNNING` en vez de terminal sanitizado. | No repetir; corregir conteo inicial y transición de error bajo nueva autorización. |
+| GOV-RWK-0034 | B05 | PRM-0028 corrigió R-01–R-03 y completó cinco assets nuevos, pero el UPSERT no actualizó `existing_before`. | `REWORK_REQUIRED`; checkpoint 10/página 3 y estado COMPLETED, status diverge solo en conteo inicial. | No repetir; reconciliar persistencia bajo nueva autorización. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

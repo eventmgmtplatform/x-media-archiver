@@ -35,3 +35,9 @@ and requested an absolute page total of two. The download boundary correctly rej
 `existing_before=5 > limit=2`; code 9 preserved all assets. The run remained `RUNNING` because this
 failure was not normalized to `PAUSED` or `FAILED`. B05 is therefore `REWORK_REQUIRED`; no retry is
 authorized by this decision.
+
+PRM-0028 corrected verified-state reconciliation, absolute page targets and terminal transitions.
+Its single resume completed `5 → 7 → 9 → 10` with ten intact assets. A remaining persistence defect
+was observed: the in-memory result reported `existing_before=5`, while the run UPSERT retained the
+historical zero. The checkpoint count and page are correct, but B05 remains `REWORK_REQUIRED` until
+that field is durably reconciled without repeating the consumed public operation.

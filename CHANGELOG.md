@@ -33,6 +33,9 @@
 - Añade B05 con `archive`, `status`, SQLite v2, checkpoints, lock local y `RESCAN_DEDUP_V1`. La
   aceptación única sobre cinco activos expuso una inicialización incorrecta del total y terminó
   código 9 sin redescarga ni pérdida; B05 queda `REWORK_REQUIRED`.
+- Reconcilia el conteo B05 desde artifacts verificados, corrige páginas absolutas y terminales. La
+  reanudación única completó diez assets íntegros, pero `status` conservó `existing_before=0` por
+  una omisión del UPSERT; no hubo retry y el gate sigue `REWORK_REQUIRED`.
 
 ## [Unreleased]
 

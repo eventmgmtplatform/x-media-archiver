@@ -170,6 +170,12 @@ run con conteo cero y pidió un total absoluto de dos; el downloader rechazó co
 existieran cinco. Terminó código 9 y el run quedó incorrectamente `RUNNING` en página cero. B05
 queda `REWORK_REQUIRED`; no debe repetirse hasta reconciliar conteo y transición terminal.
 
+PRM-0028 reconcilió el run desde los cinco artifacts verificados, corrigió los targets absolutos
+`5 → 7 → 9 → 10` y garantizó estados terminales en la aplicación. La única reanudación descargó
+cinco videos nuevos y dejó diez íntegros, checkpoint 10/página 3 y estado `COMPLETED`. Sin embargo,
+el UPSERT durable no actualizó `existing_before`: el resultado del comando informó 5 pero `status`
+leyó 0. La aceptación no se repitió y B05 continúa `REWORK_REQUIRED` por esa divergencia.
+
 ## Discovery B03
 
 B03 añade inspección y catalogación de metadatos públicos. No descarga videos ni miniaturas.

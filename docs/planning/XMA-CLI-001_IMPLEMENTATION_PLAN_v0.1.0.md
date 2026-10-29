@@ -143,6 +143,11 @@ migración preservó cinco assets B04 e integridad, pero la aceptación única t
 de discovery: el run inició conteo cero, calculó una página absoluta de dos y chocó con los cinco
 existentes. El run quedó `RUNNING` en página cero. Estado `REWORK_REQUIRED`; no hay retry autorizado.
 
+PRM-0028 corrigió la reconciliación verificada, targets absolutos y transiciones terminales. La
+única reanudación completó `5 → 7 → 9 → 10` y conservó integridad, hashes y cero residuos. El
+resultado reportó `existing_before=5`, pero `status` leyó el cero histórico porque el UPSERT no
+actualizó ese campo. B05 sigue `REWORK_REQUIRED`; la ejecución pública fue consumida sin retry.
+
 
 ## Reauditoría A-06
 
