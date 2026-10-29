@@ -38,6 +38,9 @@
   una omisión del UPSERT; no hubo retry y el gate sigue `REWORK_REQUIRED`.
 - Corrige el UPSERT de `existing_before` y repara offline el run completado. `status` confirma 5 →
   10, checkpoint 10/3 e integridad sin cambios; B05 queda `WAITING_CHAT_VALIDATION`, con máximo 10.
+- Cierra B05 como `VALIDATED_WITH_OBSERVATIONS` y publica el runbook local reproducible. Wheel y
+  sdist se construyen offline; la instalación aislada Python 3.12 queda bloqueada por caché local
+  incompleta, sin habilitar red ni modificar dependencias.
 
 ## [Unreleased]
 

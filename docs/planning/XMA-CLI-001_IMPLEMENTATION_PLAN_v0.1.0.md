@@ -153,6 +153,11 @@ PRM-0029 corrigió únicamente el UPSERT y reparó offline el run completado. `s
 Estado `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`. Esta versión queda limitada a diez;
 cientos/miles, cursor remoto, scheduler y optimización de escala permanecen en backlog posterior.
 
+PRM-0030 cierra B05 como `VALIDATED_WITH_OBSERVATIONS` y publica un runbook reproducible para
+download 1/2/5, archive 10, SINGLE_POST y status offline. Wheel y sdist se construyeron offline.
+La instalación aislada exigida no pudo completarse porque Python 3.12 y `gallery-dl` no estaban
+disponibles en la caché local; no se habilitó red. El máximo de producto permanece en diez.
+
 
 ## Reauditoría A-06
 

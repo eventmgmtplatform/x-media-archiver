@@ -39,6 +39,7 @@
 | 2026-10-29 | B05 durable archive | PRM-0027, PR #5 y HND-0005 v0.1.0 | `REWORK_REQUIRED`; implementación/CI verdes, aceptación código 9 antes de discovery | Cinco assets B04 preservados; ejecución consumida sin retry, dot, merge, tag o release |
 | 2026-10-29 | B05 existing-state reconciliation | PRM-0028, PR #5 y HND-0005 v0.1.1 | `REWORK_REQUIRED`; descarga `5 → 10` íntegra, pero status persistió `existing_before=0` | Una reanudación consumida; diez assets preservados, sin retry, dot, merge, tag o release |
 | 2026-10-29 | B05 durable baseline repair | PRM-0029, PR #5 y HND-0005 v0.1.2 | `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`; status durable 5 → 10 reparado offline | Máximo 10; operación masiva y optimización de escala diferidas; sin acceso X, dot, merge, tag o release |
+| 2026-10-29 | B05 local operability closure | PRM-0030 y HND-0005 v0.2.0 | `VALIDATED_WITH_OBSERVATIONS`; runbook y paquetes locales construidos, instalación aislada bloqueada por caché incompleta | Máximo 10; sin red, descargas, merge, tag, release o soporte masivo |
 
 ## Registro de desviaciones, alertas y rework
 
@@ -77,6 +78,7 @@
 | GOV-RWK-0033 | B05 | El run inició `downloaded_total=0` y solicitó límite absoluto 2 pese a cinco assets existentes. | `REWORK_REQUIRED`; además quedó `RUNNING` en vez de terminal sanitizado. | No repetir; corregir conteo inicial y transición de error bajo nueva autorización. |
 | GOV-RWK-0034 | B05 | PRM-0028 corrigió R-01–R-03 y completó cinco assets nuevos, pero el UPSERT no actualizó `existing_before`. | `REWORK_REQUIRED`; checkpoint 10/página 3 y estado COMPLETED, status diverge solo en conteo inicial. | No repetir; reconciliar persistencia bajo nueva autorización. |
 | GOV-VAL-0035 | B05 | PRM-0029 corrigió el UPSERT y reparó el run bajo precondiciones transaccionales. | `B05_LIMIT_10_VALIDATED / WAITING_CHAT_VALIDATION`; status 5/10, página 3, checkpoint 10, integridad ok. | Decisión humana pendiente; máximo 10, sin acceso X ni operación masiva. |
+| GOV-DEC-0036 | B05 | Leonel autoriza cierre de operabilidad local con observaciones y máximo diez. | B05 `VALIDATED_WITH_OBSERVATIONS`; instalación wheel Python 3.12 no reproducida por ausencia de intérprete/dependencias en caché offline. | No habilitar red; operación masiva, scheduler, cursor remoto y release siguen fuera de alcance. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

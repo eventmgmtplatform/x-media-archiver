@@ -7,18 +7,18 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 VALIDATED_WITH_OBSERVATIONS / B05 REWORK_REQUIRED`
+- Implementación: `B02 VALIDATED / B03 EVIDENCE GOVERNED / B04 VALIDATED_WITH_OBSERVATIONS / B05 VALIDATED_WITH_OBSERVATIONS`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
 
 1. Recibir un `@usuario`, URL de perfil o URL de publicación.
 2. Descubrir publicaciones con video, GIF animado, broadcast o Space soportado.
-3. Presentar un resumen y permitir descarga masiva desde la terminal.
-4. Descargar mediante `yt-dlp` y `ffmpeg`.
-5. Crear una carpeta normalizada por publicación con video, `metadata.json`, `ficha.md`, miniatura y URL original.
+3. Presentar un resumen y permitir descargas acotadas desde la terminal.
+4. Descubrir mediante `gallery-dl` detrás del adaptador y descargar con el cliente HTTP actual.
+5. Crear una carpeta normalizada por publicación con video y `metadata.json` sanitizado.
 6. Registrar catálogo, progreso, errores y deduplicación en SQLite.
-7. Reanudar ejecuciones y sincronizar solamente contenido nuevo.
+7. Reanudar ejecuciones hasta el máximo vigente de diez videos.
 
 ## Documentación
 
@@ -29,6 +29,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - [Prompt inicial de Codex](docs/prompts/XMA-CLI-001_PRM-0001_FOUNDATION-BOOTSTRAP_v0.1.0.md)
 - [Catálogo SQLite v1](docs/architecture/XMA-CLI-001_CATALOG-SCHEMA_v0.1.0.md)
 - [Gate register](docs/governance/XMA-CLI-001_GATE-REGISTER_v0.1.0.md)
+- [Runbook local de la CLI](docs/operations/XMA-CLI-001_LOCAL-CLI-RUNBOOK_v0.1.0.md)
 - [AUD-0005 v0.1.2](docs/audits/XMA-CLI-001_AUD-0005_B03-AUTH-BOUNDARY-REWORK-002_v0.1.2.md)
 - [PRM-0012 — recuperación de evidencia A-06](docs/prompts/XMA-CLI-001_PRM-0012_A06-PUBLIC-EVIDENCE-RECOVERY_v0.1.0.md)
 - [DOT-PRM-0014 — auditoría de evidencia A-06](docs/prompts/XMA-CLI-001_DOT-PRM-0014_A06-PUBLIC-EVIDENCE-AUDIT_v0.1.0.md)

@@ -46,3 +46,7 @@ PRM-0029 added `existing_before=excluded.existing_before` to the run UPSERT and 
 completed run transactionally, without network access. Status now reports five initial and ten
 total assets. B05 v0.1 remains deliberately capped at ten; remote cursors, scheduling, unattended
 mass operation and scale optimization are deferred.
+
+Leonel closes B05 as `VALIDATED_WITH_OBSERVATIONS`. The supported product boundary is local,
+bounded operation up to ten videos. This is not a mass-archive certification, release decision or
+authorization for a scheduler, remote cursor, unattended execution or scale optimization.
