@@ -1,7 +1,7 @@
-"""Offline worker and IPC tests for incremental gallery-dl discovery."""
+"""Offline Pipe/DTO tests for incremental gallery-dl discovery."""
 
 import json
-import queue
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -11,53 +11,107 @@ from gallery_dl import config, exception  # type: ignore[import-untyped]
 import xma.adapters.discovery.incremental as incremental
 from xma.adapters.discovery.firefox_auth import BrowserAuthentication, CookieFileAuthentication
 from xma.domain.discovery import normalize_discovery_target
-from xma.domain.errors import DiscoveryTransientError
+from xma.domain.errors import DiscoveryContractError, DiscoveryTransientError
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/gallery_dl/twitter_videos.json"
 
 
-class CapturingQueue:
-    def __init__(self, events: list[tuple[object, ...]] | None = None) -> None:
-        self.events = list(events or [])
+class Connection:
+    def __init__(self, messages: list[dict[str, Any]] | None = None) -> None:
+        self.messages = list(messages or [])
         self.closed = False
 
-    def put(self, event: tuple[object, ...]) -> None:
-        self.events.append(event)
+    def send(self, message: dict[str, Any]) -> None:
+        self.messages.append(message)
 
-    def get(self, timeout: float) -> tuple[object, ...]:
+    def poll(self, timeout: float = 0) -> bool:
         del timeout
-        if not self.events:
-            raise queue.Empty
-        return self.events.pop(0)
+        return bool(self.messages)
+
+    def recv(self) -> dict[str, Any]:
+        if not self.messages:
+            raise EOFError
+        return self.messages.pop(0)
 
     def close(self) -> None:
         self.closed = True
 
-    def join_thread(self) -> None:
-        return None
+
+def _post(**updates: object) -> dict[str, object]:
+    result: dict[str, object] = {
+        "tweet_id": "11",
+        "author": {"id": "123"},
+        "num": 1,
+        "type": "video",
+        "duration": 1.5,
+        "width": 1280,
+        "height": 720,
+        "content": "synthetic",
+        "date": datetime(2026, 1, 2, tzinfo=UTC),
+        "retweet_id": None,
+        "quoted_id": None,
+        "reply_id": None,
+    }
+    result.update(updates)
+    return result
 
 
-def test_streaming_job_skips_existing_and_emits_new_candidate() -> None:
-    output = CapturingQueue()
-    data_job = incremental._StreamingDataJob(
-        "https://x.com/Reuters/timeline", 1, frozenset({"10:0"}), output
+def test_explicit_dto_is_primitive_serializes_date_and_ignores_extra() -> None:
+    dto = incremental._candidate_dto(
+        "https://example.invalid/media",
+        _post(extra=object(), author={"id": "123", "ignored": object()}),
     )
-    data_job.handle_directory({"user": {"id": "123"}})
-    data_job.handle_url("photo", {"type": "photo"})
-    data_job.handle_url("old", {"type": "video", "tweet_id": "10", "num": 1})
+    assert incremental._is_ipc_primitive(dto)
+    assert dto["date"] == "2026-01-02T00:00:00+00:00"
+    assert "extra" not in dto
+    assert dto["author"] == {"id": "123"}
+
+
+def test_primitive_validator_and_send_reject_invalid_shapes() -> None:
+    assert incremental._is_ipc_primitive(("ok", [1, True, None]))
+    assert not incremental._is_ipc_primitive({1: "invalid"})
+    assert not incremental._is_ipc_primitive(object())
+    with pytest.raises(ValueError):
+        incremental._send(cast(Any, Connection()), {"bad": float("nan")})
+
+
+def test_profile_dto_rejects_required_nonprimitive() -> None:
+    with pytest.raises(ValueError):
+        incremental._profile_dto({"user": {"id": object()}})
+
+
+@pytest.mark.parametrize("field,value", [("author", object()), ("width", float("inf"))])
+def test_required_nonprimitive_is_rejected_without_content(field: str, value: object) -> None:
+    with pytest.raises(ValueError, match="^$"):
+        incremental._candidate_dto("ephemeral", _post(**{field: value}))
+
+
+def test_streaming_job_sends_candidate_before_stop_and_skips_duplicate() -> None:
+    output = Connection()
+    data_job = incremental._StreamingDataJob.__new__(incremental._StreamingDataJob)
+    data_job.remaining = 1
+    data_job.existing = frozenset({"10:0"})
+    data_job.output = cast(Any, output)
+    data_job.profile_record = None
+    data_job.videos_seen = data_job.duplicates_skipped = data_job.emitted = 0
+    data_job.handle_directory(
+        {
+            "user": {
+                "id": "123",
+                "name": "Example",
+                "nick": "example",
+                "protected": False,
+            },
+            "ignored": object(),
+        }
+    )
+    data_job.handle_url("old", cast(Any, _post(tweet_id="10")))
     with pytest.raises(exception.StopExtraction):
-        data_job.handle_url("new", {"type": "video", "tweet_id": "11", "num": 1})
-    assert output.events[0][0] == "candidate"
-    assert output.events[0][2]["_source_url"] == "new"  # type: ignore[index]
-
-
-def test_streaming_job_emits_invalid_identity_for_parent_contract_check() -> None:
-    output = CapturingQueue()
-    data_job = incremental._StreamingDataJob(
-        "https://x.com/Reuters/timeline", 2, frozenset(), output
-    )
-    data_job.handle_url("new", {"type": "video", "tweet_id": "11", "num": "bad"})
-    assert output.events[0][0] == "candidate"
+        data_job.handle_url("new", cast(Any, _post(tweet_id="11")))
+    kinds = [item["kind"] for item in output.messages]
+    assert kinds[-2:] == ["candidate", "telemetry"]
+    assert output.messages[-2]["post"]["source_url"] == "new"
+    assert any(item.get("event") == "DUPLICATE_SKIPPED" for item in output.messages)
 
 
 @pytest.mark.parametrize("kind", ["anonymous", "firefox", "cookie_file"])
@@ -77,9 +131,7 @@ def test_worker_configuration_keeps_credentials_in_child_memory(
         cookie_file.write_text("# Netscape HTTP Cookie File\n")
         authentication = CookieFileAuthentication(cookie_file)
         monkeypatch.setattr(
-            incremental,
-            "load_cookie_file_x_cookies",
-            lambda auth: {"auth_token": "a", "ct0": "c"},
+            incremental, "load_cookie_file_x_cookies", lambda auth: {"auth_token": "a", "ct0": "c"}
         )
     incremental._configure_worker(authentication, 30)
     assert config.get(("extractor",), "timeout") == 30
@@ -87,120 +139,158 @@ def test_worker_configuration_keeps_credentials_in_child_memory(
     assert config.get(("cache",), "file") == ":memory:"
 
 
-def test_worker_main_reports_done_and_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    output = CapturingQueue()
+@pytest.mark.parametrize(
+    "mode,terminal",
+    [
+        ("success", "COMPLETED"),
+        ("empty", "PROVIDER_EXHAUSTED"),
+        ("failure", "WORKER_FAILED"),
+        ("invalid", "IPC_SERIALIZATION_FAILED"),
+    ],
+)
+def test_worker_terminal_classification(
+    monkeypatch: pytest.MonkeyPatch, mode: str, terminal: str
+) -> None:
+    output = Connection()
     monkeypatch.setattr(incremental, "_configure_worker", lambda auth, timeout: None)
 
-    class SuccessfulJob:
-        emitted = 1
+    class Job:
+        emitted = 1 if mode == "success" else 0
 
         def __init__(self, *args: object) -> None:
-            pass
+            if mode == "failure":
+                raise RuntimeError("secret")
+            if mode == "invalid":
+                raise ValueError("secret")
 
         def run(self) -> None:
             return None
 
-    monkeypatch.setattr(incremental, "_StreamingDataJob", SuccessfulJob)
-    incremental._worker_main("https://x.com/Reuters", 1, frozenset(), None, 30, output)
-    assert output.events == [("done", 1)]
-
-    class FailedJob(SuccessfulJob):
-        def __init__(self, *args: object) -> None:
-            raise RuntimeError("synthetic")
-
-    monkeypatch.setattr(incremental, "_StreamingDataJob", FailedJob)
-    incremental._worker_main("https://x.com/Reuters", 1, frozenset(), None, 30, output)
-    assert output.events[-1] == ("failed",)
+    monkeypatch.setattr(incremental, "_StreamingDataJob", Job)
+    incremental._worker_main("https://example.invalid", 1, frozenset(), None, 30, cast(Any, output))
+    assert output.messages[-1] == {"version": 1, "kind": "terminal", "status": terminal}
+    assert output.closed
+    assert "secret" not in json.dumps(output.messages)
 
 
-class FakeProcess:
-    def __init__(self, target: Any, args: tuple[object, ...], *, alive: bool = False) -> None:
-        self.target = target
-        self.args = args
-        self.alive = alive
-        self.terminated = False
-        self.killed = False
+class Process:
+    def __init__(self, target: Any, args: tuple[object, ...], alive: bool) -> None:
+        self.target, self.args, self.alive = target, args, alive
+        self.terminated = self.killed = False
         self.joined = 0
 
     def start(self) -> None:
-        self.target(*self.args)
+        if not self.alive:
+            self.target(*self.args)
 
     def is_alive(self) -> bool:
         return self.alive
 
     def terminate(self) -> None:
-        self.terminated = True
-        self.alive = False
+        self.terminated, self.alive = True, False
 
     def kill(self) -> None:
-        self.killed = True
-        self.alive = False
+        self.killed, self.alive = True, False
 
     def join(self, timeout: float | None = None) -> None:
         del timeout
         self.joined += 1
 
 
-class FakeContext:
-    def __init__(self, output: CapturingQueue, *, alive: bool = False) -> None:
-        self.output = output
-        self.alive = alive
-        self.process: FakeProcess | None = None
+class Context:
+    def __init__(self, receiver: Connection, sender: Connection, alive: bool = False) -> None:
+        self.receiver, self.sender, self.alive = receiver, sender, alive
+        self.process: Process | None = None
 
-    def Queue(self) -> CapturingQueue:
-        return self.output
+    def Pipe(self, duplex: bool) -> tuple[Connection, Connection]:
+        assert duplex is False
+        return self.receiver, self.sender
 
-    def Process(self, target: Any, args: tuple[object, ...]) -> FakeProcess:
-        self.process = FakeProcess(target, args, alive=self.alive)
+    def Process(self, target: Any, args: tuple[object, ...]) -> Process:
+        self.process = Process(target, args, self.alive)
         return self.process
 
 
-def test_incremental_provider_maps_candidate_and_joins_worker(
+def _provider(
     monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    payload = json.loads(FIXTURE.read_text())
-    output = CapturingQueue()
-    context = FakeContext(output)
-
-    def worker(*args: object) -> None:
-        queue_output = cast(CapturingQueue, args[-1])
-        queue_output.put(("candidate", payload["profile_record"], payload["media_records"][0]))
-        queue_output.put(("done", 1))
-
-    monkeypatch.setattr(incremental, "_worker_main", worker)
-    monkeypatch.setattr(
-        "xma.adapters.discovery.incremental.multiprocessing.get_context",
-        lambda method: context,
-    )
-    provider = incremental.IncrementalGalleryDlDiscoveryProvider()
-    batches = list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
-    assert batches[0].asset_count == 1
-    assert context.process is not None and context.process.joined == 1
-    assert output.closed is True
-
-
-def test_incremental_provider_timeout_terminates_and_joins(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    output = CapturingQueue()
-    context = FakeContext(output, alive=True)
-    ticks = iter((0.0, 31.0))
+    messages: list[dict[str, Any]],
+    *,
+    alive: bool = False,
+    telemetry: list[str] | None = None,
+) -> tuple[incremental.IncrementalGalleryDlDiscoveryProvider, Context]:
+    receiver, sender = Connection(messages), Connection()
+    context = Context(receiver, sender, alive)
     monkeypatch.setattr(incremental, "_worker_main", lambda *args: None)
     monkeypatch.setattr(
         "xma.adapters.discovery.incremental.multiprocessing.get_context",
         lambda method: context,
     )
+    sink = telemetry if telemetry is not None else []
+    return incremental.IncrementalGalleryDlDiscoveryProvider(telemetry=sink.append), context
+
+
+def test_provider_maps_candidate_then_completed_and_closes_pipe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = json.loads(FIXTURE.read_text())
+    post = incremental._candidate_dto(
+        payload["media_records"][0]["_source_url"], payload["media_records"][0]
+    )
+    messages = [
+        {"version": 1, "kind": "telemetry", "event": "VIDEO_SEEN", "videos_seen": 1},
+        {
+            "version": 1,
+            "kind": "candidate",
+            "profile": incremental._profile_dto(payload["profile_record"]),
+            "post": post,
+        },
+        {"version": 1, "kind": "terminal", "status": "COMPLETED"},
+    ]
+    telemetry: list[str] = []
+    provider, context = _provider(monkeypatch, messages, telemetry=telemetry)
+    batches = list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
+    assert batches[0].asset_count == 1
+    assert telemetry == ["worker VIDEO_SEEN videos_seen=1"]
+    assert context.receiver.closed and context.sender.closed
+    assert context.process is not None and context.process.joined == 1
+
+
+@pytest.mark.parametrize(
+    "terminal,error",
+    [
+        ("PROVIDER_EXHAUSTED", DiscoveryTransientError),
+        ("WORKER_FAILED", DiscoveryContractError),
+        ("IPC_SERIALIZATION_FAILED", DiscoveryContractError),
+    ],
+)
+def test_provider_terminal_errors(
+    monkeypatch: pytest.MonkeyPatch, terminal: str, error: type[Exception]
+) -> None:
+    provider, _ = _provider(monkeypatch, [{"version": 1, "kind": "terminal", "status": terminal}])
+    with pytest.raises(error, match=terminal):
+        list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
+
+
+def test_eof_without_terminal_is_worker_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+    provider, _ = _provider(monkeypatch, [])
+    with pytest.raises(DiscoveryContractError, match="WORKER_FAILED"):
+        list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
+
+
+def test_timeout_with_live_worker_terminates_and_joins(monkeypatch: pytest.MonkeyPatch) -> None:
+    provider, context = _provider(monkeypatch, [], alive=True)
+    ticks = iter((0.0, 31.0))
     monkeypatch.setattr("xma.adapters.discovery.incremental.time.monotonic", lambda: next(ticks))
-    provider = incremental.IncrementalGalleryDlDiscoveryProvider()
     with pytest.raises(DiscoveryTransientError, match="PROVIDER_TIMEOUT"):
         list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
-    assert context.process is not None
-    assert context.process.terminated is True
-    assert context.process.joined >= 1
+    assert context.process is not None and context.process.terminated and context.process.joined
 
 
-def test_incremental_provider_fails_closed_off_linux(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_provider_fails_closed_off_linux(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("xma.adapters.discovery.incremental.sys.platform", "darwin")
-    provider = incremental.IncrementalGalleryDlDiscoveryProvider()
     with pytest.raises(DiscoveryTransientError, match="PROVIDER_TIMEOUT"):
-        list(provider.candidates(normalize_discovery_target("Reuters"), 1, frozenset(), 30))
+        list(
+            incremental.IncrementalGalleryDlDiscoveryProvider().candidates(
+                normalize_discovery_target("Reuters"), 1, frozenset(), 30
+            )
+        )

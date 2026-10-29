@@ -213,7 +213,10 @@ def download_profile(
             auth_browser, auth_profile, cookies_file, discovery_timeout
         )
         incremental_provider = _download_incremental_provider(
-            auth_browser, auth_profile, cookies_file
+            auth_browser,
+            auth_profile,
+            cookies_file,
+            lambda message: error_console.print(message, markup=False),
         )
         request = DownloadRequest(target, limit)
         service = DownloadService(
@@ -300,6 +303,7 @@ def _download_incremental_provider(
     browser: str | None,
     profile: str | None,
     cookies_file: Path | None,
+    telemetry: Callable[[str], None] | None = None,
 ) -> IncrementalGalleryDlDiscoveryProvider:
     if cookies_file is not None and (browser is not None or profile is not None):
         raise InvalidIdentityError("download authentication options are mutually exclusive")
@@ -319,7 +323,7 @@ def _download_incremental_provider(
             authentication = BrowserAuthentication(browser, profile)
         except ValueError as error:
             raise InvalidIdentityError("browser authentication configuration is invalid") from error
-    return IncrementalGalleryDlDiscoveryProvider(authentication)
+    return IncrementalGalleryDlDiscoveryProvider(authentication, telemetry)
 
 
 def _catalog_unit(database: Path) -> SQLiteUnitOfWork:
