@@ -16,8 +16,9 @@ implementa adaptadores nuevos ni amplía el máximo operativo v1.
 
 ## Publicación
 
-El workflow Pages construye `docs/wiki` con Jekyll y publica desde la rama documental para
-validación; después de integrar la documentación, `main` será la fuente estable.
+El workflow Pages construye `docs/wiki` con Jekyll. La rama documental permite revisión; al
+integrarse en `release/v0.1.0` se publica la wiki antes del producto y, tras la liberación, `main`
+queda como fuente estable.
 
 ## Restricciones
 
