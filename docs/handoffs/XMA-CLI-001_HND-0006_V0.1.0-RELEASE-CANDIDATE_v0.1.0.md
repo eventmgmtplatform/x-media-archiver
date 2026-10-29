@@ -37,12 +37,12 @@ corresponding source.
 
 | Artifact | Bytes | SHA-256 |
 |---|---:|---|
-| `xma-v0.1.0-linux-x86_64.tar.gz` | 22,802,482 | `773dcac180820aff0ca20d75e5151321527ad33a997efefe3f4f213360bd1c86` |
+| `xma-v0.1.0-linux-x86_64.tar.gz` | 22,946,458 | `faa626b5d2f71766334078b5f61b1ce81c1ca7d4dd2d024ca0739e3424a84718` |
 | `x_media_archiver-0.1.0-py3-none-any.whl` | 47,949 | `2496d256374dc446dc74e2cc537c7b8436cd7b3137c3caeeb37410b152e6076d` |
-| `x_media_archiver-0.1.0.tar.gz` | 294,260 | `75ce6f699919dde8bdd969e3c24c5fdef197a3c56a0b13dbc71b52d21b01db7d` |
+| `x_media_archiver-0.1.0.tar.gz` | 294,321 | `5e1b14878e81e266273e9e2cc9c622153539b9b7f284442ae18abbf1b8211239` |
 | `requirements-linux-x86_64.txt` | 14,683 | `a7f6ab131b9a77367680e097dd5c1bac9080ace32cbcc35b5152ea597fa6ff64` |
 | `sbom.cdx.json` | 49,884 | `660424d197c769c639d4793633daf08239cc39274108ea8a5548e3ae0e29d765` |
-| `SHA256SUMS` | 564 | `9088063aca4346e52cb4cd859ff596bf37a626f0f4fb7734c9afe9101f5f3240` |
+| `SHA256SUMS` | 564 | `b62b720bf010aea052308f687a090d903b88a1a661f2b4662e7fe3060973fbef` |
 
 Estos artifacts no están rastreados ni publicados. Wheel y sdist fueron reproducibles
 byte-for-byte en builds consecutivos. Requirements/SBOM se hicieron reproducibles eliminando el
@@ -62,7 +62,11 @@ limitación queda documentada como riesgo de reproducibilidad upstream.
 - Ruff format/lint, mypy, build, metadata, diff: PASS.
 - pip-audit producción: cero vulnerabilidades conocidas; inventario de licencias generado.
 - Secret/forbidden tracked-file scan: PASS; no media, SQLite, cookies, logs o artifacts rastreados.
-- CI final y artifact checks corresponden al head/tree publicado del PR draft.
+- CI final: [40928956435](https://github.com/eventmgmtplatform/x-media-archiver/actions/runs/40928956435),
+  `SUCCESS`, 356 pruebas, 90.76 %, build/auditoría verdes.
+- Release candidate/portabilidad:
+  [40928956602](https://github.com/eventmgmtplatform/x-media-archiver/actions/runs/40928956602),
+  `SUCCESS`, artifacts subidos y bundle validado en Ubuntu 22.04/24.04.
 
 ## GitHub, riesgos y rollback
 
