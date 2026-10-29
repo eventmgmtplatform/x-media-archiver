@@ -102,9 +102,8 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 
 ## Known limitations
 
-- Download accepts absolute `--limit 1..10` or additive `--add 1..10`; the resulting verified total
-  cannot exceed ten. Larger future operations belong to durable `archive`, also currently capped
-  at ten.
+- Download accepts absolute `--limit 1..10` or additive `--add 1..20`; the resulting verified total
+  cannot exceed twenty in v0.1.2; `--add` accepts 1..20. Durable `archive` is also capped at twenty.
 - No certified bulk or unattended operation.
 - `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.

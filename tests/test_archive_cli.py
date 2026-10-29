@@ -119,7 +119,7 @@ def test_status_without_run_is_read_only(tmp_path: Path) -> None:
     "arguments",
     [
         ["--limit", "0"],
-        ["--limit", "11"],
+        ["--limit", "21"],
         ["--batch-size", "0"],
         ["--batch-size", "6"],
         ["--request-interval", "0"],

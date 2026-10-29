@@ -252,6 +252,9 @@ PRM-0034 autoriza únicamente la preparación del release candidate: reconciliac
 validación local/distributiva, rama `release/v0.1.1` fast-forward y CI quality/RC sobre el mismo
 commit. No autoriza cambios runtime, X, merge, tag, GitHub Release, PyPI, v0.1.2 o v0.2.0.
 
+PRM-0038/0038B autoriza v0.1.2 media recovery con clasificación sanitizada, una renovación acotada,
+`download --add 1..20`, total máximo 20 y archive máximo 20. `download --limit` permanece 1..10.
+
 PRM-0035 integró PR #10 mediante squash en el commit firmado
 `9490dbdfd43517a08c68745147d3a6d34d23af25`, conservando el tree RC
 `f5a154687d984d0e50596a8daf17b7a4bd565dda`. El tag anotado `v0.1.1` apunta a ese commit y

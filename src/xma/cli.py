@@ -224,17 +224,15 @@ def download_profile(
         typer.Option("--json", help="Emit stable JSON without credentials or media URLs."),
     ] = False,
 ) -> None:
-    """Interactively download a bounded total of at most ten public videos."""
+    """Interactively download up to ten absolute or add up to twenty videos."""
     database = repository / "catalog.sqlite3"
     try:
         if limit is not None and add is not None:
             raise DomainError("--limit and --add are mutually exclusive")
-        for value in (limit, add):
-            if value is not None and not 1 <= value <= 10:
-                raise DomainError(
-                    "download supports totals from 1 to 10; larger operations require "
-                    "the durable 'xma archive' workflow. v0.1.1 does not execute totals above 10"
-                )
+        if limit is not None and not 1 <= limit <= 10:
+            raise DomainError("download --limit must be between 1 and 10")
+        if add is not None and not 1 <= add <= 20:
+            raise DomainError("download --add must be between 1 and 20")
         if quality != "best":
             raise DomainError("download quality must be 'best'")
         normalized = normalize_discovery_target(target)
@@ -246,11 +244,8 @@ def download_profile(
         )
         existing = preflight.verified_total(normalized.handle)
         requested_limit = (existing + add) if add is not None else (limit or 1)
-        if requested_limit > 10:
-            raise DomainError(
-                "download supports totals from 1 to 10; larger operations require "
-                "the durable 'xma archive' workflow. v0.1.1 does not execute totals above 10"
-            )
+        if requested_limit > 20:
+            raise DomainError("download resulting total must not exceed 20")
         request = DownloadRequest(target, requested_limit)
         if existing >= requested_limit:
             service = preflight
@@ -298,7 +293,7 @@ def download_profile(
 @app.command("archive")
 def archive_profile(
     target: Annotated[str, typer.Argument(help="Public X profile target.")],
-    limit: Annotated[int, typer.Option("--limit", min=1, max=10)] = 10,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=20)] = 10,
     batch_size: Annotated[int, typer.Option("--batch-size", min=1, max=5)] = 2,
     repository: Annotated[Path, typer.Option("--repository")] = Path("repository"),
     auth_browser: Annotated[str | None, typer.Option("--auth-browser")] = None,

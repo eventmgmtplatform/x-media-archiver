@@ -562,24 +562,36 @@ class DownloadService:
                 ),
                 False,
             )
-        except DownloadError:
+        except DownloadError as error:
             self._cleanup(directory, part, sidecar_tmp, sidecar, final)
-            self._fail_job(job)
+            self._fail_job(job, str(error))
             raise
         except (OSError, ValueError) as error:
             self._cleanup(directory, part, sidecar_tmp, sidecar, final)
-            self._fail_job(job)
+            self._fail_job(job, "MEDIA_DOWNLOAD_FAILED")
             raise DownloadError("media download failed") from error
 
     def _put_job(self, job: DownloadJob) -> None:
         with self._unit_of_work_factory() as unit:
             unit.catalog.put_download_job(job)
 
-    def _fail_job(self, job: DownloadJob) -> None:
+    def _fail_job(self, job: DownloadJob, code: str = "MEDIA_DOWNLOAD_FAILED") -> None:
+        allowed = {
+            "MEDIA_URL_EXPIRED",
+            "MEDIA_FORBIDDEN",
+            "MEDIA_NOT_FOUND",
+            "MEDIA_RATE_LIMITED",
+            "MEDIA_TIMEOUT",
+            "MEDIA_SERVER_ERROR",
+            "MEDIA_CONNECTION_FAILED",
+            "MEDIA_CONTENT_INVALID",
+            "MEDIA_DOWNLOAD_FAILED",
+        }
+        sanitized = code if code in allowed else "MEDIA_DOWNLOAD_FAILED"
         failed = job.transition(
             DownloadStatus.FAILED_FINAL,
             self._clock(),
-            error_code="DOWNLOAD_FAILED",
+            error_code=sanitized,
             error_message="media download failed",
         )
         self._put_job(failed)

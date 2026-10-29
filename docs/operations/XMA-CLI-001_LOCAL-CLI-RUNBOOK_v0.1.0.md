@@ -95,8 +95,8 @@ uv run xma status --repository ./repository-HANDLE
 uv run xma status --repository ./repository-HANDLE --json
 ```
 
-`--limit N` es el total deseado y un total existente mayor es un no-op offline. `--add N` suma al
-total verificado; si excedería diez falla antes de autenticación o red. `COMPLETED` confirma el total
+`--limit N` permanece acotado a 1..10. `--add N` acepta 1..20 y suma al total verificado; si el
+resultado excedería veinte falla antes de autenticación o red. `COMPLETED` confirma el total
 solicitado. `PAUSED` conserva progreso recuperable; revise
 `last_error_code` antes de reanudar. `FAILED` indica inconsistencia o fallo no recuperable sin
 diagnóstico. `PROVIDER_TIMEOUT` es un fallo transitorio del proveedor, no permiso para retries

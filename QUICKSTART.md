@@ -99,8 +99,8 @@ cataloged files.
 ## Limits and common errors
 
 - Linux x86_64 only; Ubuntu 22.04 and 24.04 are tested.
-- Download accepts `--limit 1..10` or `--add 1..10`, never both; the resulting repository total
-  cannot exceed ten. Durable archive remains the checkpointed workflow and is also capped at ten.
+- Download accepts `--limit 1..10` or `--add 1..20`, never both; the resulting repository total
+  cannot exceed twenty in v0.1.2; additive requests accept 1..20. Archive is capped at twenty.
 - No scheduler, daemon, mass operation, remote cursor, GUI, API service, yt-dlp, or FFmpeg.
 - Exit `2`: invalid input; `3`: authentication/content restriction; `4`: rate limit; `5`:
   provider/contract failure; `6`: catalog failure; `7`: missing target/run; `8`: transient provider

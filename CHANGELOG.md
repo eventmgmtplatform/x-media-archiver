@@ -5,7 +5,10 @@ Versioning.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- Sanitized media transport classifications, bounded URL renewal, additive downloads through 20,
+  and an explicit opt-in public acceptance harness.
 
 ## [0.1.1] - 2026-10-29
 
