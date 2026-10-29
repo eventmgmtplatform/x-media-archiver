@@ -1,7 +1,7 @@
 # XMA-CLI-001 — Plan de implementación
 
 **Versión:** 0.1.0  
-**Estado:** ACTIVE / Q2 CLOSED / B03-AUTH-BOUNDARY REWORK_COMPLETED / WAITING_VALIDATION
+**Estado:** ACTIVE / Q2 CLOSED / B03-AUTH-BOUNDARY-REWORK-002 IMPLEMENTED / WAITING_VALIDATION
 **Método:** Engineering OS + Scrum/Accelerate proporcional al riesgo
 
 ## Objetivo de entrega
@@ -56,16 +56,18 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso autorizado
 
-B03-AUTH-BOUNDARY-REWORK-001 queda `REWORK_COMPLETED / WAITING_VALIDATION` bajo PRM-0010 y
-HND-0003 v0.2.1. PRM-0009 se consumió una vez y no se repitió el smoke ni se accedió a X. La
-evidencia SQLite original no estaba disponible de forma inequívoca; no se reconstruyó.
+B03-AUTH-BOUNDARY-REWORK-002 queda `IMPLEMENTED / WAITING_VALIDATION` bajo PRM-0011 y HND-0003
+v0.2.2. R-01 exige `auth_token` y `ct0` no vacíos; R-02 normaliza el bucle de symlink. La
+validación independiente permanece pendiente. PRM-0009 se consumió una vez y no se repitió el
+smoke ni se accedió a X. A-06 sigue `EVIDENCE_NOT_AVAILABLE`; no se reconstruyó.
 
 El modo anónimo continúa por defecto. La lectura autenticada es infraestructura local, contenida,
 solo lectura y limitada a X; no almacena, exporta, copia, imprime ni versiona cookies o
 credenciales. CI continúa completamente offline.
 
-Q3-Público permanece `BLOCKED` hasta auditoría y decisión humana. La siguiente acción es que dot
-ejecute DOT-PRM-0012 sobre el HEAD final. Siguen prohibidos merge, B04, descargas, otros
+Q3-Público y la transición general B03 permanecen `BLOCKED` hasta auditoría y decisión humana.
+La siguiente acción es que dot ejecute DOT-PRM-0013 sobre el HEAD final. Siguen prohibidos merge,
+B04, descargas, otros
 extractores, API X, tags, releases y certificación.
 
 El rework B02 permanece separado y no integrado.

@@ -7,7 +7,7 @@ CLI local para descubrir el contenido audiovisual público de un perfil de X, ca
 - Workstream: `XMA-CLI-001`
 - Madurez: `DESIGN`
 - Baseline de arquitectura: `v0.1.0`
-- Implementación: `B02 VALIDATED / B03 AUTH BOUNDARY REWORK COMPLETED — WAITING VALIDATION`
+- Implementación: `B02 VALIDATED / B03 AUTH BOUNDARY REWORK-002 IMPLEMENTED — WAITING VALIDATION`
 - Certificación de producto: `NOT CERTIFIED`
 
 ## Objetivo del MVP
@@ -169,7 +169,9 @@ deshabilitada, y no copia, imprime, exporta ni persiste cookies o el identificad
 
 La aceptación gobernada Reuters → AP → BBCWorld, siempre con `--limit 2`, obtuvo códigos 3, 3 y 0.
 BBCWorld catalogó exactamente dos activos públicos distintos; el repositorio temporal contenía
-solo `.sqlite3`, sin medios, miniaturas ni sidecars. AUD-0005 clasificó esa entrega como
-`REWORK_REQUIRED`. PRM-0010 cerró A-01–A-06 en el árbol de implementación, pero la evidencia
-SQLite original ya no estaba disponible de forma inequívoca y no se reconstruyó. Q3-Público
-permanece `BLOCKED` y pendiente de auditoría independiente.
+solo `.sqlite3`, sin medios, miniaturas ni sidecars. AUD-0005 v0.1.1 clasificó el primer rework
+como `REWORK_REQUIRED`: una sesión incompleta podía continuar como guest y un symlink circular
+podía propagar un error de resolución. PRM-0011 implementa el fail-closed de `auth_token` y
+`ct0`, y normaliza específicamente ese error; ambos controles quedan `WAITING_VALIDATION`.
+La evidencia SQLite original permanece `EVIDENCE_NOT_AVAILABLE` y no se reconstruyó.
+Q3-Público y la transición general B03 permanecen `BLOCKED`.
