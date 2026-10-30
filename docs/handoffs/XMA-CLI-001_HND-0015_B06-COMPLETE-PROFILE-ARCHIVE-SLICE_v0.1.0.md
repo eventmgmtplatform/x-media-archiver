@@ -33,8 +33,12 @@ Status: `B06_OFFLINE_READY / PUBLIC_ACCEPTANCE_PENDING`
 - Provider exhaustion, low disk, max runtime, interruption, resume, migration, status,
   target-scoped reconciliation, bounded archive, download, and SINGLE_POST regressions: PASS.
 
-The final documentation commit, tree, and CI URL are reconciled in PR #13 without another
-functional change.
+- CI compatibility commit: `0960ba6a4e137a2e19569be296fc591a83f9498b`.
+- Validated tree before final handoff correction: `452d2647176d96b6bc87f66809668ef4a618677e`.
+- Quality CI: `40997904602`, PASS.
+- Draft PR: `#14`.
+
+The final handoff-only commit and tree are reconciled in PR #14 without another functional change.
 
 ## Limitations and rollback
 
