@@ -5,6 +5,7 @@ rewriting historical evidence.
 
 ## Release and postrelease records
 
+- [B06 public cap/resume acceptance — HND-0015 v0.2.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.2.0.md)
 - [B06 partial final-page reconciliation — HND-0015 v0.1.2](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.1.2.md)
 - [B06 offline boundary hardening — HND-0015 v0.1.1](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.1.1.md)
 - [B06 offline complete-profile slice — HND-0015 v0.1.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.1.0.md)

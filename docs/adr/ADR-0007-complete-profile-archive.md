@@ -40,5 +40,10 @@ only with synthetic fixtures. The boundary-hardening rework is offline validated
 acceptance and full-account exhaustion remain pending.
 No external data volume, Firefox session, cookie, or public media was used for this decision.
 
+PRM-0048 publicly validated only the bounded safety controls and durable resumption: a new local
+repository advanced 0→5 and then 5→10 on the same run, pausing at each configured cap with intact
+artifacts and checkpoints. This does not validate provider exhaustion, a complete account archive,
+mass operation, or an uncapped run.
+
 Rollback is a code rollback plus restoration of a pre-migration catalog backup; media artifacts
 are never deleted automatically.

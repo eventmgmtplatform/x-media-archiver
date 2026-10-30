@@ -38,3 +38,8 @@ terminal sanitized failure and must be diagnosed offline before resumption.
 
 Back up the whole repository before migration. Never delete or overwrite verified artifacts.
 Public acceptance and complete-account operation remain pending.
+
+The governed PRM-0048 acceptance demonstrated a capped sequence only: `--max-items 5`, followed by
+`--resume --max-items 10`, on the same repository and run. Both commands ended
+`PAUSED / SAFETY_CAP_REACHED`, remained resumable, and preserved prior hashes. Operators must not
+interpret this result as provider exhaustion or authorization for uncapped/full-account archival.

@@ -6,7 +6,7 @@
 
 | Fecha (America/Mexico_City) | Gate | Evidencia | Decisión / estado | Autorización |
 |---|---|---|---|---|
-| 2026-10-29 | B06 complete-profile archive | PRM-0045 Addendum 01, PRM-0046/0047, ADR-0007, HND-0015 v0.1.2, synthetic suite | `B06_OFFLINE_VALIDATED / PUBLIC_ACCEPTANCE_PENDING`; typed exhaustion, truthful ALL status, verified caps, sanitized failures, and reconciled partial final pages; no public access | Leonel authorized offline rework only; PR remains draft, no merge/release |
+| 2026-10-29 | B06 complete-profile archive | PRM-0045 Addendum 01, PRM-0046/0047/0048, ADR-0007, HND-0015 v0.2.0 | `B06_PUBLIC_CAP_RESUME_VALIDATED / FULL_ACCOUNT_PENDING`; public 0→5→10 validated safety caps, checkpoints, deduplication, resumption and artifact preservation | Provider exhaustion/full account remain unvalidated; PR remains draft, no merge/release |
 | 2026-10-28 | Q0 | Arquitectura, ADR-0001 y plan B00–B07 | Baseline aprobada | Leonel |
 | 2026-10-28 | Q1 | PR #1, HND-0001, CI y merge `2acb88c` | Cerrado | Leonel |
 | 2026-10-28 | Q2 | PR #2, HND-0002, AUD-0002, CI #6 | `VALIDATED_WITH_OBSERVATIONS`; merge `b2bdca7` | Leonel |
