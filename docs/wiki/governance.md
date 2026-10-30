@@ -33,4 +33,5 @@ La wiki es el índice ejecutivo; no sustituye los documentos gobernados.
 6. Publicar solo después de revisión humana.
 
 La publicación de Pages no autoriza por sí misma merge, tag o release del producto.
-PRM-0056 `CLI-EXECUTION-REPORTING` está registrado como backlog, no como alcance implementado.
+PRM-0056 `CLI-EXECUTION-REPORTING` está integrado y validado; PRM-0063 prepara el release candidate
+v0.2.0 sin autorizar merge, tag, Release o PyPI.

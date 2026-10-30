@@ -340,4 +340,11 @@ An isolated post-B06 development branch adds typed, presentation-independent exe
 `download`, `archive`, and offline `status`. Existing JSON keys and exit codes remain compatible;
 schema 1 is additive, exact-one downloads identify only the new artifact, aggregate runs remain
 compact, and failures expose durable progress without raw exceptions or secrets. Validation is
-offline only and ends at `CLI_REPORTING_OFFLINE_VALIDATED / PUBLIC_ACCEPTANCE_PENDING`.
+complete offline and publicly; PR #15 was squash-merged with main CI and Pages green.
+
+## Release candidate v0.2.0
+
+PRM-0063 promotes metadata from `0.2.0.dev0` to `0.2.0` and reconciles release packaging and
+documentation only. It validates wheel, sdist, standalone Linux bundle, checksums, manifest, SBOM,
+licenses, official gallery-dl source, isolated installation and Ubuntu 22.04/24.04 portability.
+The candidate remains a draft PR: no merge, tag, GitHub Release or PyPI publication is authorized.

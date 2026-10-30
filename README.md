@@ -1,17 +1,13 @@
-# X Media Archiver 0.2.0.dev0
+# X Media Archiver 0.2.0
 
 Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
 a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
 ## Version status
 
-Version 0.1.2 is the current published release. Interactive download and durable archive enforce a
-repository maximum of twenty videos. The release remains intentionally bounded and is not
-certified for bulk or unattended operation.
-
-The current development branch adds an `archive --all` contract validated with observations on one
-public account. It does not change the published v0.1.2 guarantee and is not certified for mass or
-unattended operation.
+Version 0.2.0 is a validated release candidate, not yet tagged or published. It adds durable
+complete-profile archive and structured CLI execution reporting to the published v0.1.2 baseline.
+Operations remain intentionally bounded and are not certified for bulk or unattended use.
 
 ## Supported platforms
 
@@ -22,11 +18,11 @@ macOS are not certified. A local filesystem with `flock` is required for durable
 
 Recommended release bundle:
 
-Download the published v0.1.2 assets, verify `SHA256SUMS`, and extract the standalone bundle:
+After publication, download the v0.2.0 assets, verify `SHA256SUMS`, and extract the bundle:
 
 ```bash
-tar -xzf xma-v0.1.2-linux-x86_64.tar.gz
-cd xma-v0.1.2-linux-x86_64
+tar -xzf xma-v0.2.0-linux-x86_64.tar.gz
+cd xma-v0.2.0-linux-x86_64
 ./xma --help
 ./xma version
 ```
@@ -40,12 +36,12 @@ For source validation, check out the immutable published tag:
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach v0.1.2
+git checkout --detach v0.2.0
 uv sync --locked --all-groups
 uv run xma version
 ```
 
-Advanced wheel installation uses the locally built `x_media_archiver-0.1.2-py3-none-any.whl` in an
+Advanced wheel installation uses `x_media_archiver-0.2.0-py3-none-any.whl` in an
 isolated Python 3.12 environment. See the local CLI runbook.
 
 ## Quick start
@@ -93,7 +89,7 @@ xma status --repository ./repository-HANDLE --json
 resumption. `FAILED` requires integrity diagnosis before another run. Back up the entire repository,
 not only SQLite.
 
-Development-only complete-profile syntax and safety semantics are documented in
+Complete-profile syntax and safety semantics are documented in
 [`docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md`](docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md).
 Use `--all` only with a safety cap. Typed provider exhaustion produces a completed, non-resumable
 run and a manifest with `complete=true` and `exhausted=true`; reaching the cap produces a resumable
@@ -115,7 +111,8 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 ## Known limitations
 
 - Download accepts absolute `--limit 1..10` or additive `--add 1..20`; the resulting verified total
-  cannot exceed twenty in v0.1.2; `--add` accepts 1..20. Durable `archive` is also capped at twenty.
+  cannot exceed twenty; `--add` accepts 1..20. BOUNDED archive is capped at twenty; ALL requires an
+  explicit operational safety cap and remains unsuitable for mass/unattended operation.
 - No certified bulk or unattended operation.
 - `RESCAN_DEDUP_V2` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
@@ -137,7 +134,7 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 License: GPL-2.0-only. Third-party composition is documented in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-## Execution reports (development)
+## Execution reports
 
 `download`, `archive`, and offline `status` expose the same compact execution report. Human output
 shows the account, request, before/run/after counts, terminal state, and durable checkpoint. When

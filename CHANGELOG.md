@@ -5,18 +5,31 @@ Versioning.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.2.0] - 2026-10-30
+
 ### Added
 
-- Development-only `archive --all`, explicit resume, safety cap, runtime/free-space guards,
-  provider-exhaustion semantics, and SQLite schema v3 durability fields.
+- Durable `archive --all` with explicit resume, safety caps, runtime/free-space guards, typed
+  provider exhaustion, rate limiting and checkpointed progress.
+- Human and additive JSON schema 1 execution reports for `download`, `archive`, and offline
+  `status`, including exact single-video detail and compact aggregate summaries.
+
+### Changed
+
+- Invocation-scoped `downloaded_this_run` uses an ephemeral verified baseline; terminal no-ops and
+  offline status report zero current work without rewriting durable state.
+- Complete-profile manifests distinguish provider exhaustion from safety-cap pauses and preserve
+  resumability accurately.
 
 ### Validation
 
-- B06 safety-cap recovery was validated through 50 assets. A separate public account reached typed
-  provider exhaustion at 22 provider-best assets; its manifest was reconciled atomically and
-  CERT-0001 records `VALIDATED_WITH_OBSERVATIONS`.
-- The evidence covers one observed public account. It does not certify thousands of downloads,
-  mass/unattended operation, every X account, Telegram, WhatsApp, or PRM-0056 reporting.
+- B06 safety-cap recovery was validated through 50 assets. A separate observed public account
+  reached typed provider exhaustion at 22 provider-best assets and passed a byte-identical terminal
+  no-op. CLI reporting passed controlled negative, one-video, aggregate, archive and status checks.
+- The evidence does not certify mass/unattended operation, every X account, Telegram, WhatsApp,
+  scheduler, GUI, API, PyPI, Windows or macOS.
 
 ## [0.1.2] - 2026-10-29
 
@@ -121,7 +134,8 @@ Public release: <https://github.com/eventmgmtplatform/x-media-archiver/releases/
 - Linux x86_64 only; Windows and macOS are not certified.
 - Provider availability remains external to XMA.
 
-[Unreleased]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.0

@@ -21,7 +21,7 @@ Los comandos principales son:
 | `archive` | Archiva y reanuda hasta 20 activos |
 | `status` | Consulta offline el estado e integridad |
 
-La rama `0.2.0.dev0` añade `archive --all`, validado con observaciones para una cuenta pública y
+El release candidate `0.2.0` añade `archive --all`, validado con observaciones para una cuenta pública y
 siempre gobernado por safety caps. Consulte [B06](b06-complete-profile-archive.html).
 
 ## Repositorio generado

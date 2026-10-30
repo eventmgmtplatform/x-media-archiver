@@ -111,6 +111,7 @@
 | GOV-CLS-0047 | v0.1.1 | PRM-0037 autoriza reconciliación documental postrelease y limpieza de ramas obsoletas. | Documentación postrelease preparada en rama aislada; Pages permanece pendiente conocido. | CI y squash documental requeridos; sin código, PyPI, tags o versión posterior. |
 | GOV-REL-0050 | v0.1.2 | PRM-0042/0043 integraron el RC, publicaron el tag anotado y verificaron GitHub Release 428531308. | `V0.1.2_PUBLISHED / POSTRELEASE_VERIFIED`; diez assets, checksums, bundle 0.1.2, SBOM, licencia y source verificados. | PyPI no publicado; tag y Release inmutables; sin versión posterior. |
 | GOV-CLS-0051 | v0.1.2 | PRM-0044 autoriza reconciliación exclusivamente documental y limpieza posterior de ramas obsoletas. | `RELEASED`; cierre documental sujeto a CI y squash sobre main. | Pages pendiente; evidencia multimedia local no rastreada; sin PyPI, código o nueva versión. |
+| GOV-RC-0063 | v0.2.0 | PRM-0063 autoriza exclusivamente preparar y validar el release candidate desde main integrado. | Versión, documentación, artifacts, SBOM, checksums, instalación aislada y portabilidad sujetos al gate RC. | PR draft; sin merge, tag, Release, PyPI, X, Firefox, cookies o evidencia multimedia. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin

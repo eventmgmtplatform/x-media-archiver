@@ -25,7 +25,7 @@ gobernada, contenido autorizado de distintas aplicaciones y plataformas.
 
 ## Trabajo técnico v2
 
-v0.2.0 no ha comenzado. Telegram y WhatsApp permanecen como roadmap futuro y requieren prompts,
+v0.2.0 está en preparación de release candidate. Telegram y WhatsApp permanecen como roadmap futuro y requieren prompts,
 autorización y gates propios; este documento no los autoriza.
 
 - separar `PlatformAdapter`, autenticación, discovery y descarga;
