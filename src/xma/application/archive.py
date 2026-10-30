@@ -22,8 +22,8 @@ from xma.domain.errors import (
     CatalogError,
     DiscoveryError,
     DomainError,
+    DownloadConflictError,
     DownloadError,
-    ProviderExhaustedError,
 )
 from xma.domain.ports import IncrementalDiscoveryProvider
 
@@ -201,32 +201,45 @@ class ArchiveService:
                         page_total = min(request.requested_total, page_total)
                     elif request.max_items is not None:
                         page_total = min(request.max_items, page_total)
-                    try:
-                        summary = self._download.execute_incremental(
-                            DownloadRequest(
-                                request.target.handle,
-                                page_total,
-                                archive_all=request.mode is ArchiveMode.ALL,
-                            ),
-                            self._provider,
-                            discovery_timeout,
-                            1,
-                            progress,
-                            500,
-                        )
-                    except ProviderExhaustedError:
-                        if request.mode is ArchiveMode.ALL:
-                            current = replace(
-                                current,
-                                status=ArchiveStatus.COMPLETED,
-                                completion_reason=CompletionReason.PROVIDER_EXHAUSTED,
-                                updated_at=self._clock(),
-                                completed_at=self._clock(),
-                                last_error_code=None,
+                    summary = self._download.execute_incremental(
+                        DownloadRequest(
+                            request.target.handle,
+                            page_total,
+                            archive_all=request.mode is ArchiveMode.ALL,
+                        ),
+                        self._provider,
+                        discovery_timeout,
+                        1,
+                        progress,
+                        500,
+                    )
+                    if summary.provider_exhausted:
+                        if request.mode is not ArchiveMode.ALL:
+                            raise DownloadError("bounded archive page ended before its target")
+                        verified_after = self._download.verified_total(request.target.handle)
+                        if (
+                            verified_after < current.downloaded_total
+                            or verified_after != summary.total_after
+                        ):
+                            raise DownloadConflictError(
+                                "catalog and filesystem do not agree after provider exhaustion"
                             )
-                            self._store.put(current)
-                            return current
-                        raise
+                        progressed = verified_after > current.downloaded_total
+                        completed_run = replace(
+                            current,
+                            status=ArchiveStatus.COMPLETED,
+                            downloaded_total=verified_after,
+                            failed_total=current.failed_total + summary.failed_count,
+                            page_number=current.page_number + (1 if progressed else 0),
+                            completion_reason=CompletionReason.PROVIDER_EXHAUSTED,
+                            updated_at=self._clock(),
+                            completed_at=self._clock(),
+                            last_error_code=None,
+                            next_allowed_at=None,
+                        )
+                        self._store.put(completed_run)
+                        current = completed_run
+                        return current
                     if summary.total_after != page_total:
                         raise DownloadError("archive page did not reach its confirmed target")
                     page = current.page_number + 1
@@ -292,7 +305,9 @@ class ArchiveService:
                 self._persist_terminal(
                     current,
                     ArchiveStatus.FAILED,
-                    error.__class__.__name__,
+                    "REPOSITORY_INCONSISTENT"
+                    if isinstance(error, DownloadConflictError)
+                    else error.__class__.__name__,
                     CompletionReason.FAILED,
                 )
                 raise

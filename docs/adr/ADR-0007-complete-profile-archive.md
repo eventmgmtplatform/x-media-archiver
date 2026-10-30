@@ -24,6 +24,12 @@ Unexpected application failures are durably classified as `FAILED / UNEXPECTED_F
 original exception remains only as the internal cause and the CLI exposes a constant sanitized XMA
 error.
 
+Natural exhaustion may arrive after a partial final page. In ALL mode, DownloadService returns the
+confirmed partial result with `provider_exhausted=true`; ArchiveService re-verifies the target-scoped
+repository before atomically persisting the new total, failures, page/checkpoint, and terminal
+reason. A page advances once only when it added valid artifacts. Persistence or verification failure
+preserves the prior checkpoint and fails closed instead of declaring completion.
+
 SQLite schema v3 adds mode, completion reason, failed count, safety settings, and resume timestamp
 while transactionally preserving v1/v2 catalogs. `status` remains offline and read-only.
 

@@ -53,6 +53,7 @@ class DownloadSummary:
     existing_before: int = 0
     total_after: int = 0
     complete: bool = True
+    provider_exhausted: bool = False
 
     def public_dict(self) -> dict[str, object]:
         return {

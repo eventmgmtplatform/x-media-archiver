@@ -17,6 +17,7 @@ from xma.domain.errors import (
     DiscoveryTransientError,
     DownloadConflictError,
     DownloadError,
+    ProviderExhaustedError,
 )
 from xma.domain.identity import media_identity
 from xma.domain.models import Artifact, DiscoveryRun, DownloadJob, MediaAsset, Post, Profile
@@ -165,6 +166,7 @@ class DownloadService:
             )
 
         last_error: DiscoveryError | DownloadError | None = None
+        provider_exhausted = False
         if provider is None:
             raise DownloadError("discovery provider is unavailable")
         for attempt in range(1, attempts + 1):
@@ -221,6 +223,9 @@ class DownloadService:
                             break
                     if len(identities) >= request.limit:
                         break
+            except ProviderExhaustedError as error:
+                last_error = error
+                provider_exhausted = True
             except DiscoveryError as error:
                 last_error = error
             finally:
@@ -228,6 +233,8 @@ class DownloadService:
                 if close is not None:
                     close()
             if len(identities) >= request.limit:
+                break
+            if provider_exhausted:
                 break
 
         complete = len(identities) >= request.limit
@@ -244,7 +251,7 @@ class DownloadService:
             complete=complete,
             exhausted=not complete and not isinstance(last_error, DownloadError),
         )
-        if not complete:
+        if not complete and not (request.archive_all and provider_exhausted):
             if last_error is not None:
                 raise last_error
             raise DiscoveryTransientError("temporary provider failure [PROVIDER_INCOMPLETE]")
@@ -258,7 +265,8 @@ class DownloadService:
             tuple(manifest_artifacts),
             existing_before,
             len(identities),
-            True,
+            complete,
+            provider_exhausted,
         )
 
     def verified_total(self, handle: str) -> int:

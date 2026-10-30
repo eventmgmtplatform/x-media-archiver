@@ -24,8 +24,8 @@ from xma.domain.errors import (
     CatalogError,
     DiscoveryTransientError,
     DomainError,
+    DownloadConflictError,
     DownloadError,
-    ProviderExhaustedError,
 )
 
 NOW = datetime(2026, 10, 29, tzinfo=UTC)
@@ -121,8 +121,20 @@ def test_all_twenty_to_fifty_pauses_at_safety_cap(tmp_path: Path) -> None:
 
 class ExhaustedDownload(Download):
     def execute_incremental(self, request: Any, *args: object) -> DownloadSummary:
-        del request, args
-        raise ProviderExhaustedError("provider exhausted [PROVIDER_EXHAUSTED]")
+        del args
+        return DownloadSummary(
+            request.target,
+            request.limit,
+            0,
+            self.total,
+            0,
+            "exhausted",
+            (),
+            self.total,
+            self.total,
+            False,
+            True,
+        )
 
 
 def test_all_completes_only_on_explicit_provider_exhaustion(tmp_path: Path) -> None:
@@ -134,6 +146,138 @@ def test_all_completes_only_on_explicit_provider_exhaustion(tmp_path: Path) -> N
     assert result.status is ArchiveStatus.COMPLETED
     assert result.completion_reason is CompletionReason.PROVIDER_EXHAUSTED
     assert result.downloaded_total == 0
+
+
+class PartialExhaustedDownload(Download):
+    def __init__(self, existing: int, added: int, failed: int = 0) -> None:
+        super().__init__(existing)
+        self.added = added
+        self.failed = failed
+
+    def execute_incremental(self, request: Any, *args: object) -> DownloadSummary:
+        del args
+        before = self.total
+        self.total += self.added
+        return DownloadSummary(
+            request.target,
+            request.limit,
+            self.added,
+            before,
+            self.failed,
+            "partial-exhausted",
+            tuple({"identity": str(index)} for index in range(self.total)),
+            before,
+            self.total,
+            False,
+            True,
+        )
+
+
+@pytest.mark.parametrize(
+    ("added", "failed", "expected_total", "expected_page"),
+    [(0, 0, 20, 0), (1, 0, 21, 1), (3, 0, 23, 1), (2, 1, 22, 1)],
+)
+def test_all_reconciles_partial_final_page_before_completing(
+    tmp_path: Path,
+    added: int,
+    failed: int,
+    expected_total: int,
+    expected_page: int,
+) -> None:
+    download = PartialExhaustedDownload(20, added, failed)
+    result = service(tmp_path, download, []).execute(
+        ArchiveRequest.create_all("BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5),
+        30,
+        lambda message: None,
+    )
+
+    assert result.status is ArchiveStatus.COMPLETED
+    assert result.completion_reason is CompletionReason.PROVIDER_EXHAUSTED
+    assert result.downloaded_total == expected_total
+    assert result.failed_total == failed
+    assert result.page_number == expected_page
+    assert result.public_dict()["complete"] is True
+    restored = SQLiteArchiveStore(tmp_path / "repository/catalog.sqlite3").latest()
+    assert restored == result
+    with sqlite3.connect(tmp_path / "repository/catalog.sqlite3") as connection:
+        assert connection.execute(
+            "SELECT known_identity_count,last_completed_page FROM archive_checkpoints"
+        ).fetchone() == (expected_total, expected_page)
+
+
+class FailingCompletionStore(SQLiteArchiveStore):
+    def __init__(self, database: Path) -> None:
+        super().__init__(database)
+        self.failed_once = False
+
+    def put(self, run: ArchiveRun) -> None:
+        if run.status is ArchiveStatus.COMPLETED and not self.failed_once:
+            self.failed_once = True
+            raise sqlite3.IntegrityError("synthetic checkpoint failure")
+        super().put(run)
+
+
+def test_partial_exhaustion_checkpoint_failure_preserves_previous_checkpoint(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "repository"
+    store = FailingCompletionStore(repository / "catalog.sqlite3")
+    archive = ArchiveService(
+        cast(Any, PartialExhaustedDownload(20, 3)),
+        cast(Any, object()),
+        store,
+        RepositoryArchiveLock(repository),
+        clock=lambda: NOW,
+        monotonic=lambda: 1.0,
+        sleeper=lambda seconds: None,
+        run_id_factory=lambda: "archive-run",
+    )
+
+    with pytest.raises(ArchiveUnexpectedError):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5
+            ),
+            30,
+            lambda message: None,
+        )
+
+    restored = store.latest()
+    assert restored is not None
+    assert restored.status is ArchiveStatus.FAILED
+    assert restored.downloaded_total == 20
+    assert restored.page_number == 0
+    assert restored.last_error_code == "UNEXPECTED_FAILURE"
+    with sqlite3.connect(repository / "catalog.sqlite3") as connection:
+        assert connection.execute(
+            "SELECT known_identity_count,last_completed_page FROM archive_checkpoints"
+        ).fetchone() == (20, 0)
+
+
+class MismatchedPartialExhaustedDownload(PartialExhaustedDownload):
+    def execute_incremental(self, request: Any, *args: object) -> DownloadSummary:
+        summary = super().execute_incremental(request, *args)
+        return replace(summary, total_after=summary.total_after + 1)
+
+
+def test_partial_exhaustion_repository_mismatch_fails_closed(tmp_path: Path) -> None:
+    archive = service(tmp_path, MismatchedPartialExhaustedDownload(20, 3), [])
+
+    with pytest.raises(DownloadConflictError, match="catalog and filesystem"):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5
+            ),
+            30,
+            lambda message: None,
+        )
+
+    restored = SQLiteArchiveStore(tmp_path / "repository/catalog.sqlite3").latest()
+    assert restored is not None
+    assert restored.status is ArchiveStatus.FAILED
+    assert restored.downloaded_total == 20
+    assert restored.page_number == 0
+    assert restored.last_error_code == "REPOSITORY_INCONSISTENT"
 
 
 def test_transient_text_cannot_impersonate_provider_exhaustion(tmp_path: Path) -> None:

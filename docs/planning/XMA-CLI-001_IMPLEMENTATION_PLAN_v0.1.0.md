@@ -60,8 +60,10 @@ B06 implements the `0.2.0.dev0` complete-profile archive contract offline with e
 `RESCAN_DEDUP_V2`, schema v3, safety pauses, resume, and typed provider exhaustion. PRM-0046 hardened
 the boundary so ALL status names provider exhaustion as its goal, safety caps are checked against
 verified state before discovery or mutation, and unexpected failures cross the CLI only as a
-sanitized typed error. HND-0015 v0.1.1 records the synthetic evidence. The current state is
-`B06_OFFLINE_HARDENED / PUBLIC_ACCEPTANCE_PENDING`. Public 20→50 acceptance and full-account
+sanitized typed error. PRM-0047 additionally reconciles partial final pages before terminal provider
+exhaustion, including atomic checkpoint failure and repository mismatch. HND-0015 v0.1.2 records
+the synthetic 20→20, 20→21, and 20→23 evidence. The current state is
+`B06_OFFLINE_VALIDATED / PUBLIC_ACCEPTANCE_PENDING`. Public 20→50 acceptance and full-account
 operation require a separate human decision; Telegram and WhatsApp remain future roadmap items.
 
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico

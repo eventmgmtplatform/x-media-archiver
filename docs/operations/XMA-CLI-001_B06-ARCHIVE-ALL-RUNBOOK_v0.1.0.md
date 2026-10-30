@@ -30,5 +30,11 @@ higher cap may continue. Unexpected failures are reported only as the sanitized
 `archive failed: unexpected internal failure` contract while the durable run records
 `UNEXPECTED_FAILURE`.
 
+The last provider page may contain fewer candidates than the batch size. Confirmed artifacts are
+retained, verified against the target-scoped repository, and checkpointed before ALL becomes
+`COMPLETED / PROVIDER_EXHAUSTED`. A zero-candidate final page does not increment `page_number`; a
+partial page with valid progress increments it once. Any verification or checkpoint failure is a
+terminal sanitized failure and must be diagnosed offline before resumption.
+
 Back up the whole repository before migration. Never delete or overwrite verified artifacts.
 Public acceptance and complete-account operation remain pending.
