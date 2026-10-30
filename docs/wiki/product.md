@@ -2,7 +2,7 @@
 title: Producto v1
 ---
 
-[Inicio](index.html) · [Producto v1](product.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
+[Inicio](index.html) · [Producto v1](product.html) · [Archivo completo B06](b06-complete-profile-archive.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
 
 ---
 
@@ -20,6 +20,9 @@ Los comandos principales son:
 | `download` | Descarga un total de 1 a 10 o agrega de 1 a 20, máximo total 20 |
 | `archive` | Archiva y reanuda hasta 20 activos |
 | `status` | Consulta offline el estado e integridad |
+
+La rama `0.2.0.dev0` añade `archive --all`, validado con observaciones para una cuenta pública y
+siempre gobernado por safety caps. Consulte [B06](b06-complete-profile-archive.html).
 
 ## Repositorio generado
 

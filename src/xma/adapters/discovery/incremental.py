@@ -27,11 +27,15 @@ from xma.adapters.discovery.gallery_dl import (
     _validate_target_batch as _validate_gallery_target_batch,
 )
 from xma.domain.discovery import DiscoveryBatch, DiscoveryTarget, DiscoveryTargetKind
-from xma.domain.errors import DiscoveryContractError, DiscoveryTransientError
+from xma.domain.errors import (
+    DiscoveryContractError,
+    DiscoveryTransientError,
+    ProviderExhaustedError,
+)
 
 _VIDEO_TYPES = {"video", "animated_gif"}
 _IPC_VERSION = 1
-_TRANSIENT_TERMINALS = {"PROVIDER_TIMEOUT", "PROVIDER_EXHAUSTED"}
+_TRANSIENT_TERMINALS = {"PROVIDER_TIMEOUT"}
 _FAILURE_TERMINALS = {"WORKER_FAILED", "IPC_SERIALIZATION_FAILED"}
 _PROFILE_FIELDS = ("id", "name", "nick", "protected")
 _POST_FIELDS = (
@@ -219,7 +223,7 @@ def _worker_main(
         data_job = _StreamingDataJob(job_url, remaining, existing, max_scan, output)
         _telemetry(output, "EXTRACTOR_STARTED")
         data_job.run()
-        terminal = "COMPLETED" if data_job.emitted else "PROVIDER_EXHAUSTED"
+        terminal = "PROVIDER_EXHAUSTED"
     except exception.StopExtraction:
         terminal = "COMPLETED"
     except (TypeError, ValueError, OverflowError):
@@ -332,6 +336,7 @@ class IncrementalGalleryDlDiscoveryProvider:
                         deadline += max(0.0, time.monotonic() - suspended_at)
                 elif kind == "terminal" and message.get("status") in {
                     "COMPLETED",
+                    "PROVIDER_EXHAUSTED",
                     *_TRANSIENT_TERMINALS,
                     *_FAILURE_TERMINALS,
                 }:
@@ -340,6 +345,8 @@ class IncrementalGalleryDlDiscoveryProvider:
                     terminal = "WORKER_FAILED"
             if terminal == "COMPLETED":
                 return
+            if terminal == "PROVIDER_EXHAUSTED":
+                raise ProviderExhaustedError("provider exhausted [PROVIDER_EXHAUSTED]")
             if terminal in _TRANSIENT_TERMINALS:
                 raise DiscoveryTransientError(f"temporary provider failure [{terminal}]")
             raise DiscoveryContractError(

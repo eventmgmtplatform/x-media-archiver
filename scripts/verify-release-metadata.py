@@ -6,7 +6,7 @@ import sys
 import tomllib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-EXPECTED = "0.1.2"
+EXPECTED = "0.2.0.dev0"
 
 project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
 init_text = (ROOT / "src/xma/__init__.py").read_text(encoding="utf-8")

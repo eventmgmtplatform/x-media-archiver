@@ -2,7 +2,7 @@
 title: Arquitectura
 ---
 
-[Inicio](index.html) · [Producto v1](product.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
+[Inicio](index.html) · [Producto v1](product.html) · [Archivo completo B06](b06-complete-profile-archive.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
 
 ---
 
@@ -41,6 +41,9 @@ Adaptadores: discovery · download · SQLite · filesystem
 - idempotencia y deduplicación por identidad estable;
 - ninguna cookie, URL firmada o ruta personal en evidencia pública;
 - cambios por rama, PR, CI, handoff y autorización humana.
+
+B06 extiende archivo durable con modos BOUNDED/ALL, `RESCAN_DEDUP_V2`, agotamiento tipado y
+checkpoint posterior a persistencia. El manifest distingue objetivo alcanzado de agotamiento real.
 
 Documentos de detalle:
 

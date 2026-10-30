@@ -2,7 +2,7 @@
 title: Gobierno
 ---
 
-[Inicio](index.html) · [Producto v1](product.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
+[Inicio](index.html) · [Producto v1](product.html) · [Archivo completo B06](b06-complete-profile-archive.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
 
 ---
 
@@ -21,6 +21,7 @@ La wiki es el índice ejecutivo; no sustituye los documentos gobernados.
 | Decisiones | [ADR](https://github.com/eventmgmtplatform/x-media-archiver/tree/main/docs/adr) |
 | Evidencia | [Handoffs](https://github.com/eventmgmtplatform/x-media-archiver/tree/main/docs/handoffs) |
 | Auditorías | [Audits](https://github.com/eventmgmtplatform/x-media-archiver/tree/main/docs/audits) |
+| Certificaciones | [CERT-0001 B06](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/docs/certifications/XMA-CLI-001_CERT-0001_B06-COMPLETE-PROFILE-ARCHIVE_v0.1.0.md) |
 
 ## Regla por release
 
@@ -32,3 +33,4 @@ La wiki es el índice ejecutivo; no sustituye los documentos gobernados.
 6. Publicar solo después de revisión humana.
 
 La publicación de Pages no autoriza por sí misma merge, tag o release del producto.
+PRM-0056 `CLI-EXECUTION-REPORTING` está registrado como backlog, no como alcance implementado.

@@ -28,6 +28,7 @@ from xma.domain.archive import ArchiveRequest, ArchiveRun
 from xma.domain.discovery import DiscoveryBatch, normalize_discovery_target
 from xma.domain.download import DownloadRequest, DownloadSummary
 from xma.domain.errors import (
+    ArchiveUnexpectedError,
     CatalogError,
     DiscoveryError,
     DiscoveryNotFoundError,
@@ -293,19 +294,52 @@ def download_profile(
 @app.command("archive")
 def archive_profile(
     target: Annotated[str, typer.Argument(help="Public X profile target.")],
-    limit: Annotated[int, typer.Option("--limit", min=1, max=20)] = 10,
-    batch_size: Annotated[int, typer.Option("--batch-size", min=1, max=5)] = 2,
+    limit: Annotated[int | None, typer.Option("--limit", min=1, max=20)] = None,
+    all_items: Annotated[
+        bool, typer.Option("--all", help="Archive until confirmed provider exhaustion.")
+    ] = False,
+    resume: Annotated[
+        bool, typer.Option("--resume", help="Resume a compatible paused --all run.")
+    ] = False,
+    max_items: Annotated[
+        int | None,
+        typer.Option("--max-items", min=1, help="Operational safety cap for --all."),
+    ] = None,
+    max_runtime: Annotated[int, typer.Option("--max-runtime", min=60, max=21600)] = 3600,
+    min_free_space_gib: Annotated[int, typer.Option("--min-free-space-gib", min=5, max=1024)] = 10,
+    batch_size: Annotated[int, typer.Option("--batch-size", min=1, max=20)] = 5,
     repository: Annotated[Path, typer.Option("--repository")] = Path("repository"),
     auth_browser: Annotated[str | None, typer.Option("--auth-browser")] = None,
     auth_profile: Annotated[str | None, typer.Option("--auth-profile")] = None,
     request_interval: Annotated[int, typer.Option("--request-interval", min=1, max=60)] = 2,
     discovery_timeout: Annotated[int, typer.Option("--discovery-timeout", min=5, max=60)] = 30,
+    quality: Annotated[str, typer.Option("--quality")] = "best",
     json_output: Annotated[bool, typer.Option("--json")] = False,
 ) -> None:
-    """Durably archive a public profile with checkpoints, currently up to ten."""
+    """Durably archive a bounded total or a complete public profile."""
     database = repository / "catalog.sqlite3"
     try:
-        request = ArchiveRequest.create(target, limit, batch_size, request_interval)
+        if all_items and limit is not None:
+            raise DomainError("archive --all and --limit are mutually exclusive")
+        if max_items is not None and not all_items:
+            raise DomainError("archive --max-items requires --all")
+        if resume and not all_items:
+            raise DomainError("archive --resume requires --all")
+        if quality != "best":
+            raise DomainError("archive quality must be 'best'")
+        request = (
+            ArchiveRequest.create_all(
+                target,
+                batch_size,
+                request_interval,
+                max_items=max_items,
+                max_runtime_seconds=max_runtime,
+                min_free_space_gib=min_free_space_gib,
+                resume=resume,
+            )
+            if all_items
+            else ArchiveRequest.create(target, limit or 10, batch_size, request_interval)
+        )
         provider = _download_incremental_provider(
             auth_browser,
             auth_profile,
@@ -336,6 +370,11 @@ def archive_profile(
     except DownloadError as error:
         error_console.print(f"archive failed: {error}", markup=False, style="red")
         raise typer.Exit(EXIT_DOWNLOAD_FAILED) from error
+    except ArchiveUnexpectedError as error:
+        error_console.print(
+            "archive failed: unexpected internal failure", markup=False, style="red"
+        )
+        raise typer.Exit(EXIT_PROVIDER_FAILED) from error
     except (CatalogError, IdentityConflictError, sqlite3.Error, OSError) as error:
         error_console.print("archive failed: local repository unavailable", markup=False)
         raise typer.Exit(EXIT_CATALOG_FAILED) from error
@@ -529,6 +568,18 @@ def _render_archive(result: ArchiveRun, json_output: bool) -> None:
         "last_error_code",
         "updated_at",
         "complete",
+        "mode",
+        "completion_reason",
+        "failed_total",
+        "verified_total",
+        "checkpoint",
+        "max_items",
+        "max_runtime_seconds",
+        "min_free_space_bytes",
+        "elapsed_seconds",
+        "resumable",
+        "goal",
+        "operational_cap",
     ):
         value = values[key]
         if key == "run_id":

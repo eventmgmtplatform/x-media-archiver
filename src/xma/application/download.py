@@ -17,6 +17,7 @@ from xma.domain.errors import (
     DiscoveryTransientError,
     DownloadConflictError,
     DownloadError,
+    ProviderExhaustedError,
 )
 from xma.domain.identity import media_identity
 from xma.domain.models import Artifact, DiscoveryRun, DownloadJob, MediaAsset, Post, Profile
@@ -130,7 +131,11 @@ class DownloadService:
         from xma.domain.discovery import normalize_discovery_target
 
         normalized = normalize_discovery_target(request.target)
-        manifest_request = DownloadRequest(normalized.canonical_url, request.limit)
+        manifest_request = DownloadRequest(
+            normalized.canonical_url,
+            request.limit,
+            archive_all=request.archive_all,
+        )
         identities, manifest_artifacts = self._load_existing(normalized.handle)
         existing_before = len(identities)
         run_id = self._run_id_factory()
@@ -165,6 +170,7 @@ class DownloadService:
             )
 
         last_error: DiscoveryError | DownloadError | None = None
+        provider_exhausted = False
         if provider is None:
             raise DownloadError("discovery provider is unavailable")
         for attempt in range(1, attempts + 1):
@@ -221,6 +227,9 @@ class DownloadService:
                             break
                     if len(identities) >= request.limit:
                         break
+            except ProviderExhaustedError as error:
+                last_error = error
+                provider_exhausted = True
             except DiscoveryError as error:
                 last_error = error
             finally:
@@ -229,8 +238,13 @@ class DownloadService:
                     close()
             if len(identities) >= request.limit:
                 break
+            if provider_exhausted:
+                break
 
-        complete = len(identities) >= request.limit
+        requested_total_reached = len(identities) >= request.limit
+        manifest_complete = requested_total_reached or (
+            request.archive_all and provider_exhausted and failed == 0
+        )
         self._write_manifest(
             manifest_request,
             run_id,
@@ -241,13 +255,13 @@ class DownloadService:
             existing_before,
             failed,
             existing_before=existing_before,
-            complete=complete,
-            exhausted=not complete and not isinstance(last_error, DownloadError),
+            complete=manifest_complete,
+            exhausted=provider_exhausted,
         )
-        if not complete:
+        if not requested_total_reached and not (request.archive_all and provider_exhausted):
             if last_error is not None:
                 raise last_error
-            raise DiscoveryTransientError("temporary provider failure [PROVIDER_EXHAUSTED]")
+            raise DiscoveryTransientError("temporary provider failure [PROVIDER_INCOMPLETE]")
         return DownloadSummary(
             normalized.canonical_url,
             request.limit,
@@ -258,7 +272,8 @@ class DownloadService:
             tuple(manifest_artifacts),
             existing_before,
             len(identities),
-            True,
+            requested_total_reached,
+            provider_exhausted,
         )
 
     def verified_total(self, handle: str) -> int:

@@ -45,9 +45,17 @@ class DiscoveryTransientError(DiscoveryError):
     """A temporary provider or transport failure occurred."""
 
 
+class ProviderExhaustedError(DiscoveryTransientError):
+    """The provider explicitly confirmed natural exhaustion."""
+
+
 class DownloadError(RuntimeError):
     """A media download could not complete safely."""
 
 
 class DownloadConflictError(DownloadError):
     """Catalog and filesystem state disagree for an existing download."""
+
+
+class ArchiveUnexpectedError(RuntimeError):
+    """An archive boundary failed unexpectedly without exposing its cause."""

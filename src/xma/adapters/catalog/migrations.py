@@ -5,13 +5,19 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from importlib.resources import files
 
-LATEST_SCHEMA_VERSION = 2
+LATEST_SCHEMA_VERSION = 3
 
 
 def _migration_sql(version: int) -> str:
     return (
         files("xma.adapters.catalog.schema")
-        .joinpath("001_initial.sql" if version == 1 else "002_durable_archive.sql")
+        .joinpath(
+            {
+                1: "001_initial.sql",
+                2: "002_durable_archive.sql",
+                3: "003_complete_profile_archive.sql",
+            }[version]
+        )
         .read_text(encoding="utf-8")
     )
 

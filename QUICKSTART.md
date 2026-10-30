@@ -1,5 +1,8 @@
 # XMA v0.1.2 quick start
 
+> The published release remains v0.1.2. `archive --all` exists only in `0.2.0.dev0` and is validated
+> with observations for one public account. It is not certified for mass or unattended operation.
+
 ## Install and verify
 
 Obtain the published v0.1.2 assets from the GitHub Release, verify `SHA256SUMS`, extract the Linux
@@ -80,6 +83,19 @@ Inspect the durable state offline:
 resumed with compatible arguments. `FAILED` requires integrity diagnosis before another run.
 Re-running a compatible operation deduplicates verified artifacts rather than overwriting them.
 
+Development evaluation of complete-profile archive requires an explicit safety cap:
+
+```bash
+uv run xma archive @HANDLE --all --max-items 30 --batch-size 5 \
+  --repository ./repository-HANDLE --quality best \
+  --auth-browser firefox --auth-profile PROFILE_NAME
+uv run xma status --repository ./repository-HANDLE --json
+```
+
+`PROVIDER_EXHAUSTED` is the only full-account completion terminal. A safety cap pauses resumably;
+timeouts, transport failures and worker failures do not imply exhaustion. Back up the complete
+repository before any governed reconciliation.
+
 ## Repository layout
 
 ```text
@@ -101,6 +117,8 @@ cataloged files.
 - Download accepts `--limit 1..10` or `--add 1..20`, never both; the resulting repository total
   cannot exceed twenty in v0.1.2; additive requests accept 1..20. Archive is capped at twenty.
 - No scheduler, daemon, mass operation, remote cursor, GUI, API service, yt-dlp, or FFmpeg.
+- `archive --all` uses `RESCAN_DEDUP_V2`; it is validated for one observed account, not thousands
+  of downloads or every X account.
 - Exit `2`: invalid input; `3`: authentication/content restriction; `4`: rate limit; `5`:
   provider/contract failure; `6`: catalog failure; `7`: missing target/run; `8`: transient provider
   failure/timeout; `9`: download or repository conflict.

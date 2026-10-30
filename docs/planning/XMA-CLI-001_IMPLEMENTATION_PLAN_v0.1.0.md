@@ -56,6 +56,54 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso gobernado
 
+B06 implements the `0.2.0.dev0` complete-profile archive contract offline with explicit ALL mode,
+`RESCAN_DEDUP_V2`, schema v3, safety pauses, resume, and typed provider exhaustion. PRM-0046 hardened
+the boundary so ALL status names provider exhaustion as its goal, safety caps are checked against
+verified state before discovery or mutation, and unexpected failures cross the CLI only as a
+sanitized typed error. PRM-0047 additionally reconciles partial final pages before terminal provider
+exhaustion, including atomic checkpoint failure and repository mismatch. HND-0015 v0.1.2 records
+the synthetic 20→20, 20→21, and 20→23 evidence. PRM-0048 then validated the public capped sequence
+0→5→10 on one durable run, with both boundaries remaining resumable safety-cap pauses. The current
+state after PRM-0049 is `B06_PUBLIC_LIMIT_20_VALIDATED / FULL_ACCOUNT_PENDING`: the same run resumed
+10→20 and stopped at its safety cap with all earlier hashes intact. Provider exhaustion,
+full-account operation, uncapped execution, and totals above twenty require a separate human decision;
+Telegram and WhatsApp remain future roadmap items.
+
+PRM-0050 consumed the single authorized cap-50 resume and exposed an offline boundary defect before
+discovery: the manifest request recreated a target above 20 without preserving ALL mode. The durable
+run is `FAILED` at the intact 20/checkpoint 4 state. Current disposition is `REWORK_REQUIRED`; cap 50
+must not be retried until a new governed implementation mandate is authorized.
+
+PRM-0051 preserves `archive_all=True` through manifest reconstruction and narrowly permits the
+known failed ALL run to resume. Synthetic validation requests [25, 30, 35, 40, 45, 50] and finishes
+at page/checkpoint 10/10, while interactive limit/add 21 remain invalid. Current disposition is
+superseded by PRM-0052.
+
+PRM-0052 consumed the one authorized public recovery and advanced the same verified run 20→50.
+It finished code 0 at page/checkpoint 10/10 with `PAUSED / SAFETY_CAP_REACHED`, 50 intact artifacts,
+zero failures, preserved initial hashes, integrity `ok`, and no residues. Current disposition is
+`B06_PUBLIC_LIMIT_50_VALIDATED / FULL_ACCOUNT_PENDING`; provider exhaustion, another public run,
+an operation above 50, and the separate `<LOCAL_E2E_TARGET>` remain unauthorized.
+
+PRM-0053 consumed the separately authorized E2E operation on a new repository. It reached genuine
+typed provider exhaustion at 22 intact provider-best artifacts and durable page/checkpoint 5/5,
+but the final-page manifest remained `complete=false` despite `exhausted=true`. Current disposition
+is `REWORK_REQUIRED`; no retry, full-account declaration, functional correction, merge, or further
+public operation is authorized.
+
+PRM-0054 corrects only that manifest boundary offline. Typed ALL exhaustion with zero failed
+downloads now produces `complete=true / exhausted=true`; requested-total completion remains
+separate, and timeout/transient/worker/DownloadError/BOUNDED paths remain fail-closed. Current
+disposition is `B06_MANIFEST_SEMANTICS_OFFLINE_VALIDATED / EVIDENCE_REPAIR_PENDING`; the retained
+manifest is unchanged and PRM-0055 is required before any acceptance decision.
+
+PRM-0055 verified and atomically reconciled the retained manifest without changing the durable run,
+catalog or artifacts. CERT-0001 records B06 `VALIDATED_WITH_OBSERVATIONS`; current disposition is
+`B06_FULL_ACCOUNT_E2E_VALIDATED / PUBLIC_ACCEPTANCE_COMPLETE / READY_FOR_MERGE_REVIEW`. Merge still
+requires a separate human decision. PRM-0056 `CLI-EXECUTION-REPORTING` is formal backlog: stable
+human/JSON summaries for single, multiple and partial/failed executions, without secrets, signed
+URLs or personal paths. It is not implemented.
+
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.

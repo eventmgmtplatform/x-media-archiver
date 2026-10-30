@@ -1,5 +1,8 @@
 # XMA-CLI-001 — Runbook local de la CLI v0.1.2
 
+The published v0.1.2 procedures below remain authoritative. The development-only B06
+`archive --all` interface is documented separately and is not publicly accepted.
+
 ## Alcance y requisitos
 
 Esta versión opera localmente y admite como máximo veinte videos. Requiere Linux, Python 3.11 o

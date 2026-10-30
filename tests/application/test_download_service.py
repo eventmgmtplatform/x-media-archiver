@@ -25,6 +25,7 @@ from xma.domain.errors import (
     DomainError,
     DownloadConflictError,
     DownloadError,
+    ProviderExhaustedError,
 )
 
 NOW = datetime(2026, 10, 28, 12, tzinfo=UTC)
@@ -157,9 +158,16 @@ def _candidate_batch(target: DiscoveryTarget, index: int) -> DiscoveryBatch:
 
 
 class IncrementalFixture:
-    def __init__(self, indices_by_attempt: list[list[int]], *, timeout: bool = False) -> None:
+    def __init__(
+        self,
+        indices_by_attempt: list[list[int]],
+        *,
+        timeout: bool = False,
+        exhausted: bool = False,
+    ) -> None:
         self.indices_by_attempt = indices_by_attempt
         self.timeout = timeout
+        self.exhausted = exhausted
         self.calls: list[tuple[int, frozenset[str], int, int]] = []
 
     def candidates(
@@ -176,6 +184,8 @@ class IncrementalFixture:
             yield _candidate_batch(target, index)
         if self.timeout:
             raise DiscoveryTransientError("temporary provider failure [PROVIDER_TIMEOUT]")
+        if self.exhausted:
+            raise ProviderExhaustedError("provider exhausted [PROVIDER_EXHAUSTED]")
 
 
 def _incremental_service(repository: Path, media: FixtureMedia) -> DownloadService:
@@ -246,16 +256,17 @@ def test_incremental_lower_limit_is_offline_noop(tmp_path: Path) -> None:
     assert provider.calls == []
 
 
-def test_incremental_max_scan_is_forwarded_and_exhaustion_is_recorded(tmp_path: Path) -> None:
+def test_incremental_max_scan_is_forwarded_without_inferred_exhaustion(tmp_path: Path) -> None:
     repository = tmp_path / "max-scan"
     provider = IncrementalFixture([[], []])
-    with pytest.raises(DiscoveryTransientError, match="PROVIDER_EXHAUSTED"):
+    with pytest.raises(DiscoveryTransientError, match="PROVIDER_INCOMPLETE"):
         _incremental_service(repository, FixtureMedia()).execute_incremental(
             DownloadRequest("Reuters", 1), provider, 30, 2, lambda message: None, 7
         )
     assert provider.calls == [(1, frozenset(), 30, 7), (1, frozenset(), 30, 7)]
     manifest = json.loads((repository / "manifests/latest.json").read_text())
-    assert manifest["exhausted"] is True
+    assert manifest["exhausted"] is False
+    assert manifest["complete"] is False
     assert manifest["quality_policy"] == "provider-best"
 
 
@@ -313,6 +324,115 @@ def test_incremental_two_timeouts_preserve_incomplete_manifest(tmp_path: Path) -
     assert manifest["downloaded_this_run"] == 1
     assert manifest["total_after"] == 1
     assert manifest["complete"] is False
+    assert manifest["exhausted"] is False
+    assert len(list(repository.glob("profiles/*/posts/*/*/video.mp4"))) == 1
+
+
+def test_archive_all_returns_typed_partial_result_on_provider_exhaustion(tmp_path: Path) -> None:
+    repository = tmp_path / "archive-all-partial-exhaustion"
+    provider = IncrementalFixture([[0, 1, 2]], exhausted=True)
+
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 5, archive_all=True),
+        provider,
+        30,
+        1,
+        lambda message: None,
+    )
+
+    assert result.downloaded_count == 3
+    assert result.total_after == 3
+    assert result.complete is False
+    assert result.provider_exhausted is True
+    assert len(result.artifacts) == 3
+    assert not list(repository.rglob("*.part"))
+    assert not list(repository.rglob("*.tmp"))
+
+
+def test_archive_all_typed_exhaustion_completes_manifest_below_page_target(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "archive-all-exhausted-22-of-25"
+    _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", 20))
+    provider = IncrementalFixture([[20, 21]], exhausted=True)
+
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 25, archive_all=True),
+        provider,
+        30,
+        1,
+        lambda message: None,
+    )
+
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["requested_total"] == 25
+    assert manifest["total_after"] == 22
+    assert manifest["exhausted"] is True
+    assert manifest["complete"] is True
+    assert result.total_after == 22
+    assert result.provider_exhausted is True
+    assert len(result.artifacts) == 22
+    assert len(list(repository.glob("profiles/*/posts/*/*/video.mp4"))) == 22
+
+
+@pytest.mark.parametrize(("existing", "requested"), [(0, 5), (20, 25)])
+def test_archive_all_genuine_zero_candidate_exhaustion_completes_manifest(
+    tmp_path: Path, existing: int, requested: int
+) -> None:
+    repository = tmp_path / f"archive-all-exhausted-{existing}-of-{requested}"
+    if existing:
+        _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", existing))
+    provider = IncrementalFixture([[]], exhausted=True)
+
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", requested, archive_all=True),
+        provider,
+        30,
+        1,
+        lambda message: None,
+    )
+
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["complete"] is True
+    assert manifest["exhausted"] is True
+    assert result.total_after == existing
+    assert result.provider_exhausted is True
+
+
+def test_archive_all_preserves_mode_when_rebuilding_manifest_request_above_twenty(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "archive-all-absolute-25"
+    _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", 20))
+    provider = IncrementalFixture([[20, 21, 22, 23, 24]])
+
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 25, archive_all=True),
+        provider,
+        30,
+        1,
+        lambda message: None,
+    )
+
+    assert result.total_after == 25
+    assert result.downloaded_count == 5
+    assert result.complete is True
+    assert provider.calls[0][0] == 5
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["requested_total"] == 25
+    assert manifest["complete"] is True
+    assert manifest["exhausted"] is False
+
+
+def test_bounded_download_does_not_convert_provider_exhaustion_to_success(tmp_path: Path) -> None:
+    repository = tmp_path / "bounded-partial-exhaustion"
+    provider = IncrementalFixture([[0]], exhausted=True)
+
+    with pytest.raises(ProviderExhaustedError):
+        _incremental_service(repository, FixtureMedia()).execute_incremental(
+            DownloadRequest("Reuters", 2), provider, 30, 1, lambda message: None
+        )
+
     assert len(list(repository.glob("profiles/*/posts/*/*/video.mp4"))) == 1
 
 
@@ -486,6 +606,7 @@ def test_provider_exhaustion_after_failure_preserves_partial_progress(tmp_path: 
 
     manifest = json.loads((repository / "manifests/latest.json").read_text())
     assert manifest["complete"] is False
+    assert manifest["exhausted"] is False
     assert manifest["failed_count"] == 1
     assert manifest["total_after"] == 1
     assert not list(repository.rglob("*.part"))

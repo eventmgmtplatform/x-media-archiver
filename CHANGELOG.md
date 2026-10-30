@@ -5,7 +5,18 @@ Versioning.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- Development-only `archive --all`, explicit resume, safety cap, runtime/free-space guards,
+  provider-exhaustion semantics, and SQLite schema v3 durability fields.
+
+### Validation
+
+- B06 safety-cap recovery was validated through 50 assets. A separate public account reached typed
+  provider exhaustion at 22 provider-best assets; its manifest was reconciled atomically and
+  CERT-0001 records `VALIDATED_WITH_OBSERVATIONS`.
+- The evidence covers one observed public account. It does not certify thousands of downloads,
+  mass/unattended operation, every X account, Telegram, WhatsApp, or PRM-0056 reporting.
 
 ## [0.1.2] - 2026-10-29
 

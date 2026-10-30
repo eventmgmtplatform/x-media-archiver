@@ -6,6 +6,11 @@
 
 | Fecha (America/Mexico_City) | Gate | Evidencia | Decisión / estado | Autorización |
 |---|---|---|---|---|
+| 2026-10-30 | B06 certification | PRM-0053–0055, CERT-0001, HND-0015 v0.7.0 | `B06_FULL_ACCOUNT_E2E_VALIDATED / PUBLIC_ACCEPTANCE_COMPLETE / READY_FOR_MERGE_REVIEW`; one observed account exhausted at 22 provider-best assets with reconciled complete manifest | `VALIDATED_WITH_OBSERVATIONS`; merge remains unauthorized; mass operation and PRM-0056 excluded |
+| 2026-10-30 | B06 manifest exhaustion semantics | PRM-0054, ADR-0007, HND-0015 v0.6.1 | `B06_MANIFEST_SEMANTICS_OFFLINE_VALIDATED / EVIDENCE_REPAIR_PENDING`; typed ALL exhaustion now yields a complete/exhausted manifest while non-typed failures stay fail-closed | Offline only; retained evidence untouched; PRM-0055 required for reconciliation; no B06 closure |
+| 2026-10-30 | B06 full-account E2E | PRM-0053, ADR-0007, HND-0015 v0.6.0 | `REWORK_REQUIRED`; typed provider exhaustion occurred at 22 intact assets, but the final-page manifest remained `complete=false` | Single public execution consumed; no retry or functional fix authorized; preserve both local repositories |
+| 2026-10-30 | B06 complete-profile archive | PRM-0052, ADR-0007, HND-0015 v0.5.0 | `B06_PUBLIC_LIMIT_50_VALIDATED / FULL_ACCOUNT_PENDING`; retained ALL run advanced 20→50 and stopped cleanly at `SAFETY_CAP_REACHED` | One public resume consumed; provider exhaustion remains unobserved; no operation above 50, merge, release, or follow-on target authorized |
+| 2026-10-29 | B06 complete-profile archive | PRM-0045 Addendum 01, PRM-0046–0051, ADR-0007, HND-0015 v0.4.1 | `B06_OFFLINE_REWORK_VALIDATED / PUBLIC_RETRY_PENDING`; ALL flag propagation and synthetic FAILED-run recovery 20→50 validated while interactive download remains 1–20 | Public repository untouched; PRM-0050 not retried; provider exhaustion/cap 50 remain publicly unvalidated; PR draft |
 | 2026-10-28 | Q0 | Arquitectura, ADR-0001 y plan B00–B07 | Baseline aprobada | Leonel |
 | 2026-10-28 | Q1 | PR #1, HND-0001, CI y merge `2acb88c` | Cerrado | Leonel |
 | 2026-10-28 | Q2 | PR #2, HND-0002, AUD-0002, CI #6 | `VALIDATED_WITH_OBSERVATIONS`; merge `b2bdca7` | Leonel |

@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 import xma.adapters.catalog.migrations as migrations
+from xma.adapters.archive import SQLiteArchiveStore
 from xma.adapters.catalog.migrations import LATEST_SCHEMA_VERSION, migrate
 from xma.adapters.catalog.sqlite import SQLiteUnitOfWork
 from xma.domain.enums import DownloadStatus, MediaType, PostType, RunStatus
@@ -44,7 +45,7 @@ def test_migration_from_empty_database_is_idempotent() -> None:
     assert migrate(connection) == LATEST_SCHEMA_VERSION
     after = datetime.now(UTC)
     assert migrate(connection) == LATEST_SCHEMA_VERSION
-    assert connection.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (2,)
+    assert connection.execute("SELECT COUNT(*) FROM schema_version").fetchone() == (3,)
     applied = connection.execute(
         "SELECT applied_at FROM schema_version ORDER BY version"
     ).fetchall()
@@ -63,6 +64,87 @@ def test_migration_records_injected_real_utc_application_time() -> None:
         ("2026-10-28T08:45:12.123456Z",)
     ]
     connection.close()
+
+
+def test_migration_v2_to_v3_preserves_durable_run_and_checkpoint() -> None:
+    connection = sqlite3.connect(":memory:", isolation_level=None)
+    connection.execute(
+        "CREATE TABLE schema_version (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)"
+    )
+    for version in (1, 2):
+        connection.executescript(migrations._migration_sql(version))
+        connection.execute(
+            "INSERT INTO schema_version VALUES (?,?)", (version, "2026-10-29T00:00:00Z")
+        )
+    connection.execute(
+        "INSERT INTO archive_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        (
+            "run-v2",
+            "BBCWorld",
+            10,
+            2,
+            1,
+            "PAUSED",
+            5,
+            7,
+            1,
+            "RESCAN_DEDUP_V1",
+            "PROVIDER_TIMEOUT",
+            "2026-10-29T00:00:00Z",
+            "2026-10-29T00:01:00Z",
+            None,
+        ),
+    )
+    connection.execute(
+        "INSERT INTO archive_checkpoints VALUES (?,?,?,?,?)",
+        ("run-v2", 7, 1, None, "2026-10-29T00:01:00Z"),
+    )
+
+    assert migrate(connection) == 3
+    row = connection.execute(
+        "SELECT run_id,downloaded_total,archive_mode,failed_total FROM archive_runs"
+    ).fetchone()
+    assert row == ("run-v2", 7, "BOUNDED", 0)
+    assert connection.execute(
+        "SELECT known_identity_count,last_completed_page FROM archive_checkpoints"
+    ).fetchone() == (7, 1)
+    assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
+    connection.close()
+
+
+def test_archive_store_reads_unmigrated_v2_status_with_safe_defaults(tmp_path: Path) -> None:
+    database = tmp_path / "catalog.sqlite3"
+    with sqlite3.connect(database) as connection:
+        connection.executescript(migrations._migration_sql(1))
+        connection.executescript(migrations._migration_sql(2))
+        connection.execute(
+            "INSERT INTO archive_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "run-v2",
+                "BBCWorld",
+                10,
+                2,
+                1,
+                "PAUSED",
+                5,
+                7,
+                1,
+                "RESCAN_DEDUP_V1",
+                "PROVIDER_TIMEOUT",
+                "2026-10-29T00:00:00Z",
+                "2026-10-29T00:01:00Z",
+                None,
+            ),
+        )
+        connection.execute(
+            "INSERT INTO archive_checkpoints VALUES (?,?,?,?,?)",
+            ("run-v2", 7, 1, None, "2026-10-29T00:01:00Z"),
+        )
+    restored = SQLiteArchiveStore(database).latest()
+    assert restored is not None
+    assert restored.mode.value == "BOUNDED"
+    assert restored.failed_total == 0
+    assert restored.max_items is None
 
 
 def test_failed_migration_rolls_back_schema(monkeypatch: pytest.MonkeyPatch) -> None:

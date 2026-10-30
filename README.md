@@ -1,4 +1,4 @@
-# X Media Archiver 0.1.2
+# X Media Archiver 0.2.0.dev0
 
 Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
 a normalized repository with SQLite metadata, sidecars and integrity hashes.
@@ -8,6 +8,10 @@ a normalized repository with SQLite metadata, sidecars and integrity hashes.
 Version 0.1.2 is the current published release. Interactive download and durable archive enforce a
 repository maximum of twenty videos. The release remains intentionally bounded and is not
 certified for bulk or unattended operation.
+
+The current development branch adds an `archive --all` contract validated with observations on one
+public account. It does not change the published v0.1.2 guarantee and is not certified for mass or
+unattended operation.
 
 ## Supported platforms
 
@@ -89,6 +93,15 @@ xma status --repository ./repository-HANDLE --json
 resumption. `FAILED` requires integrity diagnosis before another run. Back up the entire repository,
 not only SQLite.
 
+Development-only complete-profile syntax and safety semantics are documented in
+[`docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md`](docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md).
+Use `--all` only with a safety cap. Typed provider exhaustion produces a completed, non-resumable
+run and a manifest with `complete=true` and `exhausted=true`; reaching the cap produces a resumable
+`PAUSED / SAFETY_CAP_REACHED` state. Repeating `archive --all` for the same verified repository
+after typed exhaustion is a terminal no-op: it preserves the durable run and evidence without
+authentication, discovery or download. Refreshing an exhausted account requires a future explicit
+mode and is not inferred from repetition. `status` remains completely offline.
+
 ## Security
 
 - Cookie values are read through the contained Firefox read-only boundary and are not exported.
@@ -104,7 +117,7 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 - Download accepts absolute `--limit 1..10` or additive `--add 1..20`; the resulting verified total
   cannot exceed twenty in v0.1.2; `--add` accepts 1..20. Durable `archive` is also capped at twenty.
 - No certified bulk or unattended operation.
-- `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
+- `RESCAN_DEDUP_V2` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
 - Provider availability and authenticated X behavior can change independently of XMA.
 - Verify the published `SHA256SUMS` and `RELEASE-MANIFEST.json` before installation.
@@ -112,6 +125,7 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 ## Documentation
 
 - [Product wiki](docs/wiki/index.md)
+- [B06 complete-profile archive](docs/wiki/b06-complete-profile-archive.md)
 - [System requirements](docs/requirements/XMA-CLI-001_SYSTEM-REQUIREMENTS_v1.0.0.md)
 - [BAU operations](docs/operations/XMA-CLI-001_BAU-OPERATIONS_v1.0.0.md)
 - [Local CLI runbook](docs/operations/XMA-CLI-001_LOCAL-CLI-RUNBOOK_v0.1.0.md)
