@@ -5,6 +5,7 @@ rewriting historical evidence.
 
 ## Release and postrelease records
 
+- [B06 cap-50 blocked acceptance — HND-0015 v0.4.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.4.0.md)
 - [B06 public resume 10→20 — HND-0015 v0.3.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.3.0.md)
 - [B06 public cap/resume acceptance — HND-0015 v0.2.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.2.0.md)
 - [B06 partial final-page reconciliation — HND-0015 v0.1.2](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.1.2.md)

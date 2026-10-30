@@ -69,6 +69,11 @@ state after PRM-0049 is `B06_PUBLIC_LIMIT_20_VALIDATED / FULL_ACCOUNT_PENDING`: 
 full-account operation, uncapped execution, and totals above twenty require a separate human decision;
 Telegram and WhatsApp remain future roadmap items.
 
+PRM-0050 consumed the single authorized cap-50 resume and exposed an offline boundary defect before
+discovery: the manifest request recreated a target above 20 without preserving ALL mode. The durable
+run is `FAILED` at the intact 20/checkpoint 4 state. Current disposition is `REWORK_REQUIRED`; cap 50
+must not be retried until a new governed implementation mandate is authorized.
+
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.

@@ -48,3 +48,8 @@ PRM-0049 resumed that exact run from 10→20 and again ended
 `PAUSED / SAFETY_CAP_REACHED`. The evidence validates capped durable growth through twenty, but not
 the natural provider terminal. Do not continue above twenty or remove the cap without a new human
 decision.
+
+Known blocker from PRM-0050: a resume whose next absolute page target exceeds 20 is rejected while
+DownloadService reconstructs its manifest request without the ALL-mode exemption. The command ends
+`FAILED / DomainError` before discovery and preserves the prior checkpoint. Do not retry or attempt
+cap 50 until a separately authorized rework corrects and validates that boundary.
