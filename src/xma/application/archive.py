@@ -83,6 +83,18 @@ class ArchiveService:
                 and request.max_items < verified_total
             ):
                 raise DomainError("archive max-items is below verified repository progress")
+            if (
+                request.mode is ArchiveMode.ALL
+                and current is not None
+                and current.status is ArchiveStatus.COMPLETED
+            ):
+                if (
+                    current.completion_reason is not CompletionReason.PROVIDER_EXHAUSTED
+                    or current.failed_total != 0
+                    or current.downloaded_total != verified_total
+                ):
+                    raise DomainError("completed ALL checkpoint is inconsistent with repository")
+                return current
             if current is not None and request.requested_total < current.downloaded_total:
                 self._persist_terminal(current, ArchiveStatus.FAILED, "TOTAL_REDUCTION")
                 raise DomainError("archive total must not reduce durable progress")
@@ -358,6 +370,8 @@ class ArchiveService:
             return None
         if current.target.casefold() != request.target.handle.casefold():
             raise DomainError("archive target conflicts with the durable checkpoint")
+        if current.status is ArchiveStatus.COMPLETED:
+            return current
         if request.resume:
             if current.status is ArchiveStatus.PAUSED:
                 return replace(current, resumed_at=now)

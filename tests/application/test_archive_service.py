@@ -3,6 +3,7 @@
 import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -35,6 +36,7 @@ class Download:
     def __init__(self, existing: int = 0) -> None:
         self.total = existing
         self.calls: list[int] = []
+        self.verified_handles: list[str] = []
 
     def execute_incremental(self, request: Any, *args: object) -> DownloadSummary:
         self.calls.append(request.limit)
@@ -54,8 +56,72 @@ class Download:
         )
 
     def verified_total(self, handle: str) -> int:
-        del handle
+        self.verified_handles.append(handle)
         return self.total
+
+
+class CountingStore(SQLiteArchiveStore):
+    def __init__(self, database: Path) -> None:
+        super().__init__(database)
+        self.put_calls = 0
+
+    def put(self, run: ArchiveRun) -> None:
+        self.put_calls += 1
+        super().put(run)
+
+
+class InconsistentRepositoryDownload(Download):
+    def verified_total(self, handle: str) -> int:
+        self.verified_handles.append(handle)
+        raise DownloadError("repository integrity verification failed")
+
+
+def terminal_all_run(
+    *,
+    target: str = "BBCWorld",
+    total: int = 23,
+    reason: CompletionReason = CompletionReason.PROVIDER_EXHAUSTED,
+    failed_total: int = 0,
+) -> ArchiveRun:
+    return ArchiveRun(
+        "terminal-all-run",
+        target,
+        1,
+        5,
+        2,
+        ArchiveStatus.COMPLETED,
+        0,
+        total,
+        5,
+        "RESCAN_DEDUP_V2",
+        NOW,
+        NOW,
+        NOW,
+        next_allowed_at=NOW + timedelta(seconds=2),
+        mode=ArchiveMode.ALL,
+        completion_reason=reason,
+        failed_total=failed_total,
+        max_runtime_seconds=600,
+        resumed_at=NOW - timedelta(hours=1),
+    )
+
+
+def terminal_all_service(
+    tmp_path: Path, completed: ArchiveRun, download: Download
+) -> tuple[ArchiveService, CountingStore]:
+    store = CountingStore(tmp_path / "repository/catalog.sqlite3")
+    store.put(completed)
+    store.put_calls = 0
+    return (
+        ArchiveService(
+            cast(Any, download),
+            cast(Any, object()),
+            store,
+            RepositoryArchiveLock(tmp_path / "repository"),
+            clock=lambda: NOW + timedelta(hours=1),
+        ),
+        store,
+    )
 
 
 def service(tmp_path: Path, download: Download, sleeps: list[float]) -> ArchiveService:
@@ -146,6 +212,158 @@ def test_all_completes_only_on_explicit_provider_exhaustion(tmp_path: Path) -> N
     assert result.status is ArchiveStatus.COMPLETED
     assert result.completion_reason is CompletionReason.PROVIDER_EXHAUSTED
     assert result.downloaded_total == 0
+
+
+def test_completed_all_provider_exhaustion_is_offline_idempotent_noop(tmp_path: Path) -> None:
+    completed = terminal_all_run()
+    download = Download(23)
+    archive, store = terminal_all_service(tmp_path, completed, download)
+
+    result = archive.execute(
+        ArchiveRequest.create_all("BBCWorld", 5, 2, max_runtime_seconds=600, min_free_space_gib=5),
+        30,
+        lambda message: None,
+    )
+
+    assert result == completed
+    assert store.put_calls == 0
+    assert download.calls == []
+    assert download.verified_handles == ["BBCWorld"]
+    assert store.latest() == completed
+
+
+@pytest.mark.parametrize("resume", [False, True])
+def test_completed_all_noop_preserves_every_durable_field_and_manifest(
+    tmp_path: Path, resume: bool
+) -> None:
+    completed = terminal_all_run()
+    download = Download(completed.downloaded_total)
+    archive, store = terminal_all_service(tmp_path, completed, download)
+    manifest = tmp_path / "repository/manifest.json"
+    manifest.write_text('{"certified":true}\n', encoding="utf-8")
+    before_hash = sha256(manifest.read_bytes()).hexdigest()
+    request = ArchiveRequest.create_all(
+        "BBCWorld",
+        3,
+        1,
+        max_items=50,
+        max_runtime_seconds=1200,
+        min_free_space_gib=6,
+        resume=resume,
+    )
+
+    first = archive.execute(request, 30, lambda message: None)
+    second = archive.execute(request, 30, lambda message: None)
+
+    assert first == completed
+    assert second == completed
+    assert first.run_id == completed.run_id
+    assert first.updated_at == completed.updated_at
+    assert first.resumed_at == completed.resumed_at
+    assert first.max_items == completed.max_items
+    assert store.put_calls == 0
+    assert download.calls == []
+    assert download.verified_handles == ["BBCWorld", "BBCWorld"]
+    assert sha256(manifest.read_bytes()).hexdigest() == before_hash
+    assert store.latest() == completed
+
+
+@pytest.mark.parametrize("repository_total", [22, 24])
+def test_completed_all_noop_rejects_checkpoint_repository_mismatch(
+    tmp_path: Path, repository_total: int
+) -> None:
+    completed = terminal_all_run(total=23)
+    download = Download(repository_total)
+    archive, store = terminal_all_service(tmp_path, completed, download)
+
+    with pytest.raises(DomainError, match="checkpoint is inconsistent"):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5
+            ),
+            30,
+            lambda message: None,
+        )
+
+    assert store.put_calls == 0
+    assert download.calls == []
+
+
+def test_completed_all_noop_rejects_inconsistent_repository(tmp_path: Path) -> None:
+    completed = terminal_all_run()
+    download = InconsistentRepositoryDownload(23)
+    archive, store = terminal_all_service(tmp_path, completed, download)
+
+    with pytest.raises(DownloadError, match="integrity verification failed"):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5
+            ),
+            30,
+            lambda message: None,
+        )
+
+    assert store.put_calls == 1
+    assert download.calls == []
+
+
+def test_completed_all_noop_rejects_target_and_lower_cap_without_external_calls(
+    tmp_path: Path,
+) -> None:
+    completed = terminal_all_run()
+    download = Download(23)
+    archive, store = terminal_all_service(tmp_path, completed, download)
+    with pytest.raises(DomainError, match="target conflicts"):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "Reuters", 5, 1, max_runtime_seconds=600, min_free_space_gib=5
+            ),
+            30,
+            lambda message: None,
+        )
+    with pytest.raises(DomainError, match="max-items is below"):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld",
+                5,
+                1,
+                max_items=22,
+                max_runtime_seconds=600,
+                min_free_space_gib=5,
+            ),
+            30,
+            lambda message: None,
+        )
+    assert store.put_calls == 0
+    assert download.calls == []
+    assert download.verified_handles == ["BBCWorld"]
+
+
+@pytest.mark.parametrize(
+    ("reason", "failed_total"),
+    [
+        (CompletionReason.REQUESTED_TOTAL_REACHED, 0),
+        (CompletionReason.PROVIDER_EXHAUSTED, 1),
+    ],
+)
+def test_completed_all_noop_rejects_uncertified_terminal(
+    tmp_path: Path, reason: CompletionReason, failed_total: int
+) -> None:
+    completed = terminal_all_run(reason=reason, failed_total=failed_total)
+    download = Download(23)
+    archive, store = terminal_all_service(tmp_path, completed, download)
+
+    with pytest.raises(DomainError, match="checkpoint is inconsistent"):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5
+            ),
+            30,
+            lambda message: None,
+        )
+
+    assert store.put_calls == 0
+    assert download.calls == []
 
 
 class PartialExhaustedDownload(Download):
