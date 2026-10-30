@@ -62,3 +62,9 @@ PRM-0052 consumed that single retry. The retained run advanced 20→50 and stopp
 `PAUSED / SAFETY_CAP_REACHED`, page/checkpoint 10/10, with all prior hashes preserved and no
 residues. This is not evidence of natural provider exhaustion or account completeness. Do not
 resume above 50 or run another public command without a new human mandate.
+
+PRM-0053 observed typed provider exhaustion at 22 provider-best artifacts in a new repository.
+The durable status correctly became `COMPLETED / PROVIDER_EXHAUSTED`, but the final-page manifest
+remained `complete=false` while also recording `exhausted=true`. Treat this as
+`REWORK_REQUIRED`; do not repeat the public operation or declare full-account acceptance. A later
+offline mandate must reconcile final-page manifest semantics without weakening bounded mode.

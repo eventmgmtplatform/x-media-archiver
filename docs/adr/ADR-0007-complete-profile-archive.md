@@ -1,6 +1,6 @@
 # ADR-0007: durable complete-profile archive
 
-Status: Public safety-cap acceptance through 50; full-account exhaustion pending.
+Status: Provider exhaustion observed publicly; final-manifest reconciliation required.
 
 ## Decision
 
@@ -63,6 +63,13 @@ PRM-0052 consumed the single authorized retry on the same retained run. It prese
 20 hashes, added 30 verified artifacts, and stopped at total 50 with page/checkpoint 10/10,
 `PAUSED / SAFETY_CAP_REACHED`, zero failures, integrity `ok`, and no residues. This validates the
 cap-50 recovery path only; typed provider exhaustion and full-account completion remain pending.
+
+PRM-0053 then exercised a new repository and distinct sanitized target. Typed provider exhaustion
+occurred at 22 intact provider-best artifacts, with durable status `COMPLETED`, page/checkpoint 5/5,
+zero failures, and integrity `ok`. The last download-page manifest simultaneously recorded
+`exhausted=true` and `complete=false` because its requested page target was 25 while the provider
+ended at 22. That inconsistency is `REWORK_REQUIRED`: full-account acceptance is not declared until
+the final manifest represents typed exhaustion consistently. The public command must not be retried.
 
 Rollback is a code rollback plus restoration of a pre-migration catalog backup; media artifacts
 are never deleted automatically.

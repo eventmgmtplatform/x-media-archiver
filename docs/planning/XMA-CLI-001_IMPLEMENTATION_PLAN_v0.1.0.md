@@ -85,6 +85,12 @@ zero failures, preserved initial hashes, integrity `ok`, and no residues. Curren
 `B06_PUBLIC_LIMIT_50_VALIDATED / FULL_ACCOUNT_PENDING`; provider exhaustion, another public run,
 an operation above 50, and the separate `<LOCAL_E2E_TARGET>` remain unauthorized.
 
+PRM-0053 consumed the separately authorized E2E operation on a new repository. It reached genuine
+typed provider exhaustion at 22 intact provider-best artifacts and durable page/checkpoint 5/5,
+but the final-page manifest remained `complete=false` despite `exhausted=true`. Current disposition
+is `REWORK_REQUIRED`; no retry, full-account declaration, functional correction, merge, or further
+public operation is authorized.
+
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.
