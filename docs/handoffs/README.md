@@ -5,6 +5,7 @@ rewriting historical evidence.
 
 ## Release and postrelease records
 
+- [B06 public cap-50 recovery — HND-0015 v0.5.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.5.0.md)
 - [B06 ALL flag propagation rework — HND-0015 v0.4.1](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.4.1.md)
 - [B06 cap-50 blocked acceptance — HND-0015 v0.4.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.4.0.md)
 - [B06 public resume 10→20 — HND-0015 v0.3.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.3.0.md)

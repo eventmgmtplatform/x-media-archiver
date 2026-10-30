@@ -1,6 +1,6 @@
 # ADR-0007: durable complete-profile archive
 
-Status: Implemented offline; public acceptance pending.
+Status: Public safety-cap acceptance through 50; full-account exhaustion pending.
 
 ## Decision
 
@@ -35,10 +35,10 @@ while transactionally preserving v1/v2 catalogs. `status` remains offline and re
 
 ## Consequences
 
-Rescan/dedup is durable but may be inefficient for large profiles. This development cut is tested
-only with synthetic fixtures. The boundary-hardening rework is offline validated; public 20→50
-acceptance and full-account exhaustion remain pending.
-No external data volume, Firefox session, cookie, or public media was used for this decision.
+Rescan/dedup is durable but may be inefficient for large profiles. Boundary hardening and failed-run
+recovery are covered by deterministic offline fixtures. PRM-0052 publicly validated the capped
+20→50 continuation, but full-account exhaustion remains pending. No external data volume was used;
+browser secrets and public-media URLs remain local and are not persisted in project evidence.
 
 PRM-0048 publicly validated only the bounded safety controls and durable resumption: a new local
 repository advanced 0→5 and then 5→10 on the same run, pausing at each configured cap with intact
@@ -58,6 +58,11 @@ PRM-0051 corrected that boundary offline: every internal DownloadRequest reconst
 preserves the explicit `archive_all` authority, while interactive download remains limited to
 1–20. Recovery of the known `FAILED / DomainError` ALL run is narrowly permitted and validated
 synthetically through absolute pages 25, 30, 35, 40, 45, and 50. Public retry remains pending.
+
+PRM-0052 consumed the single authorized retry on the same retained run. It preserved the original
+20 hashes, added 30 verified artifacts, and stopped at total 50 with page/checkpoint 10/10,
+`PAUSED / SAFETY_CAP_REACHED`, zero failures, integrity `ok`, and no residues. This validates the
+cap-50 recovery path only; typed provider exhaustion and full-account completion remain pending.
 
 Rollback is a code rollback plus restoration of a pre-migration catalog backup; media artifacts
 are never deleted automatically.

@@ -57,3 +57,8 @@ cap 50 until a separately authorized rework corrects and validates that boundary
 PRM-0051 has now corrected and offline-validated the flag propagation and the narrow recovery of
 that known failed run. Interactive `download` still rejects totals above 20. Do not execute the
 public 20→50 retry until PRM-0052 or another explicit human mandate authorizes it.
+
+PRM-0052 consumed that single retry. The retained run advanced 20→50 and stopped cleanly at
+`PAUSED / SAFETY_CAP_REACHED`, page/checkpoint 10/10, with all prior hashes preserved and no
+residues. This is not evidence of natural provider exhaustion or account completeness. Do not
+resume above 50 or run another public command without a new human mandate.

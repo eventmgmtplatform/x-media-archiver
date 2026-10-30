@@ -77,7 +77,13 @@ must not be retried until a new governed implementation mandate is authorized.
 PRM-0051 preserves `archive_all=True` through manifest reconstruction and narrowly permits the
 known failed ALL run to resume. Synthetic validation requests [25, 30, 35, 40, 45, 50] and finishes
 at page/checkpoint 10/10, while interactive limit/add 21 remain invalid. Current disposition is
-`B06_OFFLINE_REWORK_VALIDATED / PUBLIC_RETRY_PENDING`; only PRM-0052 may authorize public retry.
+superseded by PRM-0052.
+
+PRM-0052 consumed the one authorized public recovery and advanced the same verified run 20→50.
+It finished code 0 at page/checkpoint 10/10 with `PAUSED / SAFETY_CAP_REACHED`, 50 intact artifacts,
+zero failures, preserved initial hashes, integrity `ok`, and no residues. Current disposition is
+`B06_PUBLIC_LIMIT_50_VALIDATED / FULL_ACCOUNT_PENDING`; provider exhaustion, another public run,
+an operation above 50, and the separate `<LOCAL_E2E_TARGET>` remain unauthorized.
 
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
