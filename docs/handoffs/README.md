@@ -5,6 +5,7 @@ rewriting historical evidence.
 
 ## Release and postrelease records
 
+- [v0.2.0 release metadata rework — HND-0018 v0.1.0](XMA-CLI-001_HND-0018_V0.2.0-RELEASE-METADATA-REWORK_v0.1.0.md)
 - [v0.2.0 release candidate — HND-0017 v0.1.0](XMA-CLI-001_HND-0017_V0.2.0-RELEASE-CANDIDATE_v0.1.0.md)
 - [CLI reporting public acceptance — HND-0016 v0.2.0](XMA-CLI-001_HND-0016_CLI-EXECUTION-REPORTING_v0.2.0.md)
 - [CLI invocation reporting semantics — HND-0016 v0.1.1](XMA-CLI-001_HND-0016_CLI-EXECUTION-REPORTING_v0.1.1.md)
