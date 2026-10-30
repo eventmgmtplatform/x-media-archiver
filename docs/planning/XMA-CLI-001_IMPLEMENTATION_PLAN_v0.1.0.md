@@ -56,6 +56,11 @@ No se fijan estimaciones de calendario sin medir B01 y B02. Se usarán tamaños 
 
 ## Siguiente paso gobernado
 
+B06 implements the `0.2.0.dev0` complete-profile archive contract offline with explicit ALL mode,
+`RESCAN_DEDUP_V2`, schema v3, safety pauses, resume, and provider exhaustion. HND-0015 records the
+synthetic evidence. Public 20→50 acceptance and full-account operation are pending a separate human
+decision; Telegram and WhatsApp remain future roadmap items.
+
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.

@@ -5,7 +5,15 @@ Versioning.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- Development-only `archive --all`, explicit resume, safety cap, runtime/free-space guards,
+  provider-exhaustion semantics, and SQLite schema v3 durability fields.
+
+### Validation
+
+- B06 is synthetic/offline only. Public 20→50 acceptance and complete-account operation remain
+  pending.
 
 ## [0.1.2] - 2026-10-29
 

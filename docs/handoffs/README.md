@@ -5,6 +5,8 @@ rewriting historical evidence.
 
 ## Release and postrelease records
 
+- [B06 offline complete-profile slice — HND-0015](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.1.0.md)
+
 - [v0.1.2 postrelease — HND-0014](XMA-CLI-001_HND-0014_V0.1.2-POSTRELEASE_v0.1.0.md)
 - [v0.1.2 release candidate — HND-0013](XMA-CLI-001_HND-0013_V0.1.2-RELEASE-CANDIDATE_v0.1.0.md)
 - [v0.1.1 postrelease — HND-0011](XMA-CLI-001_HND-0011_V0.1.1-POSTRELEASE_v0.1.0.md)

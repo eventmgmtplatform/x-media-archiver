@@ -1,4 +1,4 @@
-# X Media Archiver 0.1.2
+# X Media Archiver 0.2.0.dev0
 
 Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
 a normalized repository with SQLite metadata, sidecars and integrity hashes.
@@ -8,6 +8,9 @@ a normalized repository with SQLite metadata, sidecars and integrity hashes.
 Version 0.1.2 is the current published release. Interactive download and durable archive enforce a
 repository maximum of twenty videos. The release remains intentionally bounded and is not
 certified for bulk or unattended operation.
+
+The current development branch adds an offline-tested `archive --all` contract. It has not received
+public acceptance and does not change the published v0.1.2 guarantee.
 
 ## Supported platforms
 
@@ -88,6 +91,9 @@ xma status --repository ./repository-HANDLE --json
 `COMPLETED` means the requested total is present. `PAUSED` preserves valid progress for controlled
 resumption. `FAILED` requires integrity diagnosis before another run. Back up the entire repository,
 not only SQLite.
+
+Development-only complete-profile syntax and safety semantics are documented in
+[`docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md`](docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md).
 
 ## Security
 

@@ -1,5 +1,8 @@
 # XMA v0.1.2 quick start
 
+> The published release remains v0.1.2. `archive --all` exists only in `0.2.0.dev0`, has synthetic
+> offline validation, and is pending public acceptance. See the B06 runbook before evaluation.
+
 ## Install and verify
 
 Obtain the published v0.1.2 assets from the GitHub Release, verify `SHA256SUMS`, extract the Linux
