@@ -68,3 +68,9 @@ The durable status correctly became `COMPLETED / PROVIDER_EXHAUSTED`, but the fi
 remained `complete=false` while also recording `exhausted=true`. Treat this as
 `REWORK_REQUIRED`; do not repeat the public operation or declare full-account acceptance. A later
 offline mandate must reconcile final-page manifest semantics without weakening bounded mode.
+
+PRM-0054 has corrected that behavior offline: only typed ALL exhaustion with zero failed downloads
+can complete a below-target manifest, while `exhausted` is never inferred from silence, timeout,
+transient failure, worker failure, or DownloadError. BOUNDED remains fail-closed. This does not
+repair the retained manifest or authorize another public command; evidence reconciliation requires
+PRM-0055.

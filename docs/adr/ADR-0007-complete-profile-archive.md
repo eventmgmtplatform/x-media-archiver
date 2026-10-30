@@ -1,6 +1,6 @@
 # ADR-0007: durable complete-profile archive
 
-Status: Provider exhaustion observed publicly; final-manifest reconciliation required.
+Status: Manifest semantics corrected offline; retained-evidence reconciliation pending.
 
 ## Decision
 
@@ -70,6 +70,13 @@ zero failures, and integrity `ok`. The last download-page manifest simultaneousl
 `exhausted=true` and `complete=false` because its requested page target was 25 while the provider
 ended at 22. That inconsistency is `REWORK_REQUIRED`: full-account acceptance is not declared until
 the final manifest represents typed exhaustion consistently. The public command must not be retried.
+
+PRM-0054 corrects the semantics offline. Manifest completeness is now requested-total completion,
+or typed provider exhaustion in ALL mode with zero failed downloads; the exhausted bit is driven
+only by the typed terminal. Summary requested-total semantics and ArchiveService ownership of
+durable ALL completion remain unchanged. Timeout, transient/incomplete discovery, DownloadError,
+and BOUNDED mode remain fail-closed. The retained PRM-0053 manifest was not read or repaired, so
+evidence reconciliation and B06 acceptance remain pending PRM-0055.
 
 Rollback is a code rollback plus restoration of a pre-migration catalog backup; media artifacts
 are never deleted automatically.

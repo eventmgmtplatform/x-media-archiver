@@ -91,6 +91,12 @@ but the final-page manifest remained `complete=false` despite `exhausted=true`. 
 is `REWORK_REQUIRED`; no retry, full-account declaration, functional correction, merge, or further
 public operation is authorized.
 
+PRM-0054 corrects only that manifest boundary offline. Typed ALL exhaustion with zero failed
+downloads now produces `complete=true / exhausted=true`; requested-total completion remains
+separate, and timeout/transient/worker/DownloadError/BOUNDED paths remain fail-closed. Current
+disposition is `B06_MANIFEST_SEMANTICS_OFFLINE_VALIDATED / EVIDENCE_REPAIR_PENDING`; the retained
+manifest is unchanged and PRM-0055 is required before any acceptance decision.
+
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.
