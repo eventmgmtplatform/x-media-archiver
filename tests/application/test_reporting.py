@@ -137,7 +137,9 @@ def test_single_video_detail_fails_closed_for_unsafe_path() -> None:
     ],
 )
 def test_archive_report_modes(value: ArchiveRun, expected: tuple[object, ...]) -> None:
-    report: Any = archive_report(value).public_dict()
+    report: Any = archive_report(
+        value, invocation_verified_before=value.existing_before
+    ).public_dict()
     assert (
         report["request"]["mode"],
         report["complete"],
@@ -154,8 +156,10 @@ def test_terminal_all_noop_and_status_are_offline_equivalent() -> None:
         existing_before=10,
         downloaded_total=10,
     )
-    archived: Any = archive_report(value).public_dict()
-    status: Any = archive_report(value, command="status").public_dict()
+    archived: Any = archive_report(value, invocation_verified_before=10).public_dict()
+    status: Any = archive_report(
+        value, invocation_verified_before=value.downloaded_total, command="status"
+    ).public_dict()
     assert archived["counts"]["downloaded_this_run"] == 0
     assert status["counts"] == archived["counts"]
     assert status["command"] == "status"
@@ -187,9 +191,52 @@ def test_failure_report_uses_durable_archive_progress() -> None:
         error_code="UNEXPECTED_FAILURE",
         exit_code=5,
         run=value,
+        invocation_verified_before=5,
     ).public_dict()
     assert report["status"] == "FAILED"
     assert report["counts"]["total_after"] == 10
     assert report["checkpoint"]["page"] == 3
     assert report["error_code"] == "UNEXPECTED_FAILURE"
     assert report["exit_code"] == 5
+
+
+@pytest.mark.parametrize(
+    ("before", "after", "expected"),
+    [
+        (0, 22, 22),
+        (5, 10, 5),
+        (10, 20, 10),
+        (10, 13, 3),
+        (20, 22, 2),
+        (22, 22, 0),
+    ],
+)
+def test_archive_report_uses_invocation_baseline(before: int, after: int, expected: int) -> None:
+    value = replace(
+        run(
+            mode=ArchiveMode.ALL,
+            reason=CompletionReason.PROVIDER_EXHAUSTED,
+            total=after,
+        ),
+        existing_before=0,
+    )
+    report: Any = archive_report(value, invocation_verified_before=before).public_dict()
+    assert report["counts"]["downloaded_this_run"] == expected
+
+
+def test_archive_failure_before_verification_has_no_invocation_progress() -> None:
+    value = replace(
+        run(mode=ArchiveMode.ALL, status=ArchiveStatus.FAILED, reason=None),
+        existing_before=0,
+        downloaded_total=22,
+    )
+    report: Any = failure_report(
+        command="archive",
+        handle="example",
+        error_code="CATALOG_FAILED",
+        exit_code=6,
+        run=value,
+        invocation_verified_before=None,
+    ).public_dict()
+    assert report["counts"]["downloaded_this_run"] is None
+    assert report["progress_available"] is False

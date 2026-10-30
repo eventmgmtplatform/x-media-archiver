@@ -373,6 +373,12 @@ def archive_profile(
         if json_output
         else (lambda message: error_console.print(message, markup=False))
     )
+    invocation_verified_before: int | None = None
+
+    def record_invocation_baseline(value: int) -> None:
+        nonlocal invocation_verified_before
+        invocation_verified_before = value
+
     try:
         if all_items and limit is not None:
             raise DomainError("archive --all and --limit are mutually exclusive")
@@ -416,6 +422,7 @@ def archive_profile(
             request,
             discovery_timeout,
             telemetry,
+            record_invocation_baseline,
         )
     except (InvalidIdentityError, DomainError) as error:
         _render_failure_report(
@@ -425,6 +432,7 @@ def archive_profile(
                 error_code="INVALID_INPUT",
                 exit_code=EXIT_INVALID_INPUT,
                 run=_latest_run(database),
+                invocation_verified_before=invocation_verified_before,
             ),
             json_output,
             f"invalid input: {error}",
@@ -437,6 +445,7 @@ def archive_profile(
             target=target,
             json_output=json_output,
             run=_latest_run(database),
+            invocation_verified_before=invocation_verified_before,
         )
     except DownloadError as error:
         _render_failure_report(
@@ -446,6 +455,7 @@ def archive_profile(
                 error_code="DOWNLOAD_FAILED",
                 exit_code=EXIT_DOWNLOAD_FAILED,
                 run=_latest_run(database),
+                invocation_verified_before=invocation_verified_before,
             ),
             json_output,
             f"archive failed: {error}",
@@ -459,6 +469,7 @@ def archive_profile(
                 error_code="UNEXPECTED_FAILURE",
                 exit_code=EXIT_PROVIDER_FAILED,
                 run=_latest_run(database),
+                invocation_verified_before=invocation_verified_before,
             ),
             json_output,
             "archive failed: unexpected internal failure",
@@ -476,7 +487,12 @@ def archive_profile(
             "archive failed: local repository unavailable",
         )
         raise typer.Exit(EXIT_CATALOG_FAILED) from error
-    _render_archive(result, json_output, archive_report(result))
+    assert invocation_verified_before is not None
+    _render_archive(
+        result,
+        json_output,
+        archive_report(result, invocation_verified_before=invocation_verified_before),
+    )
 
 
 @app.command("status")
@@ -498,7 +514,15 @@ def archive_status(
             "archive status unavailable: no durable run",
         )
         raise typer.Exit(EXIT_NOT_FOUND)
-    _render_archive(result, json_output, archive_report(result, command="status"))
+    _render_archive(
+        result,
+        json_output,
+        archive_report(
+            result,
+            invocation_verified_before=result.downloaded_total,
+            command="status",
+        ),
+    )
 
 
 def _discovery_provider(browser: str | None, profile: str | None) -> DiscoveryProvider:
@@ -601,6 +625,7 @@ def _exit_for_discovery_error(
     json_output: bool = False,
     progress: dict[str, object] | None = None,
     run: ArchiveRun | None = None,
+    invocation_verified_before: int | None = None,
 ) -> NoReturn:
     if isinstance(error, InvalidIdentityError):
         code = EXIT_INVALID_INPUT
@@ -626,6 +651,7 @@ def _exit_for_discovery_error(
                 error_code=error_code,
                 exit_code=code,
                 run=run,
+                invocation_verified_before=invocation_verified_before,
                 progress=progress,
             ),
             json_output,

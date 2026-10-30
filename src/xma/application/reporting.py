@@ -173,7 +173,12 @@ def download_report(
     )
 
 
-def archive_report(run: ArchiveRun, *, command: str = "archive") -> ExecutionReport:
+def archive_report(
+    run: ArchiveRun,
+    *,
+    invocation_verified_before: int,
+    command: str = "archive",
+) -> ExecutionReport:
     values = run.public_dict()
     is_all = run.mode is ArchiveMode.ALL
     return ExecutionReport(
@@ -183,7 +188,7 @@ def archive_report(run: ArchiveRun, *, command: str = "archive") -> ExecutionRep
         status=run.status.value,
         counts=CountsReport(
             run.existing_before,
-            max(0, run.downloaded_total - run.existing_before),
+            max(0, run.downloaded_total - invocation_verified_before),
             0,
             run.failed_total,
             run.downloaded_total,
@@ -213,10 +218,28 @@ def failure_report(
     error_code: str,
     exit_code: int,
     run: ArchiveRun | None = None,
+    invocation_verified_before: int | None = None,
     progress: dict[str, Any] | None = None,
 ) -> ExecutionReport:
     if run is not None:
-        report = archive_report(run, command=command)
+        if invocation_verified_before is None:
+            return ExecutionReport(
+                command=command,
+                account=AccountReport(handle),
+                request=None,
+                status="FAILED",
+                counts=CountsReport(None, None, None, None, None),
+                checkpoint=None,
+                reason=error_code,
+                error_code=error_code,
+                exit_code=exit_code,
+                progress_available=False,
+            )
+        report = archive_report(
+            run,
+            command=command,
+            invocation_verified_before=invocation_verified_before,
+        )
         return replace(report, error_code=error_code, exit_code=exit_code)
     progress = progress or {}
     return ExecutionReport(

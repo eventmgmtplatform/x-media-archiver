@@ -57,6 +57,7 @@ class ArchiveService:
         request: ArchiveRequest,
         discovery_timeout: int,
         progress: Callable[[str], None],
+        invocation_baseline: Callable[[int], None] | None = None,
     ) -> ArchiveRun:
         with self._lock:
             now = self._clock()
@@ -77,6 +78,8 @@ class ArchiveService:
                 if current is not None:
                     self._persist_terminal(current, ArchiveStatus.FAILED, "REPOSITORY_INCONSISTENT")
                 raise
+            if invocation_baseline is not None:
+                invocation_baseline(verified_total)
             if (
                 request.mode is ArchiveMode.ALL
                 and request.max_items is not None

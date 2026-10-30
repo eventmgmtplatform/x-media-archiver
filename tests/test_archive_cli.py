@@ -22,6 +22,7 @@ from xma.domain.discovery import (
 )
 from xma.domain.download import DownloadedArtifact
 from xma.domain.enums import MediaType, PostType
+from xma.domain.errors import DownloadError
 
 runner = CliRunner()
 NOW = datetime(2026, 10, 29, tzinfo=UTC)
@@ -98,6 +99,7 @@ def test_archive_and_status_json_are_stable_and_offline(
     assert payload["status"] == "COMPLETED"
     assert payload["downloaded_total"] == 2
     assert payload["remaining"] == 0
+    assert payload["report"]["counts"]["downloaded_this_run"] == 2
     assert "secret=fixture" not in archived.stdout
 
     status = runner.invoke(app, ["status", "--repository", str(repository), "--json"])
@@ -108,6 +110,7 @@ def test_archive_and_status_json_are_stable_and_offline(
     }
     assert payload["report"]["command"] == "archive"
     assert status_payload["report"]["command"] == "status"
+    assert status_payload["report"]["counts"]["downloaded_this_run"] == 0
     human = runner.invoke(app, ["status", "--repository", str(repository)])
     assert human.exit_code == 0
     assert "status: COMPLETED" in human.stdout
@@ -207,6 +210,38 @@ def test_archive_cli_sanitizes_unexpected_service_failure(
     assert restored is not None
     assert restored.status is ArchiveStatus.FAILED
     assert restored.last_error_code == "UNEXPECTED_FAILURE"
+
+
+def test_archive_failure_before_verification_reports_progress_unavailable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    def fail_verification(*args: object, **kwargs: object) -> int:
+        del args, kwargs
+        raise DownloadError("repository verification failed")
+
+    monkeypatch.setattr(cli, "_provider_factory", lambda: object())
+    monkeypatch.setattr(cli, "_media_provider_factory", Media)
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
+    monkeypatch.setattr(
+        "xma.application.download.DownloadService.verified_total", fail_verification
+    )
+    result = runner.invoke(
+        app,
+        [
+            "archive",
+            "BBCWorld",
+            "--limit",
+            "2",
+            "--repository",
+            str(tmp_path / "repository"),
+            "--json",
+        ],
+    )
+    payload = json.loads(result.stderr)
+    assert result.exit_code == cli.EXIT_DOWNLOAD_FAILED
+    assert result.stdout == ""
+    assert payload["counts"]["downloaded_this_run"] is None
+    assert payload["progress_available"] is False
 
 
 @pytest.mark.parametrize(
