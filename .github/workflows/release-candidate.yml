@@ -22,7 +22,7 @@ jobs:
       - run: ./scripts/validate-release-candidate.sh release-artifacts
       - uses: actions/upload-artifact@v6
         with:
-          name: xma-v0.1.2-linux-x86_64
+          name: xma-v0.2.0-linux-x86_64
           path: release-artifacts/
           if-no-files-found: error
 
@@ -35,11 +35,11 @@ jobs:
     steps:
       - uses: actions/download-artifact@v7
         with:
-          name: xma-v0.1.2-linux-x86_64
+          name: xma-v0.2.0-linux-x86_64
           path: release-artifacts
       - run: |
           (cd release-artifacts && sha256sum -c SHA256SUMS)
           test_dir=$(mktemp -d)
-          tar -C "$test_dir" -xzf release-artifacts/xma-v0.1.2-linux-x86_64.tar.gz
-          env -i PATH=/usr/bin:/bin HOME="$test_dir" "$test_dir/xma-v0.1.2-linux-x86_64/xma" --help
-          env -i PATH=/usr/bin:/bin HOME="$test_dir" "$test_dir/xma-v0.1.2-linux-x86_64/xma" version --short | grep -Fx 0.1.2
+          tar -C "$test_dir" -xzf release-artifacts/xma-v0.2.0-linux-x86_64.tar.gz
+          env -i PATH=/usr/bin:/bin HOME="$test_dir" "$test_dir/xma-v0.2.0-linux-x86_64/xma" --help
+          env -i PATH=/usr/bin:/bin HOME="$test_dir" "$test_dir/xma-v0.2.0-linux-x86_64/xma" version --short | grep -Fx 0.2.0

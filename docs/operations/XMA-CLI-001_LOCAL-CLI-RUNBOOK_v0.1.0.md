@@ -1,7 +1,7 @@
-# XMA-CLI-001 — Runbook local de la CLI v0.1.2
+# XMA-CLI-001 — Runbook local de la CLI v0.2.0
 
-The published v0.1.2 procedures below remain authoritative. The development-only B06
-`archive --all` interface is documented separately and is not publicly accepted.
+This runbook describes the validated v0.2.0 release candidate. Publication requires a separate
+human decision; until then, v0.1.2 remains the latest public release.
 
 ## Alcance y requisitos
 
@@ -15,12 +15,12 @@ desatendida, `yt-dlp`, FFmpeg, miniaturas ni `ficha.md`.
 
 ## Método A — ejecución desde source
 
-Para validar la fuente publicada, clone el repositorio y fije el tag inmutable `v0.1.2`.
+After publication, validate source from the immutable `v0.2.0` tag.
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach v0.1.2
+git checkout --detach v0.2.0
 git rev-parse HEAD
 uv sync --locked --all-groups
 uv run xma --help
@@ -38,7 +38,7 @@ una instalación local aislada:
 ```bash
 uv build
 uv venv .venv-xma --python 3.12
-uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.2-py3-none-any.whl
+uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.2.0-py3-none-any.whl
 .venv-xma/bin/xma --help
 .venv-xma/bin/xma version
 ```

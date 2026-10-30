@@ -12,10 +12,11 @@ title: Releases
 
 | Versión | Estado | Plataforma | Alcance |
 |---|---|---|---|
+| 0.2.0 | Release candidate | Linux x86_64 | Archive ALL durable y reporting CLI schema 1 |
 | 0.1.2 | Released | Linux x86_64 | Media recovery, deadline activo, add/archive hasta 20 y provider-best |
 | 0.1.1 | Released | Linux x86_64 | Recovery, modo aditivo, límites 1–10 y provider-best |
 | 0.1.0 | Released | Linux x86_64 | X, URL individual, lotes 1/2/5 y archive 10 |
-| 0.2.x | Planeada | Linux | Estabilización operativa y deuda v1 |
+| 0.2.x | En validación | Linux | Estabilización operativa y deuda v1 |
 | 2.0.0 | Roadmap | Por definir | Núcleo multiplataforma y nuevos adaptadores |
 
 ## v0.1.2
@@ -64,5 +65,5 @@ Evidencia y control:
 Cada nueva release debe actualizar esta matriz, el changelog, las notas, la página de producto y el
 roadmap antes del tag.
 
-B06 está validado con observaciones en desarrollo, pero no constituye una release 0.2.x ni modifica
-v0.1.2. Requiere decisión separada de merge y posterior proceso de release.
+v0.2.0 está preparado únicamente como release candidate. No existe todavía tag, GitHub Release ni
+publicación PyPI; toda publicación requiere una decisión humana separada.

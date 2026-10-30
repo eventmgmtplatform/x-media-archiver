@@ -18,6 +18,13 @@ manual workflow verifies tag/version, rebuilds artifacts and creates a GitHub Re
 A human reviews notes, SBOM, licenses, checksums and artifacts before publication. PyPI publication
 requires a separate authorization.
 
+## v0.2.0 release candidate
+
+The `release/v0.2.0` branch prepares version metadata and the canonical ten-asset distribution from
+the integrated B06 and CLI-reporting tree. It remains unmerged and unpublished until a separate
+human decision. RC validation covers Ubuntu 22.04/24.04, isolated wheel installation, standalone
+bundle, SBOM, GPL-2.0-only licensing, official gallery-dl source, manifest and checksums.
+
 Postrelease verification downloads the published artifacts, checks hashes, extracts the bundle and
 runs help/version/status offline. Never rewrite a published tag. For a faulty release, withdraw or
 mark artifacts, document impact, revert safely on main and prepare a patch release. Repository

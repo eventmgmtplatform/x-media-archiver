@@ -8,9 +8,9 @@ title: Archivo completo B06
 
 # B06 — archivo completo de perfil
 
-B06 está `VALIDATED_WITH_OBSERVATIONS` en la rama de desarrollo. Una ejecución pública única sobre
+B06 está `VALIDATED_WITH_OBSERVATIONS` e incluido en el release candidate v0.2.0. Una ejecución pública única sobre
 una cuenta observada produjo 22 videos provider-best y terminó mediante agotamiento tipado del
-proveedor. No forma parte todavía de la release publicada v0.1.2.
+proveedor. El release candidate aún no está etiquetado ni publicado.
 
 ## Operación
 
@@ -57,5 +57,5 @@ Observaciones:
 - certifica una cuenta pública observada, no todas las cuentas de X;
 - `RESCAN_DEDUP_V2` puede ser ineficiente a gran escala;
 - no certifica miles de descargas, scheduler ni operación masiva/desatendida;
-- PRM-0056 `CLI-EXECUTION-REPORTING` es la siguiente mejora de backlog;
+- CLI execution reporting schema 1 está integrado y validado;
 - Telegram y WhatsApp permanecen en el roadmap futuro.

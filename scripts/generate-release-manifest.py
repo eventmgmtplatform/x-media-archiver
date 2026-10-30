@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate or validate the sanitized v0.1.2 release manifest."""
+"""Generate or validate the sanitized v0.2.0 release manifest."""
 
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ PAYLOADS = (
     "gallery_dl-1.32.18.tar.gz",
     "requirements-linux-x86_64.txt",
     "sbom.cdx.json",
-    "x_media_archiver-0.1.2-py3-none-any.whl",
-    "x_media_archiver-0.1.2.tar.gz",
-    "xma-v0.1.2-linux-x86_64.tar.gz",
+    "x_media_archiver-0.2.0-py3-none-any.whl",
+    "x_media_archiver-0.2.0.tar.gz",
+    "xma-v0.2.0-linux-x86_64.tar.gz",
 )
 
 
@@ -44,15 +44,23 @@ def build_manifest(artifact_dir: Path) -> dict[str, object]:
         artifacts.append({"name": name, "size": path.stat().st_size, "sha256": sha256(path)})
     return {
         "schema": "xma-release-manifest-v1",
-        "version": "0.1.2",
+        "product": "X Media Archiver",
+        "version": "0.2.0",
+        "supported_platform": "Linux x86_64 (Ubuntu 22.04 and 24.04)",
+        "minimum_python": "3.12",
+        "entry_point": "xma",
+        "gallery_dl_version": "1.32.18",
+        "license": "GPL-2.0-only",
+        "source_date_epoch": int(os.environ.get("SOURCE_DATE_EPOCH", "1793246400")),
+        "verification": "sha256sum -c SHA256SUMS",
         "source_sha": source_sha,
         "source_tree": source_tree,
         "uv_lock_sha256": sha256(Path("uv.lock")),
         "build": {"python": platform.python_version(), "platform": platform.platform()},
         "bundle": {
-            "name": "xma-v0.1.2-linux-x86_64.tar.gz",
+            "name": "xma-v0.2.0-linux-x86_64.tar.gz",
             "format": "tar+gzip",
-            "layout": "xma-v0.1.2-linux-x86_64/",
+            "layout": "xma-v0.2.0-linux-x86_64/",
         },
         "artifacts": artifacts,
     }
@@ -60,7 +68,7 @@ def build_manifest(artifact_dir: Path) -> dict[str, object]:
 
 def validate(artifact_dir: Path) -> None:
     manifest = json.loads((artifact_dir / "RELEASE-MANIFEST.json").read_text())
-    if manifest["schema"] != "xma-release-manifest-v1" or manifest["version"] != "0.1.2":
+    if manifest["schema"] != "xma-release-manifest-v1" or manifest["version"] != "0.2.0":
         raise SystemExit("release manifest schema/version mismatch")
     expected_sha = os.environ.get("GITHUB_SHA") or git("rev-parse", "HEAD")
     if manifest["source_sha"] != expected_sha:
