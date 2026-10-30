@@ -28,14 +28,15 @@ Status: `B06_OFFLINE_READY / PUBLIC_ACCEPTANCE_PENDING`
 
 - `uv sync --locked --all-groups`: PASS.
 - Ruff, mypy: PASS.
-- Full suite: 421 PASS; coverage 90.08%.
+- Full suite: 422 PASS; local coverage 90.08%; CI coverage 90.42%.
 - Synthetic 20→50: PAUSED / SAFETY_CAP_REACHED; no public media.
 - Provider exhaustion, low disk, max runtime, interruption, resume, migration, status,
   target-scoped reconciliation, bounded archive, download, and SINGLE_POST regressions: PASS.
 
 - CI compatibility commit: `0960ba6a4e137a2e19569be296fc591a83f9498b`.
 - Validated tree before final handoff correction: `452d2647176d96b6bc87f66809668ef4a618677e`.
-- Quality CI: `40997904602`, PASS.
+- Quality CI: `40998065915`, PASS on the final code/documentation tree before this evidence-only
+  correction.
 - Draft PR: `#14`.
 
 The final handoff-only commit and tree are reconciled in PR #14 without another functional change.
