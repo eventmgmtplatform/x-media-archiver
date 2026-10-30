@@ -2,6 +2,7 @@
 
 from email.message import Message
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -59,9 +60,53 @@ def test_empty_or_invalid_media_fails_and_removes_part(
     )
     part = tmp_path / "video.part"
 
-    with pytest.raises(DownloadError, match="media download failed"):
+    with pytest.raises(DownloadError, match="MEDIA_CONTENT_INVALID"):
         HttpMediaDownloadProvider().download("https://media.invalid/video.mp4", str(part))
     assert not part.exists()
 
     with pytest.raises(DownloadError, match="media download failed"):
         HttpMediaDownloadProvider().download("http://media.invalid/video.mp4", str(part))
+
+
+@pytest.mark.parametrize(
+    ("status", "code"),
+    [
+        (401, "MEDIA_FORBIDDEN"),
+        (403, "MEDIA_FORBIDDEN"),
+        (404, "MEDIA_URL_EXPIRED"),
+        (410, "MEDIA_URL_EXPIRED"),
+        (408, "MEDIA_TIMEOUT"),
+        (429, "MEDIA_RATE_LIMITED"),
+        (500, "MEDIA_SERVER_ERROR"),
+        (503, "MEDIA_SERVER_ERROR"),
+    ],
+)
+def test_http_status_is_sanitized(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, status: int, code: str
+) -> None:
+    def fail(request: object, timeout: int) -> object:
+        raise HTTPError("https://secret.invalid/?token=private", status, "raw", Message(), None)
+
+    monkeypatch.setattr("xma.adapters.download.http.urlopen", fail)
+    part = tmp_path / "video.part"
+    with pytest.raises(DownloadError, match=code) as captured:
+        HttpMediaDownloadProvider().download("https://media.invalid/video.mp4", str(part))
+    assert "secret" not in str(captured.value)
+    assert not part.exists()
+
+
+@pytest.mark.parametrize(
+    ("error", "code"),
+    [(TimeoutError(), "MEDIA_TIMEOUT"), (URLError("private"), "MEDIA_CONNECTION_FAILED")],
+)
+def test_transport_error_is_sanitized(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, error: OSError, code: str
+) -> None:
+    def fail(request: object, timeout: int) -> object:
+        raise error
+
+    monkeypatch.setattr("xma.adapters.download.http.urlopen", fail)
+    with pytest.raises(DownloadError, match=code):
+        HttpMediaDownloadProvider().download(
+            "https://media.invalid/video.mp4", str(tmp_path / "video.part")
+        )

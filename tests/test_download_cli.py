@@ -116,7 +116,7 @@ def test_download_json_is_stable_and_omits_ephemeral_url(
 def test_download_cli_rejects_limit_outside_one_to_ten(limit: str) -> None:
     result = runner.invoke(app, ["download", "Reuters", "--limit", limit])
     assert result.exit_code == cli.EXIT_INVALID_INPUT
-    assert "durable 'xma archive' workflow" in result.stderr
+    assert "between 1 and 10" in result.stderr
 
 
 @pytest.mark.parametrize("limit", range(1, 11))
@@ -138,7 +138,7 @@ def test_download_cli_accepts_every_limit_one_to_ten(
     assert result.exit_code == 0
 
 
-@pytest.mark.parametrize("additional", range(1, 11))
+@pytest.mark.parametrize("additional", [1, 2, 3, 5, 10, 20])
 def test_download_cli_accepts_every_add_value(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, additional: int
 ) -> None:
@@ -160,7 +160,7 @@ def test_download_cli_accepts_every_add_value(
     assert captured == [additional]
 
 
-@pytest.mark.parametrize(("existing", "additional"), [(5, 5), (0, 10)])
+@pytest.mark.parametrize(("existing", "additional"), [(5, 5), (0, 10), (0, 20)])
 def test_download_cli_additive_total_is_absolute_target(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, existing: int, additional: int
 ) -> None:
@@ -172,7 +172,16 @@ def test_download_cli_additive_total_is_absolute_target(
     def execute(self: DownloadService, request: object, *args: object) -> DownloadSummary:
         captured.append(request.limit)  # type: ignore[attr-defined]
         return DownloadSummary(
-            "https://x.com/Reuters", 10, 0, existing, 0, "run", (), existing, existing, True
+            "https://x.com/Reuters",
+            existing + additional,
+            0,
+            existing,
+            0,
+            "run",
+            (),
+            existing,
+            existing,
+            True,
         )
 
     monkeypatch.setattr(DownloadService, "execute_incremental", execute)
@@ -181,11 +190,11 @@ def test_download_cli_additive_total_is_absolute_target(
         ["download", "Reuters", "--add", str(additional), "--repository", str(tmp_path / "repo")],
     )
     assert result.exit_code == 0
-    assert captured == [10]
+    assert captured == [existing + additional]
 
 
-@pytest.mark.parametrize(("existing", "additional"), [(5, 6), (10, 1)])
-def test_download_cli_rejects_additive_total_above_ten_before_provider_or_state(
+@pytest.mark.parametrize(("existing", "additional"), [(5, 16), (20, 1)])
+def test_download_cli_rejects_additive_total_above_twenty_before_provider_or_state(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     existing: int,
@@ -203,7 +212,7 @@ def test_download_cli_rejects_additive_total_above_ten_before_provider_or_state(
         ["download", "Reuters", "--add", str(additional), "--repository", str(repository)],
     )
     assert result.exit_code == cli.EXIT_INVALID_INPUT
-    assert "durable 'xma archive' workflow" in result.stderr
+    assert "must not exceed 20" in result.stderr
     assert not repository.exists()
 
 

@@ -5,7 +5,37 @@ Versioning.
 
 ## [Unreleased]
 
-No changes yet.
+## [0.1.2] - 2026-10-29
+
+### Added
+
+- Sanitized media transport classifications, bounded URL renewal, additive downloads through 20,
+  and an explicit opt-in public acceptance harness.
+
+### Changed
+
+- `download --limit` remains bounded to 1–10, while `download --add` accepts 1–20 and the verified
+  repository total is capped at twenty. Durable `archive --limit` is also capped at twenty.
+- Discovery timeout now measures active provider/IPC wait and excludes time spent downloading,
+  hashing, writing sidecars, and persisting a yielded candidate.
+
+### Fixed
+
+- Continue scanning later identities after a sanitized media-transfer failure without retrying the
+  failed identity inside the same command.
+- Drain pending IPC messages before classifying a provider timeout.
+
+### Security
+
+- Persist only constant MEDIA_* failure classifications; do not expose raw exceptions, signed
+  media URLs, cookies, headers, profile selectors, or personal paths.
+
+### Validation observations
+
+- Public acceptance completed 0→5→10→20 with provider-best media, integral catalogs, stable prior
+  hashes, and no staging residue.
+- The public run did not produce a DownloadError. Continuation after a failed candidate is covered
+  by deterministic offline regression tests, not claimed as publicly observed.
 
 ## [0.1.1] - 2026-10-29
 
@@ -76,6 +106,7 @@ No changes yet.
 - Linux x86_64 only; Windows and macOS are not certified.
 - Provider availability remains external to XMA.
 
-[Unreleased]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/eventmgmtplatform/x-media-archiver/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.0

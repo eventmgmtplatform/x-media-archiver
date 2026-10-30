@@ -282,17 +282,17 @@ class IncrementalGalleryDlDiscoveryProvider:
         try:
             while terminal is None:
                 available = deadline - time.monotonic()
-                if available <= 0:
-                    terminal = (
-                        "COMPLETED"
-                        if delivered >= remaining
-                        else "PROVIDER_TIMEOUT"
-                        if process.is_alive()
-                        else "WORKER_FAILED"
-                    )
-                    break
                 try:
-                    if not receiver.poll(min(available, 0.25)):
+                    if not receiver.poll(min(max(available, 0.0), 0.25)):
+                        if available <= 0:
+                            terminal = (
+                                "COMPLETED"
+                                if delivered >= remaining
+                                else "PROVIDER_TIMEOUT"
+                                if process.is_alive()
+                                else "WORKER_FAILED"
+                            )
+                            break
                         if not process.is_alive():
                             terminal = "COMPLETED" if delivered >= remaining else "WORKER_FAILED"
                         continue
@@ -325,7 +325,11 @@ class IncrementalGalleryDlDiscoveryProvider:
                     )
                     _validate_target_batch(target, batch)
                     delivered += batch.asset_count
-                    yield batch
+                    suspended_at = time.monotonic()
+                    try:
+                        yield batch
+                    finally:
+                        deadline += max(0.0, time.monotonic() - suspended_at)
                 elif kind == "terminal" and message.get("status") in {
                     "COMPLETED",
                     *_TRANSIENT_TERMINALS,

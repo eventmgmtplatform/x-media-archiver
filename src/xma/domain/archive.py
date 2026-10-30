@@ -33,8 +33,8 @@ class ArchiveRequest:
     def __post_init__(self) -> None:
         if self.target.kind is not DiscoveryTargetKind.PROFILE:
             raise DomainError("archive accepts profile targets only")
-        if not 1 <= self.requested_total <= 10:
-            raise DomainError("archive limit must be between 1 and 10")
+        if not 1 <= self.requested_total <= 20:
+            raise DomainError("archive limit must be between 1 and 20")
         if not 1 <= self.batch_size <= 5:
             raise DomainError("archive batch size must be between 1 and 5")
         if not 1 <= self.request_interval_seconds <= 60:

@@ -6,14 +6,14 @@ from xma.domain.archive import ArchiveRequest
 from xma.domain.errors import DomainError
 
 
-@pytest.mark.parametrize("limit", [1, 10])
+@pytest.mark.parametrize("limit", [1, 10, 20])
 def test_archive_request_accepts_boundary_totals(limit: int) -> None:
     assert ArchiveRequest.create("@BBCWorld", limit, 2, 1).requested_total == limit
 
 
-@pytest.mark.parametrize("limit", [0, 11])
+@pytest.mark.parametrize("limit", [0, 21])
 def test_archive_request_rejects_invalid_totals(limit: int) -> None:
-    with pytest.raises(DomainError, match="between 1 and 10"):
+    with pytest.raises(DomainError, match="between 1 and 20"):
         ArchiveRequest.create("BBCWorld", limit, 2, 1)
 
 

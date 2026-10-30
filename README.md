@@ -1,14 +1,13 @@
-# X Media Archiver 0.1.1
+# X Media Archiver 0.1.2 release candidate
 
 Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
 a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
 ## Version status
 
-Version 0.1.1 is the current published bounded release. Interactive download and durable archive
-both enforce a repository maximum of ten videos; moving branches are development sources, not
-releases, and the product is not certified for bulk operation. Download the immutable assets from
-the [GitHub Release v0.1.1](https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.1).
+Version 0.1.1 remains the current published release. Version 0.1.2 is a draft release candidate:
+interactive download and durable archive enforce a repository maximum of twenty videos, but no
+v0.1.2 tag or GitHub Release exists yet and the product is not certified for bulk operation.
 
 ## Supported platforms
 
@@ -19,11 +18,11 @@ macOS are not certified. A local filesystem with `flock` is required for durable
 
 Recommended release bundle:
 
-Download the immutable v0.1.1 release assets, verify `SHA256SUMS`, and then extract the bundle:
+For RC validation, verify `SHA256SUMS` and extract the generated candidate bundle:
 
 ```bash
-tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
-cd xma-v0.1.1-linux-x86_64
+tar -xzf xma-v0.1.2-linux-x86_64.tar.gz
+cd xma-v0.1.2-linux-x86_64
 ./xma --help
 ./xma version
 ```
@@ -32,17 +31,18 @@ The published bundle does not require a system Python or `uv`.
 
 Advanced source installation:
 
-Use the immutable published `v0.1.1` tag:
+Until publication is separately authorized, source validation uses the governed RC commit on
+`release/v0.1.2`; do not describe it as a published tag:
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach v0.1.1
+git checkout --detach release/v0.1.2
 uv sync --locked --all-groups
 uv run xma version
 ```
 
-Advanced wheel installation uses the locally built `x_media_archiver-0.1.1-py3-none-any.whl` in an
+Advanced wheel installation uses the locally built `x_media_archiver-0.1.2-py3-none-any.whl` in an
 isolated Python 3.12 environment. See the local CLI runbook.
 
 ## Quick start
@@ -102,14 +102,13 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 
 ## Known limitations
 
-- Download accepts absolute `--limit 1..10` or additive `--add 1..10`; the resulting verified total
-  cannot exceed ten. Larger future operations belong to durable `archive`, also currently capped
-  at ten.
+- Download accepts absolute `--limit 1..10` or additive `--add 1..20`; the resulting verified total
+  cannot exceed twenty in v0.1.2; `--add` accepts 1..20. Durable `archive` is also capped at twenty.
 - No certified bulk or unattended operation.
 - `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
 - Provider availability and authenticated X behavior can change independently of XMA.
-- Verify the published `v0.1.1` tag and `SHA256SUMS`; do not install an arbitrary moving branch.
+- Verify the RC `SHA256SUMS` and `RELEASE-MANIFEST.json`; do not treat the candidate as published.
 
 ## Documentation
 

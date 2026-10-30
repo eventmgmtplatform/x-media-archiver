@@ -1,19 +1,18 @@
-# XMA v0.1.1 quick start
+# XMA v0.1.2 release-candidate quick start
 
 ## Install and verify
 
-Download the immutable assets from the published
-[GitHub Release v0.1.1](https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.1),
-verify `SHA256SUMS`, extract the Linux x86_64 bundle, and verify the embedded CLI:
+For RC validation, obtain the governed candidate assets, verify `SHA256SUMS`, extract the Linux
+x86_64 bundle, and verify the embedded CLI. The candidate is not yet a tag or GitHub Release:
 
 ```bash
-tar -xzf xma-v0.1.1-linux-x86_64.tar.gz
-cd xma-v0.1.1-linux-x86_64
+tar -xzf xma-v0.1.2-linux-x86_64.tar.gz
+cd xma-v0.1.2-linux-x86_64
 ./xma --help
 ./xma version --short
 ```
 
-The version must be `0.1.1`. The bundle needs neither Python nor `uv`. Before extraction, verify
+The version must be `0.1.2`. The bundle needs neither Python nor `uv`. Before extraction, verify
 the distributed `SHA256SUMS` from the parent directory with `sha256sum -c SHA256SUMS`.
 
 ## Firefox authentication
@@ -61,10 +60,10 @@ links, extra path elements, author mismatches, and post-ID mismatches fail close
 
 ## Durable archive, status, and resumption
 
-Archive progressively up to the supported maximum of ten videos:
+Archive progressively up to the supported maximum of twenty videos:
 
 ```bash
-./xma archive @HANDLE --limit 10 --batch-size 2 \
+./xma archive @HANDLE --limit 20 --batch-size 2 \
   --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile PROFILE_NAME \
   --request-interval 2 --discovery-timeout 30
@@ -99,8 +98,8 @@ cataloged files.
 ## Limits and common errors
 
 - Linux x86_64 only; Ubuntu 22.04 and 24.04 are tested.
-- Download accepts `--limit 1..10` or `--add 1..10`, never both; the resulting repository total
-  cannot exceed ten. Durable archive remains the checkpointed workflow and is also capped at ten.
+- Download accepts `--limit 1..10` or `--add 1..20`, never both; the resulting repository total
+  cannot exceed twenty in v0.1.2; additive requests accept 1..20. Archive is capped at twenty.
 - No scheduler, daemon, mass operation, remote cursor, GUI, API service, yt-dlp, or FFmpeg.
 - Exit `2`: invalid input; `3`: authentication/content restriction; `4`: rate limit; `5`:
   provider/contract failure; `6`: catalog failure; `7`: missing target/run; `8`: transient provider

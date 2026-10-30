@@ -136,6 +136,8 @@ class DownloadService:
         run_id = self._run_id_factory()
         started_at = self._clock()
         downloaded = 0
+        failed = 0
+        attempted_failed: set[str] = set()
         if existing_before >= request.limit:
             self._write_manifest(
                 manifest_request,
@@ -170,7 +172,7 @@ class DownloadService:
             stream = provider.candidates(
                 normalized,
                 request.limit - len(identities),
-                frozenset(identities),
+                frozenset(identities | attempted_failed),
                 timeout_seconds,
                 max_scan,
             )
@@ -179,7 +181,7 @@ class DownloadService:
                     for post in batch.posts:
                         for asset in post.assets:
                             identity = media_identity(asset.post_id, asset.media_index)
-                            if identity in identities:
+                            if identity in identities or identity in attempted_failed:
                                 continue
                             self._repository.mkdir(parents=True, exist_ok=True)
                             candidate_run = self._run_id_factory()
@@ -194,7 +196,9 @@ class DownloadService:
                                 )
                             except DownloadError as error:
                                 last_error = error
-                                break
+                                attempted_failed.add(identity)
+                                failed += 1
+                                continue
                             identities.add(identity)
                             manifest_artifacts.append(result)
                             downloaded += 1
@@ -207,7 +211,7 @@ class DownloadService:
                                 manifest_artifacts,
                                 downloaded,
                                 existing_before,
-                                0,
+                                failed,
                                 existing_before=existing_before,
                                 complete=len(identities) >= request.limit,
                             )
@@ -215,11 +219,7 @@ class DownloadService:
                                 break
                         if len(identities) >= request.limit:
                             break
-                        if isinstance(last_error, DownloadError):
-                            break
                     if len(identities) >= request.limit:
-                        break
-                    if isinstance(last_error, DownloadError):
                         break
             except DiscoveryError as error:
                 last_error = error
@@ -239,7 +239,7 @@ class DownloadService:
             manifest_artifacts,
             downloaded,
             existing_before,
-            0,
+            failed,
             existing_before=existing_before,
             complete=complete,
             exhausted=not complete and not isinstance(last_error, DownloadError),
@@ -253,7 +253,7 @@ class DownloadService:
             request.limit,
             downloaded,
             existing_before,
-            0,
+            failed,
             run_id,
             tuple(manifest_artifacts),
             existing_before,
@@ -562,24 +562,36 @@ class DownloadService:
                 ),
                 False,
             )
-        except DownloadError:
+        except DownloadError as error:
             self._cleanup(directory, part, sidecar_tmp, sidecar, final)
-            self._fail_job(job)
+            self._fail_job(job, str(error))
             raise
         except (OSError, ValueError) as error:
             self._cleanup(directory, part, sidecar_tmp, sidecar, final)
-            self._fail_job(job)
+            self._fail_job(job, "MEDIA_DOWNLOAD_FAILED")
             raise DownloadError("media download failed") from error
 
     def _put_job(self, job: DownloadJob) -> None:
         with self._unit_of_work_factory() as unit:
             unit.catalog.put_download_job(job)
 
-    def _fail_job(self, job: DownloadJob) -> None:
+    def _fail_job(self, job: DownloadJob, code: str = "MEDIA_DOWNLOAD_FAILED") -> None:
+        allowed = {
+            "MEDIA_URL_EXPIRED",
+            "MEDIA_FORBIDDEN",
+            "MEDIA_NOT_FOUND",
+            "MEDIA_RATE_LIMITED",
+            "MEDIA_TIMEOUT",
+            "MEDIA_SERVER_ERROR",
+            "MEDIA_CONNECTION_FAILED",
+            "MEDIA_CONTENT_INVALID",
+            "MEDIA_DOWNLOAD_FAILED",
+        }
+        sanitized = code if code in allowed else "MEDIA_DOWNLOAD_FAILED"
         failed = job.transition(
             DownloadStatus.FAILED_FINAL,
             self._clock(),
-            error_code="DOWNLOAD_FAILED",
+            error_code=sanitized,
             error_message="media download failed",
         )
         self._put_job(failed)

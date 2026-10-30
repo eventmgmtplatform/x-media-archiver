@@ -98,6 +98,21 @@ class FailOnceMedia(FixtureMedia):
         return super().download(source_url, part_path)
 
 
+class SelectiveFailMedia(FixtureMedia):
+    def __init__(self, failed_indices: set[int]) -> None:
+        super().__init__()
+        self.failed_indices = failed_indices
+        self.calls: list[int] = []
+
+    def download(self, source_url: str, part_path: str) -> DownloadedArtifact:
+        index = int(source_url.rsplit("-", 1)[-1].split(".", 1)[0])
+        self.calls.append(index)
+        if index in self.failed_indices:
+            Path(part_path).write_bytes(b"discarded-failure")
+            raise DownloadError("MEDIA_URL_EXPIRED")
+        return super().download(source_url, part_path)
+
+
 def _service(repository: Path, media: FixtureMedia) -> DownloadService:
     database = repository / "catalog.sqlite3"
     return DownloadService(
@@ -389,18 +404,92 @@ def test_failed_final_without_artifact_retries_and_increments_attempts(tmp_path:
 def test_one_bounded_rediscovery_recovers_transient_media_failure(tmp_path: Path) -> None:
     repository = tmp_path / "fresh-url-recovery"
     media = FailOnceMedia()
-    provider = IncrementalFixture([[0], [0]])
+    provider = IncrementalFixture([[0], [1]])
     result = _incremental_service(repository, media).execute_incremental(
         DownloadRequest("Reuters", 1), provider, 30, 2, lambda message: None
     )
     assert result.total_after == 1
     assert media.calls == 2
     assert len(provider.calls) == 2
+    assert provider.calls[1][1] == frozenset({"9000:0"})
     with sqlite3.connect(repository / "catalog.sqlite3") as connection:
-        assert connection.execute("SELECT status, attempts FROM download_jobs").fetchone() == (
-            "COMPLETED",
-            2,
+        assert connection.execute(
+            "SELECT COUNT(*) FROM download_jobs WHERE status='FAILED_FINAL'"
+        ).fetchone() == (1,)
+        assert connection.execute(
+            "SELECT COUNT(*) FROM download_jobs WHERE status='COMPLETED'"
+        ).fetchone() == (1,)
+
+
+def test_incremental_continues_after_failed_candidate_to_reach_five(tmp_path: Path) -> None:
+    repository = tmp_path / "continue-after-failure"
+    media = SelectiveFailMedia({1})
+    provider = IncrementalFixture([[0, 1, 2, 3, 4, 5]])
+
+    result = _incremental_service(repository, media).execute_incremental(
+        DownloadRequest("Reuters", 5), provider, 30, 1, lambda message: None
+    )
+
+    assert result.total_after == 5
+    assert result.failed_count == 1
+    assert result.complete is True
+    assert media.calls == [0, 1, 2, 3, 4, 5]
+    with sqlite3.connect(repository / "catalog.sqlite3") as connection:
+        assert connection.execute("SELECT COUNT(*) FROM artifacts").fetchone() == (5,)
+        assert connection.execute(
+            "SELECT COUNT(*) FROM download_jobs WHERE status='FAILED_FINAL'"
+        ).fetchone() == (1,)
+    assert not list(repository.rglob("*.part"))
+    assert not list(repository.rglob("*.tmp"))
+
+
+def test_failed_identity_is_excluded_from_second_discovery_attempt(tmp_path: Path) -> None:
+    repository = tmp_path / "failed-exclusion"
+    media = SelectiveFailMedia({1})
+    provider = IncrementalFixture([[0, 1], [1, 2]])
+
+    result = _incremental_service(repository, media).execute_incremental(
+        DownloadRequest("Reuters", 2), provider, 30, 2, lambda message: None
+    )
+
+    assert result.complete is True
+    assert result.failed_count == 1
+    assert media.calls == [0, 1, 2]
+    assert provider.calls[1][1] == frozenset({"9000:0", "9001:0"})
+
+
+def test_two_failed_candidates_and_later_candidates_complete(tmp_path: Path) -> None:
+    repository = tmp_path / "two-failures"
+    media = SelectiveFailMedia({1, 3})
+    provider = IncrementalFixture([[0, 1, 2, 3, 4, 5, 6]])
+
+    result = _incremental_service(repository, media).execute_incremental(
+        DownloadRequest("Reuters", 5), provider, 30, 1, lambda message: None
+    )
+
+    assert result.complete is True
+    assert result.failed_count == 2
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["failed_count"] == 2
+    assert manifest["total_after"] == 5
+
+
+def test_provider_exhaustion_after_failure_preserves_partial_progress(tmp_path: Path) -> None:
+    repository = tmp_path / "failure-exhaustion"
+    media = SelectiveFailMedia({1})
+    provider = IncrementalFixture([[0, 1]])
+
+    with pytest.raises(DownloadError, match="MEDIA_URL_EXPIRED"):
+        _incremental_service(repository, media).execute_incremental(
+            DownloadRequest("Reuters", 3), provider, 30, 1, lambda message: None
         )
+
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["complete"] is False
+    assert manifest["failed_count"] == 1
+    assert manifest["total_after"] == 1
+    assert not list(repository.rglob("*.part"))
+    assert not list(repository.rglob("*.tmp"))
 
 
 def test_failed_final_with_unexpected_file_remains_conflict(tmp_path: Path) -> None:
@@ -439,7 +528,7 @@ def test_catalog_filesystem_conflict_fails_closed(tmp_path: Path) -> None:
         service.execute(DownloadRequest("Reuters", 1))
 
 
-@pytest.mark.parametrize("limit", [0, 11])
+@pytest.mark.parametrize("limit", [0, 21])
 def test_download_request_rejects_limit_outside_vertical_slice(limit: int) -> None:
-    with pytest.raises(DomainError, match="between 1 and 10"):
+    with pytest.raises(DomainError, match="between 1 and 20"):
         DownloadRequest("Reuters", limit)

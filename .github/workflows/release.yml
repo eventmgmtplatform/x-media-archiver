@@ -36,4 +36,4 @@ jobs:
       - name: Create draft only
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ inputs.tag }}" release-artifacts/* --draft --verify-tag --title "XMA ${{ inputs.tag }}" --notes-file docs/release/XMA-CLI-001_RELEASE-NOTES_v0.1.1.md
+        run: gh release create "${{ inputs.tag }}" release-artifacts/* --draft --verify-tag --title "XMA ${{ inputs.tag }}" --notes-file docs/release/XMA-CLI-001_RELEASE-NOTES_v0.1.2.md
