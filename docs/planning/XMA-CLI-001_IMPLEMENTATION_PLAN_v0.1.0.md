@@ -333,3 +333,11 @@ PRM-0044 limita el cierre a reconciliación documental, CI, squash y limpieza de
 v0.1.2. GitHub Pages/Actions continúa pendiente de habilitación; Telegram y WhatsApp permanecen en
 el roadmap futuro; soporte masivo, scheduler y cursor remoto eficiente siguen diferidos. v0.2.0 no
 ha comenzado y no se infiere por este cierre.
+
+## PRM-0056 — CLI execution reporting
+
+An isolated post-B06 development branch adds typed, presentation-independent execution reports for
+`download`, `archive`, and offline `status`. Existing JSON keys and exit codes remain compatible;
+schema 1 is additive, exact-one downloads identify only the new artifact, aggregate runs remain
+compact, and failures expose durable progress without raw exceptions or secrets. Validation is
+offline only and ends at `CLI_REPORTING_OFFLINE_VALIDATED / PUBLIC_ACCEPTANCE_PENDING`.

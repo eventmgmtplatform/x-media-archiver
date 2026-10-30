@@ -65,3 +65,10 @@ reanudación.
 
 Consulte [requisitos](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/docs/requirements/XMA-CLI-001_SYSTEM-REQUIREMENTS_v1.0.0.md)
 y el [runbook](https://github.com/eventmgmtplatform/x-media-archiver/blob/main/docs/operations/XMA-CLI-001_LOCAL-CLI-RUNBOOK_v0.1.0.md).
+
+## Reportes de ejecución
+
+La interfaz de desarrollo resume `download`, `archive` y `status` de forma humana y ofrece un bloque
+JSON aditivo `report` (schema 1). Una descarga nueva única incluye detalle público y ruta relativa;
+dos o más videos usan conteos agregados. Los fallos JSON se emiten por stderr con código estable,
+progreso durable y resumibilidad, sin secretos, rutas personales ni excepciones del proveedor.

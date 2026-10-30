@@ -347,6 +347,12 @@ class DownloadService:
                         str(sidecar_data.get("extension", absolute.suffix)),
                         sidecar_data.get("width"),
                         sidecar_data.get("height"),
+                        post_id=str(sidecar_data.get("post_id", media.post_id)),
+                        media_index=sidecar_data.get("media_index", media.media_index),
+                        published_at=sidecar_data.get("published_at"),
+                        duration_ms=sidecar_data.get("duration_ms", media.duration_ms),
+                        media_type=sidecar_data.get("media_type", media.media_type.value),
+                        job_status=artifact_job.status.value,
                     )
                 )
         return identities, manifest_artifacts
@@ -574,6 +580,12 @@ class DownloadService:
                     downloaded.extension,
                     asset.width,
                     asset.height,
+                    post_id=post.post_id,
+                    media_index=asset.media_index,
+                    published_at=post.published_at.isoformat(),
+                    duration_ms=asset.duration_ms,
+                    media_type=asset.media_type.value,
+                    job_status=completed.status.value,
                 ),
                 False,
             )
@@ -682,6 +694,13 @@ def _manifest_artifact(
     extension: str,
     width: object,
     height: object,
+    *,
+    post_id: object = None,
+    media_index: object = None,
+    published_at: object = None,
+    duration_ms: object = None,
+    media_type: object = None,
+    job_status: object = None,
 ) -> dict[str, object]:
     return {
         "asset_id": asset_id,
@@ -694,4 +713,10 @@ def _manifest_artifact(
         "width": width,
         "height": height,
         "quality_policy": "provider-best",
+        "post_id": post_id,
+        "media_index": media_index,
+        "published_at": published_at,
+        "duration_ms": duration_ms,
+        "media_type": media_type,
+        "job_status": job_status,
     }
