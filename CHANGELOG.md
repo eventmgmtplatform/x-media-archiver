@@ -5,7 +5,11 @@ Versioning.
 
 ## [Unreleased]
 
+No changes yet.
+
 ## [0.1.2] - 2026-10-29
+
+Public release: <https://github.com/eventmgmtplatform/x-media-archiver/releases/tag/v0.1.2>
 
 ### Added
 

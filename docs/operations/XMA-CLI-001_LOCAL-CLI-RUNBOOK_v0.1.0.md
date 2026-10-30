@@ -1,4 +1,4 @@
-# XMA-CLI-001 — Runbook local de la CLI v0.1.2 RC
+# XMA-CLI-001 — Runbook local de la CLI v0.1.2
 
 ## Alcance y requisitos
 
@@ -12,21 +12,20 @@ desatendida, `yt-dlp`, FFmpeg, miniaturas ni `ficha.md`.
 
 ## Método A — ejecución desde source
 
-Para validar el RC, clone el repositorio y fije el commit gobernado de `release/v0.1.2`. El tag no
-existe todavía y no debe inferirse como publicado.
+Para validar la fuente publicada, clone el repositorio y fije el tag inmutable `v0.1.2`.
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach release/v0.1.2
+git checkout --detach v0.1.2
 git rev-parse HEAD
 uv sync --locked --all-groups
 uv run xma --help
 uv run xma version
 ```
 
-Compare el HEAD y tree con `RELEASE-MANIFEST.json`; no exija un tag antes de la decisión de
-publicación.
+Compare el HEAD y tree con `RELEASE-MANIFEST.json` y verifique el objeto tag anotado antes de usar
+la fuente.
 
 ## Método B — wheel local en un entorno virtual
 

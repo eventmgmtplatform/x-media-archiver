@@ -22,3 +22,16 @@ Postrelease verification downloads the published artifacts, checks hashes, extra
 runs help/version/status offline. Never rewrite a published tag. For a faulty release, withdraw or
 mark artifacts, document impact, revert safely on main and prepare a patch release. Repository
 catalog rollback uses backups; migrations are never reversed in place.
+
+## Published v0.1.2
+
+PRM-0042 integrated PR #12 by squash at `d595bd61e2d1642b6d6ba889de63b29d98307b85`,
+preserved RC tree `c0c3b975a323484731795f0781e74c40cee6b378`, and published the annotated
+`v0.1.2` tag. PRM-0043 published GitHub Release 428531308 on 2026-10-30. Its ten assets,
+checksums, standalone bundle, wheel, sdist, manifest, SBOM, license, requirements, and gallery-dl
+source were publicly verified. PyPI remains unpublished.
+
+Product state is `V0.1.2_RELEASED / POSTRELEASE_VERIFIED`. The public acceptance did not encounter
+a DownloadError; continuation after that condition is supported by deterministic offline tests.
+PRM-0044 limits closure to documentation and branch cleanup after CI and squash. Pages remains
+administratively pending.

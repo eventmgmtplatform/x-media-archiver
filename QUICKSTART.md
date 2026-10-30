@@ -1,9 +1,9 @@
-# XMA v0.1.2 release-candidate quick start
+# XMA v0.1.2 quick start
 
 ## Install and verify
 
-For RC validation, obtain the governed candidate assets, verify `SHA256SUMS`, extract the Linux
-x86_64 bundle, and verify the embedded CLI. The candidate is not yet a tag or GitHub Release:
+Obtain the published v0.1.2 assets from the GitHub Release, verify `SHA256SUMS`, extract the Linux
+x86_64 bundle, and verify the embedded CLI:
 
 ```bash
 tar -xzf xma-v0.1.2-linux-x86_64.tar.gz

@@ -1,13 +1,13 @@
-# X Media Archiver 0.1.2 release candidate
+# X Media Archiver 0.1.2
 
 Local-first Linux CLI for discovering, cataloging and downloading bounded public video from X into
 a normalized repository with SQLite metadata, sidecars and integrity hashes.
 
 ## Version status
 
-Version 0.1.1 remains the current published release. Version 0.1.2 is a draft release candidate:
-interactive download and durable archive enforce a repository maximum of twenty videos, but no
-v0.1.2 tag or GitHub Release exists yet and the product is not certified for bulk operation.
+Version 0.1.2 is the current published release. Interactive download and durable archive enforce a
+repository maximum of twenty videos. The release remains intentionally bounded and is not
+certified for bulk or unattended operation.
 
 ## Supported platforms
 
@@ -18,7 +18,7 @@ macOS are not certified. A local filesystem with `flock` is required for durable
 
 Recommended release bundle:
 
-For RC validation, verify `SHA256SUMS` and extract the generated candidate bundle:
+Download the published v0.1.2 assets, verify `SHA256SUMS`, and extract the standalone bundle:
 
 ```bash
 tar -xzf xma-v0.1.2-linux-x86_64.tar.gz
@@ -31,13 +31,12 @@ The published bundle does not require a system Python or `uv`.
 
 Advanced source installation:
 
-Until publication is separately authorized, source validation uses the governed RC commit on
-`release/v0.1.2`; do not describe it as a published tag:
+For source validation, check out the immutable published tag:
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach release/v0.1.2
+git checkout --detach v0.1.2
 uv sync --locked --all-groups
 uv run xma version
 ```
@@ -108,7 +107,7 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 - `RESCAN_DEDUP_V1` rescans and deduplicates; it is not an efficient remote cursor for thousands.
 - No scheduler, daemon, GUI, API service, Redis, Docker runtime, yt-dlp or FFmpeg integration.
 - Provider availability and authenticated X behavior can change independently of XMA.
-- Verify the RC `SHA256SUMS` and `RELEASE-MANIFEST.json`; do not treat the candidate as published.
+- Verify the published `SHA256SUMS` and `RELEASE-MANIFEST.json` before installation.
 
 ## Documentation
 
