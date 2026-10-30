@@ -1,8 +1,8 @@
-# XMA-CLI-001 — Runbook local de la CLI v0.1.1
+# XMA-CLI-001 — Runbook local de la CLI v0.1.2 RC
 
 ## Alcance y requisitos
 
-Esta versión opera localmente y admite como máximo diez videos. Requiere Linux, Python 3.11 o
+Esta versión opera localmente y admite como máximo veinte videos. Requiere Linux, Python 3.11 o
 superior, `uv`, espacio suficiente y acceso de escritura al repositorio normalizado. Las
 operaciones reales autenticadas requieren Firefox local ya autenticado; use solo el nombre de
 perfil como `<LOCAL_PROFILE>`. No exporte cookies ni publique rutas, sesiones o URLs multimedia.
@@ -12,20 +12,21 @@ desatendida, `yt-dlp`, FFmpeg, miniaturas ni `ficha.md`.
 
 ## Método A — ejecución desde source
 
-Clone el repositorio y fije el tag inmutable publicado `v0.1.1`. No opere desde una rama móvil.
+Para validar el RC, clone el repositorio y fije el commit gobernado de `release/v0.1.2`. El tag no
+existe todavía y no debe inferirse como publicado.
 
 ```bash
 git clone https://github.com/eventmgmtplatform/x-media-archiver.git
 cd x-media-archiver
-git checkout --detach v0.1.1
+git checkout --detach release/v0.1.2
 git rev-parse HEAD
 uv sync --locked --all-groups
 uv run xma --help
 uv run xma version
 ```
 
-Confirme que `git describe --exact-match --tags HEAD` devuelve `v0.1.1` y compare el HEAD con el
-manifest de distribución.
+Compare el HEAD y tree con `RELEASE-MANIFEST.json`; no exija un tag antes de la decisión de
+publicación.
 
 ## Método B — wheel local en un entorno virtual
 
@@ -35,13 +36,13 @@ una instalación local aislada:
 ```bash
 uv build
 uv venv .venv-xma --python 3.12
-uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.1-py3-none-any.whl
+uv pip install --python .venv-xma/bin/python dist/x_media_archiver-0.1.2-py3-none-any.whl
 .venv-xma/bin/xma --help
 .venv-xma/bin/xma version
 ```
 
 Para una instalación reproducible aislada, prepare primero Python 3.12 y las dependencias exactas
-de `uv.lock`; no instale XMA desde PyPI o desde una rama distinta. El máximo sigue siendo diez y
+de `uv.lock`; no instale XMA desde PyPI o desde una rama distinta. El máximo es veinte y
 este wheel no certifica operación masiva.
 
 Use un repositorio distinto por perfil. No mezcle handles en la misma ruta.
@@ -65,10 +66,10 @@ uv run xma download @HANDLE --add 5 --repository ./repository-HANDLE \
   --quality best --max-scan 100 --auth-browser firefox --auth-profile <LOCAL_PROFILE>
 ```
 
-Archivar durablemente hasta diez sobre el mismo repositorio:
+Archivar durablemente hasta veinte sobre el mismo repositorio:
 
 ```bash
-uv run xma archive @HANDLE --limit 10 --batch-size 2 \
+uv run xma archive @HANDLE --limit 20 --batch-size 2 \
   --repository ./repository-HANDLE \
   --auth-browser firefox --auth-profile <LOCAL_PROFILE> \
   --request-interval 2 --discovery-timeout 30

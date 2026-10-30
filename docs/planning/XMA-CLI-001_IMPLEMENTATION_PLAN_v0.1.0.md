@@ -267,3 +267,17 @@ de gallery-dl fueron verificados públicamente. PyPI permanece sin publicar.
 Estado de producto: `V0.1.1_RELEASED / POSTRELEASE_VERIFIED`. PRM-0037 limita el cierre a
 documentación y ramas obsoletas. GitHub Pages permanece pendiente de activación administrativa y
 no afecta la disponibilidad del Release.
+
+## Release candidate v0.1.2
+
+PRM-0038 a PRM-0040 entregaron clasificación MEDIA_* sanitizada, renovación acotada, continuación
+tras candidatos fallidos, deadline de discovery activo, `download --add 1..20`, total máximo 20 y
+`archive --limit 20`. La aceptación pública única completó 0→5→10→20 con integridad, provider-best,
+hashes previos estables y cero residuos. No ocurrió DownloadError en la prueba pública; esa frontera
+se valida exclusivamente con fixtures offline deterministas.
+
+Leonel declaró el alcance `VALIDATED_WITH_OBSERVATIONS` y PRM-0041 autoriza preparar el candidato
+v0.1.2: metadata, documentos, bundle standalone, wheel, sdist, SBOM, corresponding source,
+`RELEASE-MANIFEST.json`, `SHA256SUMS`, seguridad y portabilidad Ubuntu 22.04/24.04. La rama
+`release/v0.1.2` solo puede avanzar fast-forward al mismo commit RC. PR #12 permanece draft; merge,
+tag, GitHub Release, PyPI y cualquier nueva operación pública continúan prohibidos.

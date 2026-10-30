@@ -34,8 +34,8 @@ jobs:
         run: uv run python scripts/verify-release-metadata.py
       - name: Inspect distributions
         run: |
-          unzip -l dist/x_media_archiver-0.1.1-py3-none-any.whl
-          tar -tzf dist/x_media_archiver-0.1.1.tar.gz
+          unzip -l dist/x_media_archiver-0.1.2-py3-none-any.whl
+          tar -tzf dist/x_media_archiver-0.1.2.tar.gz
           ! unzip -l dist/*.whl | grep -Ei 'cookies|\.sqlite|\.mp4|\.env'
       - name: Dependency vulnerability scan
         run: |

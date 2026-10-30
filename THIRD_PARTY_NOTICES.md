@@ -1,6 +1,6 @@
 # Third-party notices
 
-This inventory describes the v0.1.0 distribution composition; it is not legal advice. Exact
+This inventory describes the v0.1.2 distribution composition; it is not legal advice. Exact
 resolved versions are recorded in `requirements-linux-x86_64.txt` and the CycloneDX SBOM.
 
 | Component | Version/range | License observed | Official source |
