@@ -5,6 +5,7 @@ rewriting historical evidence.
 
 ## Release and postrelease records
 
+- [CLI reporting public acceptance — HND-0016 v0.2.0](XMA-CLI-001_HND-0016_CLI-EXECUTION-REPORTING_v0.2.0.md)
 - [CLI invocation reporting semantics — HND-0016 v0.1.1](XMA-CLI-001_HND-0016_CLI-EXECUTION-REPORTING_v0.1.1.md)
 - [CLI execution reporting — HND-0016 v0.1.0](XMA-CLI-001_HND-0016_CLI-EXECUTION-REPORTING_v0.1.0.md)
 - [B06 evidence reconciliation and certification — HND-0015 v0.7.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.7.0.md)
