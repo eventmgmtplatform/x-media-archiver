@@ -60,8 +60,11 @@ would make `uv sync --locked` and wheel metadata inconsistent with the authorize
 
 ## Stable payload inventory
 
-These payload hashes exclude the self-updating manifest/checksum metadata and remain stable when
-this handoff is added because `docs/handoffs/**` is excluded from the sdist and bundle.
+These payload hashes exclude the self-updating manifest/checksum metadata. Wheel, sdist, notices,
+license, requirements, SBOM, and corresponding source remain stable when this handoff is added
+because `docs/handoffs/**` is excluded from their payloads. The PyInstaller bundle is validated by
+content and checksums but is not bit-reproducible across local rebuilds; its authoritative final
+hash is therefore reported in the PR body after the final-commit build.
 
 | Asset | Bytes | SHA-256 |
 |---|---:|---|
@@ -72,11 +75,9 @@ this handoff is added because `docs/handoffs/**` is excluded from the sdist and 
 | `sbom.cdx.json` | 49,884 | `660424d197c769c639d4793633daf08239cc39274108ea8a5548e3ae0e29d765` |
 | `x_media_archiver-0.1.2-py3-none-any.whl` | 56,227 | `d59393737b94f0680cd519d1c31893f303e2c7186967948c777af0f472f28728` |
 | `x_media_archiver-0.1.2.tar.gz` | 326,162 | `527f4106134506c0f00c00ea2759eaac34f48461731ceaf13694bdb79574c170` |
-| `xma-v0.1.2-linux-x86_64.tar.gz` | 22,836,898 | `8d5f522e21f31ace9da539d529cdeeeee7e4bdb7d9b2d37bf1bf0f26e3220785` |
-
-The final `RELEASE-MANIFEST.json` and `SHA256SUMS` hashes are reported in the PR body after the
-final-commit rebuild. The manifest never hashes itself; `SHA256SUMS` binds it and every distributed
-asset.
+The final bundle, `RELEASE-MANIFEST.json`, and `SHA256SUMS` hashes are reported in the PR body after
+the final-commit rebuild. The manifest never hashes itself; `SHA256SUMS` binds it and every
+distributed asset.
 
 ## Evidence, risk, and rollback
 
