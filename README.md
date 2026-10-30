@@ -148,3 +148,8 @@ With `--json`, existing keys remain unchanged and an additive `report` object us
 `report_schema_version: 1`. Failed JSON commands keep stdout empty and emit one sanitized report to
 stderr while preserving the established exit code. Reports never contain authentication data,
 signed media URLs, absolute paths, or raw provider exceptions.
+
+For `archive`, `downloaded_this_run` is scoped to the current invocation: XMA captures a verified,
+in-memory baseline after repository verification and subtracts it from the terminal verified total.
+The baseline is never stored in `ArchiveRun`. Offline `status` therefore reports zero work for its
+own query instead of repeating historical progress.
