@@ -10,11 +10,12 @@ from xma.domain.identity import validate_non_negative, validate_sha256
 class DownloadRequest:
     target: str
     limit: int
+    archive_all: bool = False
 
     def __post_init__(self) -> None:
         if not self.target.strip():
             raise DomainError("download target must not be blank")
-        if not 1 <= self.limit <= 20:
+        if self.limit < 1 or (self.limit > 20 and not self.archive_all):
             raise DomainError("download target total must be between 1 and 20")
 
 

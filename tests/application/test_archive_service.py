@@ -4,13 +4,20 @@ import sqlite3
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
 
 from xma.adapters.archive import RepositoryArchiveLock, SQLiteArchiveStore
 from xma.application.archive import ArchiveService
-from xma.domain.archive import ArchiveRequest, ArchiveRun, ArchiveStatus
+from xma.domain.archive import (
+    ArchiveMode,
+    ArchiveRequest,
+    ArchiveRun,
+    ArchiveStatus,
+    CompletionReason,
+)
 from xma.domain.download import DownloadSummary
 from xma.domain.errors import CatalogError, DiscoveryTransientError, DomainError, DownloadError
 
@@ -80,6 +87,129 @@ def test_archive_five_to_ten_only_requests_new_total(tmp_path: Path) -> None:
     assert result.existing_before == 5
     assert result.downloaded_total == 10
     assert download.calls == [7, 9, 10]
+
+
+def test_all_twenty_to_fifty_pauses_at_safety_cap(tmp_path: Path) -> None:
+    download, sleeps = Download(20), []  # type: Download, list[float]
+    result = service(tmp_path, download, sleeps).execute(
+        ArchiveRequest.create_all(
+            "BBCWorld",
+            5,
+            1,
+            max_items=50,
+            max_runtime_seconds=600,
+            min_free_space_gib=5,
+        ),
+        30,
+        lambda message: None,
+    )
+    assert result.mode is ArchiveMode.ALL
+    assert result.status is ArchiveStatus.PAUSED
+    assert result.completion_reason is CompletionReason.SAFETY_CAP_REACHED
+    assert result.downloaded_total == 50
+    assert result.page_number == 6
+    assert download.calls == [25, 30, 35, 40, 45, 50]
+    assert result.public_dict()["resumable"] is True
+
+
+class ExhaustedDownload(Download):
+    def execute_incremental(self, request: Any, *args: object) -> DownloadSummary:
+        del request, args
+        raise DiscoveryTransientError("temporary provider failure [PROVIDER_EXHAUSTED]")
+
+
+def test_all_completes_only_on_explicit_provider_exhaustion(tmp_path: Path) -> None:
+    result = service(tmp_path, ExhaustedDownload(), []).execute(
+        ArchiveRequest.create_all("BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5),
+        30,
+        lambda message: None,
+    )
+    assert result.status is ArchiveStatus.COMPLETED
+    assert result.completion_reason is CompletionReason.PROVIDER_EXHAUSTED
+    assert result.downloaded_total == 0
+
+
+def test_all_resume_requires_compatible_paused_run(tmp_path: Path) -> None:
+    download = Download()
+    archive = service(tmp_path, download, [])
+    with pytest.raises(DomainError, match="compatible paused ALL"):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld",
+                5,
+                1,
+                max_items=10,
+                max_runtime_seconds=600,
+                min_free_space_gib=5,
+                resume=True,
+            ),
+            30,
+            lambda message: None,
+        )
+
+    paused = archive.execute(
+        ArchiveRequest.create_all(
+            "BBCWorld", 5, 1, max_items=5, max_runtime_seconds=600, min_free_space_gib=5
+        ),
+        30,
+        lambda message: None,
+    )
+    assert paused.status is ArchiveStatus.PAUSED
+    resumed = archive.execute(
+        ArchiveRequest.create_all(
+            "BBCWorld",
+            5,
+            1,
+            max_items=10,
+            max_runtime_seconds=600,
+            min_free_space_gib=5,
+            resume=True,
+        ),
+        30,
+        lambda message: None,
+    )
+    assert resumed.downloaded_total == 10
+    assert resumed.status is ArchiveStatus.PAUSED
+
+
+def test_all_pauses_before_discovery_on_low_space(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(
+        "xma.application.archive.shutil.disk_usage",
+        lambda path: SimpleNamespace(free=1),
+    )
+    download = Download()
+    result = service(tmp_path, download, []).execute(
+        ArchiveRequest.create_all("BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5),
+        30,
+        lambda message: None,
+    )
+    assert result.status is ArchiveStatus.PAUSED
+    assert result.completion_reason is CompletionReason.LOW_DISK_SPACE
+    assert download.calls == []
+
+
+def test_all_pauses_at_runtime_without_leaving_running(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    ticks = iter([0.0, 601.0])
+    archive = ArchiveService(
+        cast(Any, Download()),
+        cast(Any, object()),
+        SQLiteArchiveStore(repository / "catalog.sqlite3"),
+        RepositoryArchiveLock(repository),
+        clock=lambda: NOW,
+        monotonic=lambda: next(ticks),
+        sleeper=lambda seconds: None,
+        run_id_factory=lambda: "runtime-run",
+    )
+    result = archive.execute(
+        ArchiveRequest.create_all("BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5),
+        30,
+        lambda message: None,
+    )
+    assert result.status is ArchiveStatus.PAUSED
+    assert result.completion_reason is CompletionReason.MAX_RUNTIME_REACHED
 
 
 def test_reconciles_defective_running_run_five_to_seven_nine_ten(tmp_path: Path) -> None:

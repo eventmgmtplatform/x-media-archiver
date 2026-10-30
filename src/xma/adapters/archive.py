@@ -8,7 +8,12 @@ from pathlib import Path
 from types import TracebackType
 
 from xma.adapters.catalog.migrations import migrate
-from xma.domain.archive import ArchiveRun, ArchiveStatus
+from xma.domain.archive import (
+    ArchiveMode,
+    ArchiveRun,
+    ArchiveStatus,
+    CompletionReason,
+)
 from xma.domain.errors import CatalogError
 
 
@@ -50,14 +55,24 @@ class SQLiteArchiveStore:
         with sqlite3.connect(self.database) as connection:
             connection.execute("PRAGMA foreign_keys = ON")
             connection.execute(
-                "INSERT INTO archive_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+                "INSERT INTO archive_runs (run_id,target_handle,requested_total,batch_size,"
+                "request_interval_seconds,status,existing_before,downloaded_total,page_number,"
+                "checkpoint_strategy,last_error_code,created_at,updated_at,completed_at,"
+                "archive_mode,completion_reason,failed_total,max_items,max_runtime_seconds,"
+                "min_free_space_bytes,resumed_at) VALUES "
+                "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                 "ON CONFLICT(run_id) DO UPDATE SET requested_total=excluded.requested_total, "
                 "batch_size=excluded.batch_size, "
                 "request_interval_seconds=excluded.request_interval_seconds, "
                 "status=excluded.status, existing_before=excluded.existing_before, "
                 "downloaded_total=excluded.downloaded_total, "
                 "page_number=excluded.page_number, last_error_code=excluded.last_error_code, "
-                "updated_at=excluded.updated_at, completed_at=excluded.completed_at",
+                "updated_at=excluded.updated_at, completed_at=excluded.completed_at, "
+                "archive_mode=excluded.archive_mode, completion_reason=excluded.completion_reason, "
+                "failed_total=excluded.failed_total, max_items=excluded.max_items, "
+                "max_runtime_seconds=excluded.max_runtime_seconds, "
+                "min_free_space_bytes=excluded.min_free_space_bytes, "
+                "resumed_at=excluded.resumed_at",
                 (
                     run.run_id,
                     run.target,
@@ -73,6 +88,13 @@ class SQLiteArchiveStore:
                     _stamp(run.created_at),
                     _stamp(run.updated_at),
                     None if run.completed_at is None else _stamp(run.completed_at),
+                    run.mode.value,
+                    None if run.completion_reason is None else run.completion_reason.value,
+                    run.failed_total,
+                    run.max_items,
+                    run.max_runtime_seconds,
+                    run.min_free_space_bytes,
+                    None if run.resumed_at is None else _stamp(run.resumed_at),
                 ),
             )
             connection.execute(
@@ -108,6 +130,15 @@ class SQLiteArchiveStore:
             _date(row["completed_at"]),
             row["last_error_code"],
             _date(row["next_allowed_at"]),
+            ArchiveMode(row["archive_mode"]),
+            None
+            if row["completion_reason"] is None
+            else CompletionReason(row["completion_reason"]),
+            row["failed_total"],
+            row["max_items"],
+            row["max_runtime_seconds"],
+            row["min_free_space_bytes"],
+            _date(row["resumed_at"]),
         )
 
 

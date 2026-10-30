@@ -104,7 +104,7 @@ def test_archive_and_status_json_are_stable_and_offline(
     human = runner.invoke(app, ["status", "--repository", str(repository)])
     assert human.exit_code == 0
     assert "status: COMPLETED" in human.stdout
-    assert "checkpoint_strategy: RESCAN_DEDUP_V1" in human.stdout
+    assert "checkpoint_strategy: RESCAN_DEDUP_V2" in human.stdout
 
 
 def test_status_without_run_is_read_only(tmp_path: Path) -> None:
@@ -115,13 +115,69 @@ def test_status_without_run_is_read_only(tmp_path: Path) -> None:
     assert not repository.exists()
 
 
+def test_archive_all_safety_cap_and_status_are_offline(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(cli, "_provider_factory", lambda: object())
+    monkeypatch.setattr(cli, "_media_provider_factory", Media)
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
+    monkeypatch.setattr("xma.application.archive.time.sleep", lambda seconds: None)
+    repository = tmp_path / "repository"
+    result = runner.invoke(
+        app,
+        [
+            "archive",
+            "BBCWorld",
+            "--all",
+            "--max-items",
+            "2",
+            "--batch-size",
+            "1",
+            "--request-interval",
+            "1",
+            "--min-free-space-gib",
+            "5",
+            "--repository",
+            str(repository),
+            "--json",
+        ],
+    )
+    assert result.exit_code == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["mode"] == "ALL"
+    assert payload["status"] == "PAUSED"
+    assert payload["completion_reason"] == "SAFETY_CAP_REACHED"
+    assert payload["verified_total"] == 2
+    assert payload["resumable"] is True
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--all", "--limit", "1"],
+        ["--max-items", "5"],
+        ["--resume"],
+        ["--all", "--quality", "worst"],
+    ],
+)
+def test_archive_all_invalid_combinations_fail_before_repository(
+    arguments: list[str], tmp_path: Path
+) -> None:
+    repository = tmp_path / "repository"
+    result = runner.invoke(
+        app, ["archive", "BBCWorld", *arguments, "--repository", str(repository)]
+    )
+    assert result.exit_code == cli.EXIT_INVALID_INPUT
+    assert not repository.exists()
+
+
 @pytest.mark.parametrize(
     "arguments",
     [
         ["--limit", "0"],
         ["--limit", "21"],
         ["--batch-size", "0"],
-        ["--batch-size", "6"],
+        ["--batch-size", "21"],
         ["--request-interval", "0"],
         ["--request-interval", "61"],
     ],
