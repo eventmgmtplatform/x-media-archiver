@@ -97,7 +97,10 @@ Development-only complete-profile syntax and safety semantics are documented in
 [`docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md`](docs/operations/XMA-CLI-001_B06-ARCHIVE-ALL-RUNBOOK_v0.1.0.md).
 Use `--all` only with a safety cap. Typed provider exhaustion produces a completed, non-resumable
 run and a manifest with `complete=true` and `exhausted=true`; reaching the cap produces a resumable
-`PAUSED / SAFETY_CAP_REACHED` state. `status` remains completely offline.
+`PAUSED / SAFETY_CAP_REACHED` state. Repeating `archive --all` for the same verified repository
+after typed exhaustion is a terminal no-op: it preserves the durable run and evidence without
+authentication, discovery or download. Refreshing an exhausted account requires a future explicit
+mode and is not inferred from repetition. `status` remains completely offline.
 
 ## Security
 

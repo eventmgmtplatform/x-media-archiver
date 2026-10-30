@@ -29,6 +29,10 @@ uv run xma status --repository ./repository-HANDLE --json
 - `PROVIDER_EXHAUSTED`: cuenta observada completa, run `COMPLETED`, no resumible.
 - `SAFETY_CAP_REACHED`: pausa íntegra y resumible; no significa cuenta completa.
 - Timeout, error transitorio, worker, catálogo o descarga nunca se interpretan como agotamiento.
+- Repetir `archive --all` sobre el mismo repositorio íntegro después de `PROVIDER_EXHAUSTED` es un
+  no-op terminal: conserva run, checkpoint, timestamps, catálogo, manifest y artifacts sin cargar
+  autenticación, iniciar discovery ni descargar. Una actualización futura requiere un modo
+  explícito distinto.
 - `status` es offline y no cambia timestamps ni estado.
 
 ## Durabilidad y seguridad
@@ -44,7 +48,9 @@ perfil, rutas personales, headers, tokens y URLs firmadas no se publican ni pers
 
 La aceptación observó 22 videos, sidecars, artifacts, jobs e identidades; SQLite íntegro, manifest
 `complete=true / exhausted=true`, provider-best y cero residuos. CERT-0001 conserva la trazabilidad
-sin publicar target, perfil, rutas o medios.
+sin publicar target, perfil, rutas o medios. Una aceptación pública posterior repitió exactamente
+una vez `archive --all` y confirmó 22→22, el mismo terminal y checkpoint 5/5, fingerprints
+byte-idénticos y ausencia observable de worker, autenticación, discovery, candidatos o descarga.
 
 Observaciones:
 
