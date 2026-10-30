@@ -1,6 +1,6 @@
 # ADR-0007: durable complete-profile archive
 
-Status: Manifest semantics corrected offline; retained-evidence reconciliation pending.
+Status: Validated with observations; ready for merge review.
 
 ## Decision
 
@@ -77,6 +77,12 @@ only by the typed terminal. Summary requested-total semantics and ArchiveService
 durable ALL completion remain unchanged. Timeout, transient/incomplete discovery, DownloadError,
 and BOUNDED mode remain fail-closed. The retained PRM-0053 manifest was not read or repaired, so
 evidence reconciliation and B06 acceptance remain pending PRM-0055.
+
+PRM-0055 verified the retained repository offline and atomically changed only the final manifest's
+`complete` field from false to true, preserving `exhausted=true`, catalog/run/checkpoint state,
+timestamps, artifacts, sidecars, hashes and sizes. CERT-0001 therefore records
+`VALIDATED_WITH_OBSERVATIONS` for one observed public account at 22 provider-best assets. This does
+not certify mass operation, every X account, a scheduler, or thousands of downloads.
 
 Rollback is a code rollback plus restoration of a pre-migration catalog backup; media artifacts
 are never deleted automatically.

@@ -2,7 +2,7 @@
 title: X Media Archiver
 ---
 
-[Inicio](index.html) · [Producto v1](product.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
+[Inicio](index.html) · [Producto v1](product.html) · [Archivo completo B06](b06-complete-profile-archive.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
 
 ---
 
@@ -30,6 +30,7 @@ públicos en un repositorio normalizado, verificable y deduplicado.
 ## Navegación
 
 - [Qué contiene la v1](product.html)
+- [Archivo completo B06 validado con observaciones](b06-complete-profile-archive.html)
 - [Cómo está construido](architecture.html)
 - [Control de releases](releases.html)
 - [Gobierno y documentos canónicos](governance.html)

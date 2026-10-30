@@ -2,7 +2,7 @@
 title: Releases
 ---
 
-[Inicio](index.html) · [Producto v1](product.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
+[Inicio](index.html) · [Producto v1](product.html) · [Archivo completo B06](b06-complete-profile-archive.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
 
 ---
 
@@ -63,3 +63,6 @@ Evidencia y control:
 
 Cada nueva release debe actualizar esta matriz, el changelog, las notas, la página de producto y el
 roadmap antes del tag.
+
+B06 está validado con observaciones en desarrollo, pero no constituye una release 0.2.x ni modifica
+v0.1.2. Requiere decisión separada de merge y posterior proceso de release.

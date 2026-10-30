@@ -1,7 +1,7 @@
 # B06 `archive --all` development runbook
 
-This runbook describes the unaccepted `0.2.0.dev0` interface. It is not part of the published
-v0.1.2 contract and must not be used for public or unattended archival without a later decision.
+This runbook describes the `0.2.0.dev0` interface validated with observations in B06. It is not part
+of the published v0.1.2 contract and is not certified for mass or unattended archival.
 
 ```bash
 uv run xma archive @HANDLE --all --max-items 50 --batch-size 5 \
@@ -74,3 +74,8 @@ can complete a below-target manifest, while `exhausted` is never inferred from s
 transient failure, worker failure, or DownloadError. BOUNDED remains fail-closed. This does not
 repair the retained manifest or authorize another public command; evidence reconciliation requires
 PRM-0055.
+
+PRM-0055 reconciled only the retained manifest `complete` field after full offline verification.
+CERT-0001 validates the observed 22-asset provider-best account with typed exhaustion, complete
+manifest, integral catalog and zero residues. Use safety caps and offline `status`; this result does
+not authorize uncapped operation, thousands of downloads, or automatic retries.

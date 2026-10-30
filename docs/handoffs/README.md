@@ -5,6 +5,7 @@ rewriting historical evidence.
 
 ## Release and postrelease records
 
+- [B06 evidence reconciliation and certification — HND-0015 v0.7.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.7.0.md)
 - [B06 manifest exhaustion semantics — HND-0015 v0.6.1](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.6.1.md)
 - [B06 full-account E2E acceptance — HND-0015 v0.6.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.6.0.md)
 - [B06 public cap-50 recovery — HND-0015 v0.5.0](XMA-CLI-001_HND-0015_B06-COMPLETE-PROFILE-ARCHIVE-SLICE_v0.5.0.md)

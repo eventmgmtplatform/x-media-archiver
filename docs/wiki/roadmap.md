@@ -2,7 +2,7 @@
 title: Roadmap v2
 ---
 
-[Inicio](index.html) · [Producto v1](product.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
+[Inicio](index.html) · [Producto v1](product.html) · [Archivo completo B06](b06-complete-profile-archive.html) · [Arquitectura](architecture.html) · [Releases](releases.html) · [Gobierno](governance.html) · [Roadmap v2](roadmap.html)
 
 ---
 
@@ -36,6 +36,7 @@ autorización y gates propios; este documento no los autoriza.
 - vault/keyring para secretos cuando sea necesario;
 - scheduler opcional, colas y observabilidad;
 - soporte de cientos/miles solo después de pruebas de capacidad;
+- PRM-0056: reportes CLI estables para ejecuciones simples, múltiples y parciales/fallidas;
 - matriz de compatibilidad, términos de servicio y controles de privacidad.
 
 ## Criterios de incorporación

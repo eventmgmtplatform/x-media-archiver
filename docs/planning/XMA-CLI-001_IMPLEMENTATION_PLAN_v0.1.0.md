@@ -97,6 +97,13 @@ separate, and timeout/transient/worker/DownloadError/BOUNDED paths remain fail-c
 disposition is `B06_MANIFEST_SEMANTICS_OFFLINE_VALIDATED / EVIDENCE_REPAIR_PENDING`; the retained
 manifest is unchanged and PRM-0055 is required before any acceptance decision.
 
+PRM-0055 verified and atomically reconciled the retained manifest without changing the durable run,
+catalog or artifacts. CERT-0001 records B06 `VALIDATED_WITH_OBSERVATIONS`; current disposition is
+`B06_FULL_ACCOUNT_E2E_VALIDATED / PUBLIC_ACCEPTANCE_COMPLETE / READY_FOR_MERGE_REVIEW`. Merge still
+requires a separate human decision. PRM-0056 `CLI-EXECUTION-REPORTING` is formal backlog: stable
+human/JSON summaries for single, multiple and partial/failed executions, without secrets, signed
+URLs or personal paths. It is not implemented.
+
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.
