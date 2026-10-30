@@ -23,4 +23,4 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="xma", console=True)
-coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="xma-v0.1.1-linux-x86_64")
+coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="xma-v0.1.2-linux-x86_64")
