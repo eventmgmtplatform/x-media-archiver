@@ -31,9 +31,19 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
         run: test "$(uv run xma version --short)" = "${RELEASE_TAG#v}"
-      - run: ./scripts/build-release-candidate.sh release-artifacts
-      - run: ./scripts/validate-release-candidate.sh release-artifacts
+      - name: Verify release notes
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: uv run python scripts/generate-release-manifest.py --validate-release-notes docs/release/XMA-CLI-001_RELEASE-NOTES_v0.2.0.md
+      - name: Build release assets
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: ./scripts/build-release-candidate.sh release-artifacts
+      - name: Validate release assets
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: ./scripts/validate-release-candidate.sh release-artifacts
       - name: Create draft only
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ inputs.tag }}" release-artifacts/* --draft --verify-tag --title "XMA ${{ inputs.tag }}" --notes-file docs/release/XMA-CLI-001_RELEASE-NOTES_v0.1.2.md
+        run: gh release create "${{ inputs.tag }}" release-artifacts/* --draft --verify-tag --title "XMA ${{ inputs.tag }}" --notes-file docs/release/XMA-CLI-001_RELEASE-NOTES_v0.2.0.md
