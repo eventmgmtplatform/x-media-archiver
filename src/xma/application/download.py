@@ -241,7 +241,10 @@ class DownloadService:
             if provider_exhausted:
                 break
 
-        complete = len(identities) >= request.limit
+        requested_total_reached = len(identities) >= request.limit
+        manifest_complete = requested_total_reached or (
+            request.archive_all and provider_exhausted and failed == 0
+        )
         self._write_manifest(
             manifest_request,
             run_id,
@@ -252,10 +255,10 @@ class DownloadService:
             existing_before,
             failed,
             existing_before=existing_before,
-            complete=complete,
-            exhausted=not complete and not isinstance(last_error, DownloadError),
+            complete=manifest_complete,
+            exhausted=provider_exhausted,
         )
-        if not complete and not (request.archive_all and provider_exhausted):
+        if not requested_total_reached and not (request.archive_all and provider_exhausted):
             if last_error is not None:
                 raise last_error
             raise DiscoveryTransientError("temporary provider failure [PROVIDER_INCOMPLETE]")
@@ -269,7 +272,7 @@ class DownloadService:
             tuple(manifest_artifacts),
             existing_before,
             len(identities),
-            complete,
+            requested_total_reached,
             provider_exhausted,
         )
 
