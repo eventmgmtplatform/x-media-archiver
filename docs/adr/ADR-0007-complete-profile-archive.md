@@ -54,5 +54,10 @@ the archive page target 25 was rebuilt as a non-ALL `DownloadRequest` for manife
 rejected by the interactive 1–20 contract. The run failed cleanly at 20 with its artifacts and
 checkpoint intact. Cap 50 and provider exhaustion therefore remain unvalidated pending rework.
 
+PRM-0051 corrected that boundary offline: every internal DownloadRequest reconstruction now
+preserves the explicit `archive_all` authority, while interactive download remains limited to
+1–20. Recovery of the known `FAILED / DomainError` ALL run is narrowly permitted and validated
+synthetically through absolute pages 25, 30, 35, 40, 45, and 50. Public retry remains pending.
+
 Rollback is a code rollback plus restoration of a pre-migration catalog backup; media artifacts
 are never deleted automatically.

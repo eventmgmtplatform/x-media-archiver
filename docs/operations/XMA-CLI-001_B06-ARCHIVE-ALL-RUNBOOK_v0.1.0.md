@@ -53,3 +53,7 @@ Known blocker from PRM-0050: a resume whose next absolute page target exceeds 20
 DownloadService reconstructs its manifest request without the ALL-mode exemption. The command ends
 `FAILED / DomainError` before discovery and preserves the prior checkpoint. Do not retry or attempt
 cap 50 until a separately authorized rework corrects and validates that boundary.
+
+PRM-0051 has now corrected and offline-validated the flag propagation and the narrow recovery of
+that known failed run. Interactive `download` still rejects totals above 20. Do not execute the
+public 20→50 retry until PRM-0052 or another explicit human mandate authorizes it.

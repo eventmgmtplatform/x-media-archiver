@@ -74,6 +74,11 @@ discovery: the manifest request recreated a target above 20 without preserving A
 run is `FAILED` at the intact 20/checkpoint 4 state. Current disposition is `REWORK_REQUIRED`; cap 50
 must not be retried until a new governed implementation mandate is authorized.
 
+PRM-0051 preserves `archive_all=True` through manifest reconstruction and narrowly permits the
+known failed ALL run to resume. Synthetic validation requests [25, 30, 35, 40, 45, 50] and finishes
+at page/checkpoint 10/10, while interactive limit/add 21 remain invalid. Current disposition is
+`B06_OFFLINE_REWORK_VALIDATED / PUBLIC_RETRY_PENDING`; only PRM-0052 may authorize public retry.
+
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico
 auditado. CI #35 pasó con 214 pruebas y 94.74 % de cobertura sobre el mismo tree. Este cierre no
 acredita la aceptación pública histórica.

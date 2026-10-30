@@ -375,6 +375,57 @@ def test_all_resume_requires_compatible_paused_run(tmp_path: Path) -> None:
     assert resumed.status is ArchiveStatus.PAUSED
 
 
+def test_all_resumes_failed_domain_boundary_from_twenty_to_fifty(tmp_path: Path) -> None:
+    repository = tmp_path / "repository"
+    store = SQLiteArchiveStore(repository / "catalog.sqlite3")
+    store.put(
+        ArchiveRun(
+            "failed-prm0050",
+            "BBCWorld",
+            50,
+            5,
+            2,
+            ArchiveStatus.FAILED,
+            0,
+            20,
+            4,
+            "RESCAN_DEDUP_V2",
+            NOW,
+            NOW,
+            last_error_code="DomainError",
+            mode=ArchiveMode.ALL,
+            completion_reason=CompletionReason.FAILED,
+            max_items=50,
+            max_runtime_seconds=1800,
+            min_free_space_bytes=5 * 1024**3,
+        )
+    )
+    download = Download(20)
+    archive = service(tmp_path, download, [])
+
+    result = archive.execute(
+        ArchiveRequest.create_all(
+            "BBCWorld",
+            5,
+            2,
+            max_items=50,
+            max_runtime_seconds=1800,
+            min_free_space_gib=5,
+            resume=True,
+        ),
+        30,
+        lambda message: None,
+    )
+
+    assert download.calls == [25, 30, 35, 40, 45, 50]
+    assert result.status is ArchiveStatus.PAUSED
+    assert result.completion_reason is CompletionReason.SAFETY_CAP_REACHED
+    assert result.downloaded_total == 50
+    assert result.page_number == 10
+    restored = store.latest()
+    assert restored == result
+
+
 def test_all_pauses_before_discovery_on_low_space(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

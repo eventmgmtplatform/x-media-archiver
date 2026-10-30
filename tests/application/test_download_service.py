@@ -347,6 +347,29 @@ def test_archive_all_returns_typed_partial_result_on_provider_exhaustion(tmp_pat
     assert not list(repository.rglob("*.tmp"))
 
 
+def test_archive_all_preserves_mode_when_rebuilding_manifest_request_above_twenty(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "archive-all-absolute-25"
+    _service(repository, FixtureMedia()).execute(DownloadRequest("Reuters", 20))
+    provider = IncrementalFixture([[20, 21, 22, 23, 24]])
+
+    result = _incremental_service(repository, FixtureMedia()).execute_incremental(
+        DownloadRequest("Reuters", 25, archive_all=True),
+        provider,
+        30,
+        1,
+        lambda message: None,
+    )
+
+    assert result.total_after == 25
+    assert result.downloaded_count == 5
+    assert result.complete is True
+    assert provider.calls[0][0] == 5
+    manifest = json.loads((repository / "manifests/latest.json").read_text())
+    assert manifest["requested_total"] == 25
+
+
 def test_bounded_download_does_not_convert_provider_exhaustion_to_success(tmp_path: Path) -> None:
     repository = tmp_path / "bounded-partial-exhaustion"
     provider = IncrementalFixture([[0]], exhausted=True)

@@ -359,9 +359,16 @@ class ArchiveService:
         if current.target.casefold() != request.target.handle.casefold():
             raise DomainError("archive target conflicts with the durable checkpoint")
         if request.resume:
-            if current.status is not ArchiveStatus.PAUSED:
+            if current.status is ArchiveStatus.PAUSED:
+                return replace(current, resumed_at=now)
+            if (
+                current.status is ArchiveStatus.FAILED
+                and current.last_error_code == "DomainError"
+                and current.completion_reason is CompletionReason.FAILED
+            ):
+                return replace(current, status=ArchiveStatus.PAUSED, resumed_at=now)
+            else:
                 raise DomainError("archive --resume requires a compatible paused ALL run")
-            return replace(current, resumed_at=now)
         if current.status is ArchiveStatus.PAUSED:
             raise DomainError("paused ALL run requires --resume")
         if current.status is ArchiveStatus.RUNNING:

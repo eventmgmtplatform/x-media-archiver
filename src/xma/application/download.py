@@ -131,7 +131,11 @@ class DownloadService:
         from xma.domain.discovery import normalize_discovery_target
 
         normalized = normalize_discovery_target(request.target)
-        manifest_request = DownloadRequest(normalized.canonical_url, request.limit)
+        manifest_request = DownloadRequest(
+            normalized.canonical_url,
+            request.limit,
+            archive_all=request.archive_all,
+        )
         identities, manifest_artifacts = self._load_existing(normalized.handle)
         existing_before = len(identities)
         run_id = self._run_id_factory()

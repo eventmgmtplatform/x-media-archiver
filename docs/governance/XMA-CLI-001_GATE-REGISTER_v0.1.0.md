@@ -6,7 +6,7 @@
 
 | Fecha (America/Mexico_City) | Gate | Evidencia | Decisión / estado | Autorización |
 |---|---|---|---|---|
-| 2026-10-29 | B06 complete-profile archive | PRM-0045 Addendum 01, PRM-0046–0050, ADR-0007, HND-0015 v0.4.0 | `REWORK_REQUIRED`; public 0→5→10→20 remains valid, but the single cap-50 resume failed locally before discovery because the manifest request lost ALL-mode semantics | Twenty artifacts/checkpoint preserved; no retry; provider exhaustion/cap 50 remain unvalidated; PR draft |
+| 2026-10-29 | B06 complete-profile archive | PRM-0045 Addendum 01, PRM-0046–0051, ADR-0007, HND-0015 v0.4.1 | `B06_OFFLINE_REWORK_VALIDATED / PUBLIC_RETRY_PENDING`; ALL flag propagation and synthetic FAILED-run recovery 20→50 validated while interactive download remains 1–20 | Public repository untouched; PRM-0050 not retried; provider exhaustion/cap 50 remain publicly unvalidated; PR draft |
 | 2026-10-28 | Q0 | Arquitectura, ADR-0001 y plan B00–B07 | Baseline aprobada | Leonel |
 | 2026-10-28 | Q1 | PR #1, HND-0001, CI y merge `2acb88c` | Cerrado | Leonel |
 | 2026-10-28 | Q2 | PR #2, HND-0002, AUD-0002, CI #6 | `VALIDATED_WITH_OBSERVATIONS`; merge `b2bdca7` | Leonel |
