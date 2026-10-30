@@ -136,3 +136,15 @@ Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 
 License: GPL-2.0-only. Third-party composition is documented in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Execution reports (development)
+
+`download`, `archive`, and offline `status` expose the same compact execution report. Human output
+shows the account, request, before/run/after counts, terminal state, and durable checkpoint. When
+exactly one new video is downloaded, it also shows that video's sanitized metadata, digest, and
+repository-relative path; multi-video runs remain aggregate by default.
+
+With `--json`, existing keys remain unchanged and an additive `report` object uses
+`report_schema_version: 1`. Failed JSON commands keep stdout empty and emit one sanitized report to
+stderr while preserving the established exit code. Reports never contain authentication data,
+signed media URLs, absolute paths, or raw provider exceptions.

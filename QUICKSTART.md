@@ -128,3 +128,11 @@ cataloged files.
 
 See `README.md` and `docs/operations/` inside this bundle for integrity, backup, troubleshooting,
 and rollback procedures.
+
+## Reading command results
+
+Human output is compact: a single newly downloaded video includes public media metadata, SHA-256,
+size, and its repository-relative file path; two or more downloads show aggregate counts. A no-op
+states that no new video was downloaded. Add `--json` for automation: legacy fields remain and the
+new additive `report` object has schema version 1. On failure, JSON is written only to stderr and
+contains a stable error code, preserved progress when available, checkpoint, and resumability.

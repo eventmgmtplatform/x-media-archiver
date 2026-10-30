@@ -170,3 +170,11 @@ fallida, después de comprobar que no corresponden a un proceso activo. Nunca el
 - No publique logs crudos, headers, tokens, query strings o URLs multimedia firmadas.
 - `status` no accede a X.
 - El máximo vigente es diez; no se certifica operación masiva.
+
+## Reportes de ejecución de desarrollo
+
+Los comandos `download`, `archive` y `status` presentan cuenta, solicitud, conteos, estado y
+checkpoint a partir de DTOs y evidencia persistida. `--json` conserva las claves anteriores y añade
+`report` con `report_schema_version=1`. Un error JSON deja stdout vacío y escribe en stderr un único
+objeto sanitizado con el mismo código de salida histórico. Nunca publique rutas absolutas, cookies,
+URLs firmadas o excepciones crudas; las rutas de artifacts del reporte son relativas al repositorio.
