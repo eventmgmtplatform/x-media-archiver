@@ -64,8 +64,9 @@ sanitized typed error. PRM-0047 additionally reconciles partial final pages befo
 exhaustion, including atomic checkpoint failure and repository mismatch. HND-0015 v0.1.2 records
 the synthetic 20→20, 20→21, and 20→23 evidence. PRM-0048 then validated the public capped sequence
 0→5→10 on one durable run, with both boundaries remaining resumable safety-cap pauses. The current
-state is `B06_PUBLIC_CAP_RESUME_VALIDATED / FULL_ACCOUNT_PENDING`. Provider exhaustion,
-full-account operation, uncapped execution, and totals above ten require a separate human decision;
+state after PRM-0049 is `B06_PUBLIC_LIMIT_20_VALIDATED / FULL_ACCOUNT_PENDING`: the same run resumed
+10→20 and stopped at its safety cap with all earlier hashes intact. Provider exhaustion,
+full-account operation, uncapped execution, and totals above twenty require a separate human decision;
 Telegram and WhatsApp remain future roadmap items.
 
 AUD-0005 v0.1.2 cierra R-01–R-03 como `VALIDATED_WITH_OBSERVATIONS` dentro del alcance técnico

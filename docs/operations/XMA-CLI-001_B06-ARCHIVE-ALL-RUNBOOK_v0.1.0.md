@@ -43,3 +43,8 @@ The governed PRM-0048 acceptance demonstrated a capped sequence only: `--max-ite
 `--resume --max-items 10`, on the same repository and run. Both commands ended
 `PAUSED / SAFETY_CAP_REACHED`, remained resumable, and preserved prior hashes. Operators must not
 interpret this result as provider exhaustion or authorization for uncapped/full-account archival.
+
+PRM-0049 resumed that exact run from 10→20 and again ended
+`PAUSED / SAFETY_CAP_REACHED`. The evidence validates capped durable growth through twenty, but not
+the natural provider terminal. Do not continue above twenty or remove the cap without a new human
+decision.

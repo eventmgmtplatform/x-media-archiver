@@ -45,5 +45,9 @@ repository advanced 0→5 and then 5→10 on the same run, pausing at each confi
 artifacts and checkpoints. This does not validate provider exhaustion, a complete account archive,
 mass operation, or an uncapped run.
 
+PRM-0049 extended the same durable run from 10→20. It again stopped at the configured safety cap,
+with page/checkpoint 4 and all prior hashes preserved. Provider exhaustion was not observed, so
+full-account completion remains unvalidated.
+
 Rollback is a code rollback plus restoration of a pre-migration catalog backup; media artifacts
 are never deleted automatically.
