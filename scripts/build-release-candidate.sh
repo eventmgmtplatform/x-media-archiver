@@ -16,6 +16,7 @@ rm -rf -- "$artifact_dir"
 mkdir -p "$artifact_dir"
 
 uv build --out-dir "$artifact_dir"
+rm -f -- "$artifact_dir/.gitignore"
 uv run pyinstaller --clean --noconfirm --distpath "$work_dir/dist" \
   --workpath "$work_dir/work" packaging/xma.spec
 cp LICENSE README.md THIRD_PARTY_NOTICES.md QUICKSTART.md \

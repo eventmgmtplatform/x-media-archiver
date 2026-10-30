@@ -47,7 +47,7 @@ def build_manifest(artifact_dir: Path) -> dict[str, object]:
         "product": "X Media Archiver",
         "version": "0.2.0",
         "supported_platform": "Linux x86_64 (Ubuntu 22.04 and 24.04)",
-        "minimum_python": "3.12",
+        "minimum_python": "3.11",
         "entry_point": "xma",
         "gallery_dl_version": "1.32.18",
         "license": "GPL-2.0-only",
