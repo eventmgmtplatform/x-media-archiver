@@ -268,7 +268,7 @@ Estado de producto: `V0.1.1_RELEASED / POSTRELEASE_VERIFIED`. PRM-0037 limita el
 documentación y ramas obsoletas. GitHub Pages permanece pendiente de activación administrativa y
 no afecta la disponibilidad del Release.
 
-## Release candidate v0.1.2
+## Release v0.1.2 y cierre postrelease
 
 PRM-0038 a PRM-0040 entregaron clasificación MEDIA_* sanitizada, renovación acotada, continuación
 tras candidatos fallidos, deadline de discovery activo, `download --add 1..20`, total máximo 20 y
@@ -276,8 +276,12 @@ tras candidatos fallidos, deadline de discovery activo, `download --add 1..20`, 
 hashes previos estables y cero residuos. No ocurrió DownloadError en la prueba pública; esa frontera
 se valida exclusivamente con fixtures offline deterministas.
 
-Leonel declaró el alcance `VALIDATED_WITH_OBSERVATIONS` y PRM-0041 autoriza preparar el candidato
-v0.1.2: metadata, documentos, bundle standalone, wheel, sdist, SBOM, corresponding source,
-`RELEASE-MANIFEST.json`, `SHA256SUMS`, seguridad y portabilidad Ubuntu 22.04/24.04. La rama
-`release/v0.1.2` solo puede avanzar fast-forward al mismo commit RC. PR #12 permanece draft; merge,
-tag, GitHub Release, PyPI y cualquier nueva operación pública continúan prohibidos.
+Leonel declaró el alcance `VALIDATED_WITH_OBSERVATIONS`. v0.1.2 fue integrada en main mediante PR
+#12, etiquetada con el tag anotado `v0.1.2` y publicada como GitHub Release 428531308 el 2026-10-30.
+Los diez assets, checksums, bundle standalone, wheel, sdist, SBOM, licencia, corresponding source y
+portabilidad Ubuntu 22.04/24.04 quedaron verificados. PyPI no fue publicado.
+
+PRM-0044 limita el cierre a reconciliación documental, CI, squash y limpieza de las ramas temporales
+v0.1.2. GitHub Pages/Actions continúa pendiente de habilitación; Telegram y WhatsApp permanecen en
+el roadmap futuro; soporte masivo, scheduler y cursor remoto eficiente siguen diferidos. v0.2.0 no
+ha comenzado y no se infiere por este cierre.

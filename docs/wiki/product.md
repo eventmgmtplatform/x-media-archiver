@@ -17,8 +17,8 @@ Los comandos principales son:
 |---|---|
 | `inspect` | Descubre metadatos sin persistir |
 | `sync` | Cataloga metadatos en SQLite |
-| `download` | Descarga un total o incremento configurable de 1 a 10 activos |
-| `archive` | Archiva y reanuda hasta 10 activos |
+| `download` | Descarga un total de 1 a 10 o agrega de 1 a 20, máximo total 20 |
+| `archive` | Archiva y reanuda hasta 20 activos |
 | `status` | Consulta offline el estado e integridad |
 
 ## Repositorio generado
@@ -54,7 +54,7 @@ reanudación.
 
 ## Límites conocidos
 
-- máximo de diez videos por operación certificada;
+- máximo operativo de veinte videos; sin certificación masiva o desatendida;
 - Linux x86_64; Ubuntu 22.04 y 24.04 validados;
 - sin scheduler, daemon, GUI o API;
 - sin cursor remoto eficiente para miles;

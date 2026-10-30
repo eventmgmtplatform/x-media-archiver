@@ -102,6 +102,8 @@
 | GOV-REL-0045 | v0.1.1 | PRM-0035 autorizó squash merge, tag anotado y creación del GitHub Release draft. | Main `9490dbd`, tree RC preservado, tag `v0.1.1` y workflow 40961716484 verificados; draft con diez assets y checksums PASS. | No publicar hasta autorización PRM-0036; PyPI continúa prohibido. |
 | GOV-REL-0046 | v0.1.1 | PRM-0036 autorizó publicar exclusivamente el draft existente y verificar assets públicos. | `V0.1.1_PUBLISHED / POSTRELEASE_VERIFIED`; Release 428434769 publicada el 2026-10-29, diez assets, checksums y bundle 0.1.1 PASS. | Sin PyPI, cambios funcionales, nuevos tags/versiones o acceso a X. |
 | GOV-CLS-0047 | v0.1.1 | PRM-0037 autoriza reconciliación documental postrelease y limpieza de ramas obsoletas. | Documentación postrelease preparada en rama aislada; Pages permanece pendiente conocido. | CI y squash documental requeridos; sin código, PyPI, tags o versión posterior. |
+| GOV-REL-0050 | v0.1.2 | PRM-0042/0043 integraron el RC, publicaron el tag anotado y verificaron GitHub Release 428531308. | `V0.1.2_PUBLISHED / POSTRELEASE_VERIFIED`; diez assets, checksums, bundle 0.1.2, SBOM, licencia y source verificados. | PyPI no publicado; tag y Release inmutables; sin versión posterior. |
+| GOV-CLS-0051 | v0.1.2 | PRM-0044 autoriza reconciliación exclusivamente documental y limpieza posterior de ramas obsoletas. | `RELEASED`; cierre documental sujeto a CI y squash sobre main. | Pages pendiente; evidencia multimedia local no rastreada; sin PyPI, código o nueva versión. |
 
 Existe un rework B02 separado documentado por AUD-0002 v0.1.2, todavía sin integración ni CI sobre
 su SHA final. B03 conserva `b2bdca7` como baseline; PRM-0004 exige conciliar esta trazabilidad sin
