@@ -247,7 +247,7 @@ class DownloadService:
         if not complete:
             if last_error is not None:
                 raise last_error
-            raise DiscoveryTransientError("temporary provider failure [PROVIDER_EXHAUSTED]")
+            raise DiscoveryTransientError("temporary provider failure [PROVIDER_INCOMPLETE]")
         return DownloadSummary(
             normalized.canonical_url,
             request.limit,

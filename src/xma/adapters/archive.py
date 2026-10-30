@@ -114,6 +114,7 @@ class SQLiteArchiveStore:
 
     @staticmethod
     def _run(row: sqlite3.Row) -> ArchiveRun:
+        columns = set(row.keys())
         return ArchiveRun(
             row["run_id"],
             row["target_handle"],
@@ -130,15 +131,15 @@ class SQLiteArchiveStore:
             _date(row["completed_at"]),
             row["last_error_code"],
             _date(row["next_allowed_at"]),
-            ArchiveMode(row["archive_mode"]),
+            ArchiveMode(row["archive_mode"]) if "archive_mode" in columns else ArchiveMode.BOUNDED,
             None
-            if row["completion_reason"] is None
+            if "completion_reason" not in columns or row["completion_reason"] is None
             else CompletionReason(row["completion_reason"]),
-            row["failed_total"],
-            row["max_items"],
-            row["max_runtime_seconds"],
-            row["min_free_space_bytes"],
-            _date(row["resumed_at"]),
+            row["failed_total"] if "failed_total" in columns else 0,
+            row["max_items"] if "max_items" in columns else None,
+            row["max_runtime_seconds"] if "max_runtime_seconds" in columns else 3600,
+            row["min_free_space_bytes"] if "min_free_space_bytes" in columns else 10 * 1024**3,
+            _date(row["resumed_at"]) if "resumed_at" in columns else None,
         )
 
 

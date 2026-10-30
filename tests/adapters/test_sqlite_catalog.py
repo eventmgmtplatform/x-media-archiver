@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 
 import xma.adapters.catalog.migrations as migrations
+from xma.adapters.archive import SQLiteArchiveStore
 from xma.adapters.catalog.migrations import LATEST_SCHEMA_VERSION, migrate
 from xma.adapters.catalog.sqlite import SQLiteUnitOfWork
 from xma.domain.enums import DownloadStatus, MediaType, PostType, RunStatus
@@ -109,6 +110,41 @@ def test_migration_v2_to_v3_preserves_durable_run_and_checkpoint() -> None:
     ).fetchone() == (7, 1)
     assert connection.execute("PRAGMA foreign_key_check").fetchall() == []
     connection.close()
+
+
+def test_archive_store_reads_unmigrated_v2_status_with_safe_defaults(tmp_path: Path) -> None:
+    database = tmp_path / "catalog.sqlite3"
+    with sqlite3.connect(database) as connection:
+        connection.executescript(migrations._migration_sql(1))
+        connection.executescript(migrations._migration_sql(2))
+        connection.execute(
+            "INSERT INTO archive_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "run-v2",
+                "BBCWorld",
+                10,
+                2,
+                1,
+                "PAUSED",
+                5,
+                7,
+                1,
+                "RESCAN_DEDUP_V1",
+                "PROVIDER_TIMEOUT",
+                "2026-10-29T00:00:00Z",
+                "2026-10-29T00:01:00Z",
+                None,
+            ),
+        )
+        connection.execute(
+            "INSERT INTO archive_checkpoints VALUES (?,?,?,?,?)",
+            ("run-v2", 7, 1, None, "2026-10-29T00:01:00Z"),
+        )
+    restored = SQLiteArchiveStore(database).latest()
+    assert restored is not None
+    assert restored.mode.value == "BOUNDED"
+    assert restored.failed_total == 0
+    assert restored.max_items is None
 
 
 def test_failed_migration_rolls_back_schema(monkeypatch: pytest.MonkeyPatch) -> None:

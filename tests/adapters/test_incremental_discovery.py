@@ -13,7 +13,11 @@ import xma.adapters.discovery.incremental as incremental
 from xma.adapters.discovery.firefox_auth import BrowserAuthentication, CookieFileAuthentication
 from xma.adapters.discovery.gallery_dl import GalleryDlExtraction, map_gallery_dl_extraction
 from xma.domain.discovery import normalize_discovery_target
-from xma.domain.errors import DiscoveryContractError, DiscoveryTransientError
+from xma.domain.errors import (
+    DiscoveryContractError,
+    DiscoveryTransientError,
+    ProviderExhaustedError,
+)
 
 FIXTURE = Path(__file__).parents[1] / "fixtures/gallery_dl/twitter_videos.json"
 
@@ -181,6 +185,8 @@ def test_worker_terminal_classification(
                 raise ValueError("secret")
 
         def run(self) -> None:
+            if mode == "success":
+                raise exception.StopExtraction
             return None
 
     monkeypatch.setattr(incremental, "_StreamingDataJob", Job)
@@ -430,7 +436,7 @@ def test_single_post_target_dto_is_primitive_and_sanitized() -> None:
 @pytest.mark.parametrize(
     "terminal,error",
     [
-        ("PROVIDER_EXHAUSTED", DiscoveryTransientError),
+        ("PROVIDER_EXHAUSTED", ProviderExhaustedError),
         ("WORKER_FAILED", DiscoveryContractError),
         ("IPC_SERIALIZATION_FAILED", DiscoveryContractError),
     ],

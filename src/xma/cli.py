@@ -28,6 +28,7 @@ from xma.domain.archive import ArchiveRequest, ArchiveRun
 from xma.domain.discovery import DiscoveryBatch, normalize_discovery_target
 from xma.domain.download import DownloadRequest, DownloadSummary
 from xma.domain.errors import (
+    ArchiveUnexpectedError,
     CatalogError,
     DiscoveryError,
     DiscoveryNotFoundError,
@@ -369,6 +370,11 @@ def archive_profile(
     except DownloadError as error:
         error_console.print(f"archive failed: {error}", markup=False, style="red")
         raise typer.Exit(EXIT_DOWNLOAD_FAILED) from error
+    except ArchiveUnexpectedError as error:
+        error_console.print(
+            "archive failed: unexpected internal failure", markup=False, style="red"
+        )
+        raise typer.Exit(EXIT_PROVIDER_FAILED) from error
     except (CatalogError, IdentityConflictError, sqlite3.Error, OSError) as error:
         error_console.print("archive failed: local repository unavailable", markup=False)
         raise typer.Exit(EXIT_CATALOG_FAILED) from error
@@ -572,6 +578,8 @@ def _render_archive(result: ArchiveRun, json_output: bool) -> None:
         "min_free_space_bytes",
         "elapsed_seconds",
         "resumable",
+        "goal",
+        "operational_cap",
     ):
         value = values[key]
         if key == "run_id":

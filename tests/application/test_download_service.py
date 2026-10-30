@@ -249,7 +249,7 @@ def test_incremental_lower_limit_is_offline_noop(tmp_path: Path) -> None:
 def test_incremental_max_scan_is_forwarded_and_exhaustion_is_recorded(tmp_path: Path) -> None:
     repository = tmp_path / "max-scan"
     provider = IncrementalFixture([[], []])
-    with pytest.raises(DiscoveryTransientError, match="PROVIDER_EXHAUSTED"):
+    with pytest.raises(DiscoveryTransientError, match="PROVIDER_INCOMPLETE"):
         _incremental_service(repository, FixtureMedia()).execute_incremental(
             DownloadRequest("Reuters", 1), provider, 30, 2, lambda message: None, 7
         )

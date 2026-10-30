@@ -127,19 +127,23 @@ class ArchiveRun:
         return max(0, self.requested_total - self.downloaded_total)
 
     def public_dict(self) -> dict[str, object]:
+        is_all = self.mode is ArchiveMode.ALL
+        complete = self.status is ArchiveStatus.COMPLETED and (
+            not is_all or self.completion_reason is CompletionReason.PROVIDER_EXHAUSTED
+        )
         return {
             "run_id": self.run_id,
             "target": self.target,
             "status": self.status.value,
-            "requested_total": self.requested_total,
+            "requested_total": None if is_all else self.requested_total,
             "existing_before": self.existing_before,
             "downloaded_total": self.downloaded_total,
-            "remaining": self.remaining,
+            "remaining": None if is_all else self.remaining,
             "page_number": self.page_number,
             "checkpoint_strategy": self.checkpoint_strategy,
             "last_error_code": self.last_error_code,
             "updated_at": self.updated_at.isoformat(),
-            "complete": self.status is ArchiveStatus.COMPLETED,
+            "complete": complete,
             "mode": self.mode.value,
             "completion_reason": None
             if self.completion_reason is None
@@ -154,4 +158,6 @@ class ArchiveRun:
                 0.0, (self.updated_at - (self.resumed_at or self.created_at)).total_seconds()
             ),
             "resumable": self.mode is ArchiveMode.ALL and self.status is ArchiveStatus.PAUSED,
+            "goal": "PROVIDER_EXHAUSTION" if is_all else "REQUESTED_TOTAL",
+            "operational_cap": self.max_items if is_all else None,
         }

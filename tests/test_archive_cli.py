@@ -10,7 +10,9 @@ import pytest
 from typer.testing import CliRunner
 
 import xma.cli as cli
+from xma.adapters.archive import SQLiteArchiveStore
 from xma.cli import app
+from xma.domain.archive import ArchiveStatus
 from xma.domain.discovery import (
     DiscoveredAsset,
     DiscoveredPost,
@@ -149,6 +151,51 @@ def test_archive_all_safety_cap_and_status_are_offline(
     assert payload["completion_reason"] == "SAFETY_CAP_REACHED"
     assert payload["verified_total"] == 2
     assert payload["resumable"] is True
+    assert payload["requested_total"] is None
+    assert payload["remaining"] is None
+    assert payload["goal"] == "PROVIDER_EXHAUSTION"
+    assert payload["operational_cap"] == 2
+    assert payload["complete"] is False
+
+
+def test_archive_cli_sanitizes_unexpected_service_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    marker = "SECRET_TOKEN path=/private signed=https://media.invalid/?token=raw"
+
+    def fail(*args: object, **kwargs: object) -> None:
+        del args, kwargs
+        raise RuntimeError(marker)
+
+    monkeypatch.setattr(cli, "_provider_factory", lambda: object())
+    monkeypatch.setattr(cli, "_media_provider_factory", Media)
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
+    monkeypatch.setattr("xma.application.download.DownloadService.execute_incremental", fail)
+    repository = tmp_path / "repository"
+    result = runner.invoke(
+        app,
+        [
+            "archive",
+            "BBCWorld",
+            "--all",
+            "--max-items",
+            "1",
+            "--min-free-space-gib",
+            "5",
+            "--repository",
+            str(repository),
+            "--json",
+        ],
+    )
+    output = result.stdout + result.stderr
+    assert result.exit_code == cli.EXIT_PROVIDER_FAILED
+    assert "unexpected internal failure" in output
+    assert marker not in output
+    assert "Traceback" not in output
+    restored = SQLiteArchiveStore(repository / "catalog.sqlite3").latest()
+    assert restored is not None
+    assert restored.status is ArchiveStatus.FAILED
+    assert restored.last_error_code == "UNEXPECTED_FAILURE"
 
 
 @pytest.mark.parametrize(

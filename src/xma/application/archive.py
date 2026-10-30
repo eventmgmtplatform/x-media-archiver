@@ -18,11 +18,12 @@ from xma.domain.archive import (
 )
 from xma.domain.download import DownloadRequest
 from xma.domain.errors import (
+    ArchiveUnexpectedError,
     CatalogError,
     DiscoveryError,
-    DiscoveryTransientError,
     DomainError,
     DownloadError,
+    ProviderExhaustedError,
 )
 from xma.domain.ports import IncrementalDiscoveryProvider
 
@@ -76,6 +77,12 @@ class ArchiveService:
                 if current is not None:
                     self._persist_terminal(current, ArchiveStatus.FAILED, "REPOSITORY_INCONSISTENT")
                 raise
+            if (
+                request.mode is ArchiveMode.ALL
+                and request.max_items is not None
+                and request.max_items < verified_total
+            ):
+                raise DomainError("archive max-items is below verified repository progress")
             if current is not None and request.requested_total < current.downloaded_total:
                 self._persist_terminal(current, ArchiveStatus.FAILED, "TOTAL_REDUCTION")
                 raise DomainError("archive total must not reduce durable progress")
@@ -137,6 +144,21 @@ class ArchiveService:
                 and current.downloaded_total >= request.requested_total
             ):
                 return current
+            if (
+                request.mode is ArchiveMode.ALL
+                and request.max_items is not None
+                and request.max_items == verified_total
+            ):
+                current = replace(
+                    current,
+                    status=ArchiveStatus.PAUSED,
+                    downloaded_total=verified_total,
+                    completion_reason=CompletionReason.SAFETY_CAP_REACHED,
+                    last_error_code=None,
+                    updated_at=self._clock(),
+                )
+                self._store.put(current)
+                return current
             current = replace(
                 current, status=ArchiveStatus.RUNNING, updated_at=now, last_error_code=None
             )
@@ -192,8 +214,8 @@ class ArchiveService:
                             progress,
                             500,
                         )
-                    except DiscoveryTransientError as error:
-                        if request.mode is ArchiveMode.ALL and "[PROVIDER_EXHAUSTED]" in str(error):
+                    except ProviderExhaustedError:
+                        if request.mode is ArchiveMode.ALL:
                             current = replace(
                                 current,
                                 status=ArchiveStatus.COMPLETED,
@@ -274,14 +296,14 @@ class ArchiveService:
                     CompletionReason.FAILED,
                 )
                 raise
-            except Exception:
+            except Exception as error:
                 self._persist_terminal(
                     current,
                     ArchiveStatus.FAILED,
                     "UNEXPECTED_FAILURE",
                     CompletionReason.FAILED,
                 )
-                raise
+                raise ArchiveUnexpectedError("archive failed unexpectedly") from error
             return current
 
     def _persist_terminal(

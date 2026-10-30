@@ -16,10 +16,19 @@ uv run xma archive @HANDLE --all --resume --max-items 50 \
 uv run xma status --repository ./repository-HANDLE --json
 ```
 
-`PROVIDER_EXHAUSTED` is the only successful completion reason for ALL. `SAFETY_CAP_REACHED`,
+`goal=PROVIDER_EXHAUSTION` identifies unbounded ALL status. Its `requested_total` and `remaining`
+fields are null until provider exhaustion is confirmed; `operational_cap` is a safety control, not
+the archive goal. `PROVIDER_EXHAUSTED` is the only successful completion reason for ALL and is
+accepted only through the typed provider-exhaustion boundary. `SAFETY_CAP_REACHED`,
 `MAX_RUNTIME_REACHED`, `LOW_DISK_SPACE`, `INTERRUPTED`, and `PROVIDER_TRANSIENT` are resumable
 pauses. `FAILED` requires offline integrity diagnosis. `--resume` fails closed unless a compatible
 ALL run is paused. `RESCAN_DEDUP_V2` rescans and deduplicates; it is not a remote cursor.
+
+The repository is verified before an ALL cap is applied. A cap below verified progress is rejected
+without discovery or run mutation; an equal cap is an offline `PAUSED / SAFETY_CAP_REACHED`; a
+higher cap may continue. Unexpected failures are reported only as the sanitized
+`archive failed: unexpected internal failure` contract while the durable run records
+`UNEXPECTED_FAILURE`.
 
 Back up the whole repository before migration. Never delete or overwrite verified artifacts.
 Public acceptance and complete-account operation remain pending.

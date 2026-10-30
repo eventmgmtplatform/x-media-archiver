@@ -19,7 +19,14 @@ from xma.domain.archive import (
     CompletionReason,
 )
 from xma.domain.download import DownloadSummary
-from xma.domain.errors import CatalogError, DiscoveryTransientError, DomainError, DownloadError
+from xma.domain.errors import (
+    ArchiveUnexpectedError,
+    CatalogError,
+    DiscoveryTransientError,
+    DomainError,
+    DownloadError,
+    ProviderExhaustedError,
+)
 
 NOW = datetime(2026, 10, 29, tzinfo=UTC)
 
@@ -115,7 +122,7 @@ def test_all_twenty_to_fifty_pauses_at_safety_cap(tmp_path: Path) -> None:
 class ExhaustedDownload(Download):
     def execute_incremental(self, request: Any, *args: object) -> DownloadSummary:
         del request, args
-        raise DiscoveryTransientError("temporary provider failure [PROVIDER_EXHAUSTED]")
+        raise ProviderExhaustedError("provider exhausted [PROVIDER_EXHAUSTED]")
 
 
 def test_all_completes_only_on_explicit_provider_exhaustion(tmp_path: Path) -> None:
@@ -127,6 +134,58 @@ def test_all_completes_only_on_explicit_provider_exhaustion(tmp_path: Path) -> N
     assert result.status is ArchiveStatus.COMPLETED
     assert result.completion_reason is CompletionReason.PROVIDER_EXHAUSTED
     assert result.downloaded_total == 0
+
+
+def test_transient_text_cannot_impersonate_provider_exhaustion(tmp_path: Path) -> None:
+    archive = service(
+        tmp_path,
+        FailingDownload(DiscoveryTransientError("contains [PROVIDER_EXHAUSTED] text")),
+        [],
+    )
+    with pytest.raises(DiscoveryTransientError):
+        archive.execute(
+            ArchiveRequest.create_all(
+                "BBCWorld", 5, 1, max_runtime_seconds=600, min_free_space_gib=5
+            ),
+            30,
+            lambda message: None,
+        )
+    restored = SQLiteArchiveStore(tmp_path / "repository/catalog.sqlite3").latest()
+    assert restored is not None
+    assert restored.status is ArchiveStatus.PAUSED
+    assert restored.completion_reason is CompletionReason.PROVIDER_TRANSIENT
+
+
+@pytest.mark.parametrize(
+    ("cap", "expected_calls", "expected_status"),
+    [
+        (10, [], None),
+        (20, [], ArchiveStatus.PAUSED),
+        (21, [21], ArchiveStatus.PAUSED),
+        (50, [25, 30, 35, 40, 45, 50], ArchiveStatus.PAUSED),
+    ],
+)
+def test_all_cap_is_checked_against_twenty_verified(
+    tmp_path: Path,
+    cap: int,
+    expected_calls: list[int],
+    expected_status: ArchiveStatus | None,
+) -> None:
+    download = Download(20)
+    archive = service(tmp_path, download, [])
+    request = ArchiveRequest.create_all(
+        "BBCWorld", 5, 1, max_items=cap, max_runtime_seconds=600, min_free_space_gib=5
+    )
+    if expected_status is None:
+        with pytest.raises(DomainError, match="below verified"):
+            archive.execute(request, 30, lambda message: None)
+        assert SQLiteArchiveStore(tmp_path / "repository/catalog.sqlite3").latest() is None
+    else:
+        result = archive.execute(request, 30, lambda message: None)
+        assert result.status is expected_status
+        assert result.completion_reason is CompletionReason.SAFETY_CAP_REACHED
+        assert result.downloaded_total == cap
+    assert download.calls == expected_calls
 
 
 def test_all_resume_requires_compatible_paused_run(tmp_path: Path) -> None:
@@ -265,7 +324,6 @@ class FailingDownload(Download):
         ),
         (InterruptedError(), ArchiveStatus.PAUSED, "INTERRUPTED"),
         (KeyboardInterrupt(), ArchiveStatus.PAUSED, "INTERRUPTED"),
-        (RuntimeError("synthetic"), ArchiveStatus.FAILED, "UNEXPECTED_FAILURE"),
     ],
 )
 def test_every_exit_persists_terminal_state(
@@ -278,6 +336,19 @@ def test_every_exit_persists_terminal_state(
     assert restored is not None
     assert restored.status is status
     assert restored.last_error_code == code
+
+
+def test_unexpected_error_is_wrapped_and_preserved_as_internal_cause(tmp_path: Path) -> None:
+    original = RuntimeError("secret path=/private token=synthetic")
+    archive = service(tmp_path, FailingDownload(original), [])
+    with pytest.raises(ArchiveUnexpectedError, match="archive failed unexpectedly") as captured:
+        archive.execute(ArchiveRequest.create("BBCWorld", 1, 1, 1), 30, lambda message: None)
+    assert captured.value.__cause__ is original
+    assert "secret" not in str(captured.value)
+    restored = SQLiteArchiveStore(tmp_path / "repository/catalog.sqlite3").latest()
+    assert restored is not None
+    assert restored.status is ArchiveStatus.FAILED
+    assert restored.last_error_code == "UNEXPECTED_FAILURE"
 
 
 def test_checkpoint_ahead_of_repository_fails_without_discovery(tmp_path: Path) -> None:
