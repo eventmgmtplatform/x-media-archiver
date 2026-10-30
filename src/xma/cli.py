@@ -24,6 +24,12 @@ from xma.adapters.download import HttpMediaDownloadProvider
 from xma.application.archive import ArchiveService
 from xma.application.discovery import DiscoveryService, SyncResult
 from xma.application.download import DownloadService
+from xma.application.reporting import (
+    ExecutionReport,
+    archive_report,
+    download_report,
+    failure_report,
+)
 from xma.domain.archive import ArchiveRequest, ArchiveRun
 from xma.domain.discovery import DiscoveryBatch, normalize_discovery_target
 from xma.domain.download import DownloadRequest, DownloadSummary
@@ -227,6 +233,11 @@ def download_profile(
 ) -> None:
     """Interactively download up to ten absolute or add up to twenty videos."""
     database = repository / "catalog.sqlite3"
+    telemetry = (
+        (lambda message: None)
+        if json_output
+        else (lambda message: error_console.print(message, markup=False))
+    )
     try:
         if limit is not None and add is not None:
             raise DomainError("--limit and --add are mutually exclusive")
@@ -259,7 +270,7 @@ def download_profile(
                 auth_browser,
                 auth_profile,
                 cookies_file,
-                lambda message: error_console.print(message, markup=False),
+                telemetry,
             )
             service = DownloadService(
                 provider,
@@ -272,23 +283,62 @@ def download_profile(
             incremental_provider,
             discovery_timeout,
             discovery_attempts,
-            lambda message: error_console.print(message, markup=False),
+            telemetry,
             max_scan,
         )
     except (InvalidIdentityError, DomainError) as error:
-        error_console.print(f"invalid input: {error}", markup=False, style="red")
+        _render_failure_report(
+            failure_report(
+                command="download",
+                handle=_safe_handle(target),
+                error_code="INVALID_INPUT",
+                exit_code=EXIT_INVALID_INPUT,
+            ),
+            json_output,
+            f"invalid input: {error}",
+        )
         raise typer.Exit(EXIT_INVALID_INPUT) from error
     except DiscoveryError as error:
-        _exit_for_discovery_error(error)
+        _exit_for_discovery_error(
+            error,
+            command="download",
+            target=target,
+            json_output=json_output,
+            progress=_download_progress(repository),
+        )
     except DownloadError as error:
-        error_console.print(f"download failed: {error}", markup=False, style="red")
+        _render_failure_report(
+            failure_report(
+                command="download",
+                handle=_safe_handle(target),
+                error_code="DOWNLOAD_FAILED",
+                exit_code=EXIT_DOWNLOAD_FAILED,
+                progress=_download_progress(repository),
+            ),
+            json_output,
+            f"download failed: {error}",
+        )
         raise typer.Exit(EXIT_DOWNLOAD_FAILED) from error
     except (CatalogError, IdentityConflictError, sqlite3.Error, OSError) as error:
-        error_console.print(
-            "download failed: local persistence unavailable or conflicting", markup=False
+        _render_failure_report(
+            failure_report(
+                command="download",
+                handle=_safe_handle(target),
+                error_code="CATALOG_FAILED",
+                exit_code=EXIT_CATALOG_FAILED,
+                progress=_download_progress(repository),
+            ),
+            json_output,
+            "download failed: local persistence unavailable or conflicting",
         )
         raise typer.Exit(EXIT_CATALOG_FAILED) from error
-    _render_download(result, json_output)
+    request_mode = "ADD" if add is not None else "LIMIT"
+    request_value = add if add is not None else (limit or 1)
+    _render_download(
+        result,
+        json_output,
+        download_report(result, mode=request_mode, requested=request_value),
+    )
 
 
 @app.command("archive")
@@ -318,6 +368,11 @@ def archive_profile(
 ) -> None:
     """Durably archive a bounded total or a complete public profile."""
     database = repository / "catalog.sqlite3"
+    telemetry = (
+        (lambda message: None)
+        if json_output
+        else (lambda message: error_console.print(message, markup=False))
+    )
     try:
         if all_items and limit is not None:
             raise DomainError("archive --all and --limit are mutually exclusive")
@@ -344,7 +399,7 @@ def archive_profile(
             auth_browser,
             auth_profile,
             None,
-            lambda message: error_console.print(message, markup=False),
+            telemetry,
         )
         download = DownloadService(
             _provider_factory(),
@@ -360,25 +415,68 @@ def archive_profile(
         ).execute(
             request,
             discovery_timeout,
-            lambda message: error_console.print(message, markup=False),
+            telemetry,
         )
     except (InvalidIdentityError, DomainError) as error:
-        error_console.print(f"invalid input: {error}", markup=False, style="red")
+        _render_failure_report(
+            failure_report(
+                command="archive",
+                handle=_safe_handle(target),
+                error_code="INVALID_INPUT",
+                exit_code=EXIT_INVALID_INPUT,
+                run=_latest_run(database),
+            ),
+            json_output,
+            f"invalid input: {error}",
+        )
         raise typer.Exit(EXIT_INVALID_INPUT) from error
     except DiscoveryError as error:
-        _exit_for_discovery_error(error)
+        _exit_for_discovery_error(
+            error,
+            command="archive",
+            target=target,
+            json_output=json_output,
+            run=_latest_run(database),
+        )
     except DownloadError as error:
-        error_console.print(f"archive failed: {error}", markup=False, style="red")
+        _render_failure_report(
+            failure_report(
+                command="archive",
+                handle=_safe_handle(target),
+                error_code="DOWNLOAD_FAILED",
+                exit_code=EXIT_DOWNLOAD_FAILED,
+                run=_latest_run(database),
+            ),
+            json_output,
+            f"archive failed: {error}",
+        )
         raise typer.Exit(EXIT_DOWNLOAD_FAILED) from error
     except ArchiveUnexpectedError as error:
-        error_console.print(
-            "archive failed: unexpected internal failure", markup=False, style="red"
+        _render_failure_report(
+            failure_report(
+                command="archive",
+                handle=_safe_handle(target),
+                error_code="UNEXPECTED_FAILURE",
+                exit_code=EXIT_PROVIDER_FAILED,
+                run=_latest_run(database),
+            ),
+            json_output,
+            "archive failed: unexpected internal failure",
         )
         raise typer.Exit(EXIT_PROVIDER_FAILED) from error
     except (CatalogError, IdentityConflictError, sqlite3.Error, OSError) as error:
-        error_console.print("archive failed: local repository unavailable", markup=False)
+        _render_failure_report(
+            failure_report(
+                command="archive",
+                handle=_safe_handle(target),
+                error_code="CATALOG_FAILED",
+                exit_code=EXIT_CATALOG_FAILED,
+            ),
+            json_output,
+            "archive failed: local repository unavailable",
+        )
         raise typer.Exit(EXIT_CATALOG_FAILED) from error
-    _render_archive(result, json_output)
+    _render_archive(result, json_output, archive_report(result))
 
 
 @app.command("status")
@@ -389,9 +487,18 @@ def archive_status(
     """Read the latest durable archive checkpoint without network access."""
     result = SQLiteArchiveStore(repository / "catalog.sqlite3").latest()
     if result is None:
-        error_console.print("archive status unavailable: no durable run", markup=False)
+        _render_failure_report(
+            failure_report(
+                command="status",
+                handle=None,
+                error_code="NOT_FOUND",
+                exit_code=EXIT_NOT_FOUND,
+            ),
+            json_output,
+            "archive status unavailable: no durable run",
+        )
         raise typer.Exit(EXIT_NOT_FOUND)
-    _render_archive(result, json_output)
+    _render_archive(result, json_output, archive_report(result, command="status"))
 
 
 def _discovery_provider(browser: str | None, profile: str | None) -> DiscoveryProvider:
@@ -486,7 +593,15 @@ def _catalog_unit(database: Path) -> SQLiteUnitOfWork:
     return SQLiteUnitOfWork(database)
 
 
-def _exit_for_discovery_error(error: Exception) -> NoReturn:
+def _exit_for_discovery_error(
+    error: Exception,
+    *,
+    command: str | None = None,
+    target: str | None = None,
+    json_output: bool = False,
+    progress: dict[str, object] | None = None,
+    run: ArchiveRun | None = None,
+) -> NoReturn:
     if isinstance(error, InvalidIdentityError):
         code = EXIT_INVALID_INPUT
     elif isinstance(error, DiscoveryNotFoundError):
@@ -500,8 +615,84 @@ def _exit_for_discovery_error(error: Exception) -> NoReturn:
     else:
         code = EXIT_PROVIDER_FAILED
     label = "invalid input" if isinstance(error, InvalidIdentityError) else "discovery failed"
-    error_console.print(f"{label}: {error}", markup=False, style="red")
+    if command is None:
+        error_console.print(f"{label}: {error}", markup=False, style="red")
+    else:
+        error_code = _discovery_error_code(error)
+        _render_failure_report(
+            failure_report(
+                command=command,
+                handle=_safe_handle(target),
+                error_code=error_code,
+                exit_code=code,
+                run=run,
+                progress=progress,
+            ),
+            json_output,
+            f"{label}: {error}",
+        )
     raise typer.Exit(code) from error
+
+
+def _discovery_error_code(error: Exception) -> str:
+    if isinstance(error, InvalidIdentityError):
+        return "INVALID_INPUT"
+    if isinstance(error, DiscoveryNotFoundError):
+        return "NOT_FOUND"
+    if isinstance(error, DiscoveryRestrictedError):
+        return "PROVIDER_RESTRICTED"
+    if isinstance(error, DiscoveryRateLimitError):
+        return "PROVIDER_RATE_LIMITED"
+    if isinstance(error, DiscoveryTransientError):
+        return "PROVIDER_TRANSIENT"
+    return "PROVIDER_FAILED"
+
+
+def _safe_handle(target: str | None) -> str | None:
+    if target is None:
+        return None
+    try:
+        return normalize_discovery_target(target).handle
+    except (InvalidIdentityError, DomainError):
+        return None
+
+
+def _download_progress(repository: Path) -> dict[str, object]:
+    manifest = repository / "manifests/latest.json"
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    result: dict[str, object] = {}
+    for key in (
+        "existing_before",
+        "downloaded_this_run",
+        "skipped_count",
+        "failed_count",
+        "total_after",
+    ):
+        value = payload.get(key)
+        if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+            result[key] = value
+    return result
+
+
+def _latest_run(database: Path) -> ArchiveRun | None:
+    try:
+        return SQLiteArchiveStore(database).latest()
+    except (sqlite3.Error, OSError):
+        return None
+
+
+def _render_failure_report(report: ExecutionReport, json_output: bool, legacy_message: str) -> None:
+    if json_output:
+        typer.echo(
+            json.dumps(report.public_dict(), ensure_ascii=False, sort_keys=True),
+            err=True,
+        )
+        return
+    error_console.print(legacy_message, markup=False, style="red")
+    _render_execution_report(report, output=error_console)
 
 
 def _render_batch(batch: DiscoveryBatch, json_output: bool) -> None:
@@ -539,21 +730,22 @@ def _render_sync(result: SyncResult, json_output: bool, database: Path) -> None:
         console.print(f"Discovery run: {result.run_id}", markup=False)
 
 
-def _render_download(result: DownloadSummary, json_output: bool) -> None:
+def _render_download(result: DownloadSummary, json_output: bool, report: ExecutionReport) -> None:
     if json_output:
-        typer.echo(json.dumps(result.public_dict(), ensure_ascii=False, sort_keys=True))
+        payload = result.public_dict()
+        payload["report"] = report.public_dict()
+        typer.echo(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         return
-    console.print(
-        f"Downloaded {result.downloaded_count}; skipped {result.skipped_count}; "
-        f"failed {result.failed_count}.",
-        markup=False,
-    )
+    _render_execution_report(report)
 
 
-def _render_archive(result: ArchiveRun, json_output: bool) -> None:
+def _render_archive(result: ArchiveRun, json_output: bool, report: ExecutionReport) -> None:
     if json_output:
-        typer.echo(json.dumps(result.public_dict(), ensure_ascii=False, sort_keys=True))
+        payload = result.public_dict()
+        payload["report"] = report.public_dict()
+        typer.echo(json.dumps(payload, ensure_ascii=False, sort_keys=True))
         return
+    _render_execution_report(report)
     values = result.public_dict()
     for key in (
         "run_id",
@@ -585,3 +777,69 @@ def _render_archive(result: ArchiveRun, json_output: bool) -> None:
         if key == "run_id":
             value = str(value)[:8]
         console.print(f"{key}: {value}", markup=False)
+
+
+def _render_execution_report(report: ExecutionReport, *, output: Console = console) -> None:
+    values = report.public_dict()
+    account = values["account"]
+    counts = values["counts"]
+    checkpoint = values["checkpoint"]
+    request = values["request"]
+    assert isinstance(account, dict)
+    assert isinstance(counts, dict)
+    handle = account.get("handle")
+    output.print(f"Account: {'@' + str(handle) if handle else 'unavailable'}", markup=False)
+    output.print(f"Result: {report.status}", markup=False)
+    if isinstance(request, dict):
+        requested = request.get("requested")
+        label = str(request.get("mode", "")).lower()
+        output.print(
+            f"Requested: {label}{'' if requested is None else ' ' + str(requested)}",
+            markup=False,
+        )
+    output.print(f"Existing before: {counts.get('existing_before')}", markup=False)
+    output.print(f"Downloaded this run: {counts.get('downloaded_this_run')}", markup=False)
+    output.print(f"Skipped: {counts.get('skipped')}", markup=False)
+    output.print(f"Failed: {counts.get('failed')}", markup=False)
+    output.print(f"Total after: {counts.get('total_after')}", markup=False)
+    if report.complete is not None:
+        output.print(f"Complete: {'yes' if report.complete else 'no'}", markup=False)
+    if report.reason is not None:
+        output.print(f"Reason: {report.reason}", markup=False)
+    if isinstance(checkpoint, dict):
+        output.print(f"Checkpoint: {checkpoint.get('page')}", markup=False)
+        output.print(f"Remaining: {checkpoint.get('remaining')}", markup=False)
+        output.print(f"Resumable: {str(checkpoint.get('resumable')).lower()}", markup=False)
+    if report.video is None:
+        if report.command == "download" and counts.get("downloaded_this_run") == 0:
+            output.print("No new video was downloaded.", markup=False)
+        return
+    video_report = report.video
+    video = video_report.public_dict()
+    output.print("\nVideo", markup=False)
+    output.print(f"Post: {video['post_id']}", markup=False)
+    output.print(f"Media index: {video['media_index']}", markup=False)
+    output.print(f"Published: {video['published_at']}", markup=False)
+    duration = (
+        _duration(video_report.duration_ms) if video_report.duration_ms is not None else "unknown"
+    )
+    output.print(f"Duration: {duration}", markup=False)
+    output.print(f"Resolution: {video['resolution'] or 'unknown'}", markup=False)
+    output.print(f"Quality: {video['quality']}", markup=False)
+    output.print(f"Format: {str(video['extension']).lstrip('.').upper()}", markup=False)
+    output.print(f"Size: {_human_size(video_report.size_bytes)}", markup=False)
+    output.print(f"SHA-256: {video['sha256']}", markup=False)
+    output.print(f"File: {video['relative_path']}", markup=False)
+
+
+def _duration(milliseconds: int) -> str:
+    seconds = milliseconds // 1000
+    return f"{seconds // 60:02d}:{seconds % 60:02d}"
+
+
+def _human_size(size_bytes: int) -> str:
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    if size_bytes < 1024**2:
+        return f"{size_bytes / 1024:.1f} KiB"
+    return f"{size_bytes / 1024**2:.1f} MiB"

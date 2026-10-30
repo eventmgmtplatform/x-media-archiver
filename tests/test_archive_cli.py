@@ -102,7 +102,12 @@ def test_archive_and_status_json_are_stable_and_offline(
 
     status = runner.invoke(app, ["status", "--repository", str(repository), "--json"])
     assert status.exit_code == 0
-    assert json.loads(status.stdout) == payload
+    status_payload = json.loads(status.stdout)
+    assert {key: value for key, value in status_payload.items() if key != "report"} == {
+        key: value for key, value in payload.items() if key != "report"
+    }
+    assert payload["report"]["command"] == "archive"
+    assert status_payload["report"]["command"] == "status"
     human = runner.invoke(app, ["status", "--repository", str(repository)])
     assert human.exit_code == 0
     assert "status: COMPLETED" in human.stdout
@@ -113,7 +118,10 @@ def test_status_without_run_is_read_only(tmp_path: Path) -> None:
     repository = tmp_path / "missing"
     result = runner.invoke(app, ["status", "--repository", str(repository), "--json"])
     assert result.exit_code == cli.EXIT_NOT_FOUND
-    assert "no durable run" in result.stderr
+    error = json.loads(result.stderr)
+    assert result.stdout == ""
+    assert error["error_code"] == "NOT_FOUND"
+    assert error["progress_available"] is False
     assert not repository.exists()
 
 
@@ -189,7 +197,10 @@ def test_archive_cli_sanitizes_unexpected_service_failure(
     )
     output = result.stdout + result.stderr
     assert result.exit_code == cli.EXIT_PROVIDER_FAILED
-    assert "unexpected internal failure" in output
+    error = json.loads(result.stderr)
+    assert result.stdout == ""
+    assert error["error_code"] == "UNEXPECTED_FAILURE"
+    assert error["status"] == "FAILED"
     assert marker not in output
     assert "Traceback" not in output
     restored = SQLiteArchiveStore(repository / "catalog.sqlite3").latest()

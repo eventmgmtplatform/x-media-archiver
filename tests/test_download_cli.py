@@ -108,8 +108,42 @@ def test_download_json_is_stable_and_omits_ephemeral_url(
     assert payload["downloaded_count"] == 1
     assert payload["skipped_count"] == 0
     assert payload["requested_limit"] == 1
+    assert payload["report"]["report_schema_version"] == 1
+    assert payload["report"]["account"]["handle"] == "Reuters"
+    assert payload["report"]["video"]["post_id"] == "9001"
+    assert payload["report"]["video"]["relative_path"].startswith("profiles/")
     assert "private=signature" not in result.stdout
     assert (repository / "catalog.sqlite3").is_file()
+
+
+def test_download_human_report_shows_single_video_detail(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(cli, "_provider_factory", Discovery)
+    monkeypatch.setattr(cli, "_media_provider_factory", Media)
+    monkeypatch.setattr(cli, "_download_incremental_provider", lambda *args: Incremental())
+
+    result = runner.invoke(
+        app,
+        [
+            "download",
+            "Reuters",
+            "--limit",
+            "1",
+            "--repository",
+            str(tmp_path / "repository"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Account: @Reuters" in result.stdout
+    assert "Downloaded this run: 1" in result.stdout
+    assert "Post: 9001" in result.stdout
+    assert "Duration: 00:01" in result.stdout
+    assert "Resolution: 1280x720" in result.stdout
+    assert "Quality: provider-best" in result.stdout
+    assert "File: profiles/Reuters/posts/9001/0/video.mp4" in result.stdout
+    assert "private=signature" not in result.stdout
 
 
 @pytest.mark.parametrize("limit", ["0", "11", "1000"])
